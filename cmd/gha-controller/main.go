@@ -2,7 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"flag"
+	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"time"
 
@@ -11,10 +16,13 @@ import (
 	"github.com/go-faster/errors"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/go-faster/gha/internal/app"
+	"github.com/go-faster/gha/internal/controller"
 	"github.com/go-faster/gha/internal/ent"
 	"github.com/go-faster/gha/internal/entry"
+	"github.com/go-faster/gha/internal/oas"
 )
 
 func ensureRollback(tx *ent.Tx) func() {
@@ -61,9 +69,13 @@ func main() {
 		lg.Info("Schema ok")
 
 		var arg struct {
-			Init bool
+			Init     bool
+			Register string
+			Addr     string
 		}
 		flag.BoolVar(&arg.Init, "init", false, "initialize chunks")
+		flag.StringVar(&arg.Addr, "addr", "localhost:8080", "http listen addr")
+		flag.StringVar(&arg.Register, "register", "", "name of worker to register")
 		flag.Parse()
 
 		if arg.Init {
@@ -97,7 +109,62 @@ func main() {
 
 			lg.Info("Done")
 		}
+		if arg.Register != "" {
+			lg.Info("Registering new worker")
+			tokBytes := make([]byte, 20)
+			if _, err := io.ReadFull(rand.Reader, tokBytes); err != nil {
+				return errors.Wrap(err, "rand")
+			}
 
-		return nil
+			var tokRunes []rune
+			for i, c := range hex.EncodeToString(tokBytes) {
+				if i > 0 && i%10 == 0 {
+					tokRunes = append(tokRunes, '-')
+				}
+				tokRunes = append(tokRunes, c)
+			}
+
+			tok := arg.Register + ":" + string(tokRunes)
+			w, err := client.Worker.Create().
+				SetName(arg.Register).
+				SetToken(tok).Save(ctx)
+			if err != nil {
+				return errors.Wrap(err, "worker create")
+			}
+			lg.Debug("Created")
+
+			fmt.Println(w.Token)
+			return nil
+		}
+
+		h := controller.New(client, lg)
+		s := &http.Server{
+			Addr:    arg.Addr,
+			Handler: oas.NewServer(h),
+		}
+		g, ctx := errgroup.WithContext(ctx)
+		g.Go(func() error {
+			defer lg.Info("Stopped")
+
+			lg.Info("Listening", zap.String("http", arg.Addr))
+			return s.ListenAndServe()
+		})
+		g.Go(func() error {
+			if err := h.Run(ctx); err != nil {
+				return errors.Wrap(err, "controller")
+			}
+			return nil
+		})
+		g.Go(func() error {
+			<-ctx.Done()
+
+			lg.Info("Shutting down")
+			shutCtx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+
+			return s.Shutdown(shutCtx)
+		})
+
+		return g.Wait()
 	})
 }

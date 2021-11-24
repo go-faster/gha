@@ -14,8 +14,6 @@ type Tx struct {
 	config
 	// Chunk is the client for interacting with the Chunk builders.
 	Chunk *ChunkClient
-	// Download is the client for interacting with the Download builders.
-	Download *DownloadClient
 	// Worker is the client for interacting with the Worker builders.
 	Worker *WorkerClient
 
@@ -154,7 +152,6 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Chunk = NewChunkClient(tx.config)
-	tx.Download = NewDownloadClient(tx.config)
 	tx.Worker = NewWorkerClient(tx.config)
 }
 

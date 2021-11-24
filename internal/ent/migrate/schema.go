@@ -14,6 +14,11 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "start", Type: field.TypeTime},
+		{Name: "lease_expires_at", Type: field.TypeTime, Nullable: true},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"New", "Downloading", "Downloaded", "Processing", "Done"}, Default: "New"},
+		{Name: "sha256_input", Type: field.TypeString, Nullable: true},
+		{Name: "sha256_content", Type: field.TypeString, Nullable: true},
+		{Name: "sha256_output", Type: field.TypeString, Nullable: true},
 	}
 	// ChunksTable holds the schema information for the "chunks" table.
 	ChunksTable = &schema.Table{
@@ -21,24 +26,12 @@ var (
 		Columns:    ChunksColumns,
 		PrimaryKey: []*schema.Column{ChunksColumns[0]},
 	}
-	// DownloadsColumns holds the columns for the "downloads" table.
-	DownloadsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-	}
-	// DownloadsTable holds the schema information for the "downloads" table.
-	DownloadsTable = &schema.Table{
-		Name:       "downloads",
-		Columns:    DownloadsColumns,
-		PrimaryKey: []*schema.Column{DownloadsColumns[0]},
-	}
 	// WorkersColumns holds the columns for the "workers" table.
 	WorkersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "token", Type: field.TypeString},
 	}
 	// WorkersTable holds the schema information for the "workers" table.
@@ -50,7 +43,6 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ChunksTable,
-		DownloadsTable,
 		WorkersTable,
 	}
 )

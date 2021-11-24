@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/go-faster/gha/internal/ent/chunk"
-	"github.com/go-faster/gha/internal/ent/download"
 	"github.com/go-faster/gha/internal/ent/predicate"
 	"github.com/go-faster/gha/internal/ent/worker"
 	"github.com/google/uuid"
@@ -26,24 +25,28 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeChunk    = "Chunk"
-	TypeDownload = "Download"
-	TypeWorker   = "Worker"
+	TypeChunk  = "Chunk"
+	TypeWorker = "Worker"
 )
 
 // ChunkMutation represents an operation that mutates the Chunk nodes in the graph.
 type ChunkMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *string
-	created_at    *time.Time
-	updated_at    *time.Time
-	start         *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Chunk, error)
-	predicates    []predicate.Chunk
+	op               Op
+	typ              string
+	id               *string
+	created_at       *time.Time
+	updated_at       *time.Time
+	start            *time.Time
+	lease_expires_at *time.Time
+	state            *chunk.State
+	sha256_input     *string
+	sha256_content   *string
+	sha256_output    *string
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Chunk, error)
+	predicates       []predicate.Chunk
 }
 
 var _ ent.Mutation = (*ChunkMutation)(nil)
@@ -239,6 +242,238 @@ func (m *ChunkMutation) ResetStart() {
 	m.start = nil
 }
 
+// SetLeaseExpiresAt sets the "lease_expires_at" field.
+func (m *ChunkMutation) SetLeaseExpiresAt(t time.Time) {
+	m.lease_expires_at = &t
+}
+
+// LeaseExpiresAt returns the value of the "lease_expires_at" field in the mutation.
+func (m *ChunkMutation) LeaseExpiresAt() (r time.Time, exists bool) {
+	v := m.lease_expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeaseExpiresAt returns the old "lease_expires_at" field's value of the Chunk entity.
+// If the Chunk object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChunkMutation) OldLeaseExpiresAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldLeaseExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldLeaseExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeaseExpiresAt: %w", err)
+	}
+	return oldValue.LeaseExpiresAt, nil
+}
+
+// ClearLeaseExpiresAt clears the value of the "lease_expires_at" field.
+func (m *ChunkMutation) ClearLeaseExpiresAt() {
+	m.lease_expires_at = nil
+	m.clearedFields[chunk.FieldLeaseExpiresAt] = struct{}{}
+}
+
+// LeaseExpiresAtCleared returns if the "lease_expires_at" field was cleared in this mutation.
+func (m *ChunkMutation) LeaseExpiresAtCleared() bool {
+	_, ok := m.clearedFields[chunk.FieldLeaseExpiresAt]
+	return ok
+}
+
+// ResetLeaseExpiresAt resets all changes to the "lease_expires_at" field.
+func (m *ChunkMutation) ResetLeaseExpiresAt() {
+	m.lease_expires_at = nil
+	delete(m.clearedFields, chunk.FieldLeaseExpiresAt)
+}
+
+// SetState sets the "state" field.
+func (m *ChunkMutation) SetState(c chunk.State) {
+	m.state = &c
+}
+
+// State returns the value of the "state" field in the mutation.
+func (m *ChunkMutation) State() (r chunk.State, exists bool) {
+	v := m.state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldState returns the old "state" field's value of the Chunk entity.
+// If the Chunk object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChunkMutation) OldState(ctx context.Context) (v chunk.State, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldState: %w", err)
+	}
+	return oldValue.State, nil
+}
+
+// ResetState resets all changes to the "state" field.
+func (m *ChunkMutation) ResetState() {
+	m.state = nil
+}
+
+// SetSha256Input sets the "sha256_input" field.
+func (m *ChunkMutation) SetSha256Input(s string) {
+	m.sha256_input = &s
+}
+
+// Sha256Input returns the value of the "sha256_input" field in the mutation.
+func (m *ChunkMutation) Sha256Input() (r string, exists bool) {
+	v := m.sha256_input
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSha256Input returns the old "sha256_input" field's value of the Chunk entity.
+// If the Chunk object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChunkMutation) OldSha256Input(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldSha256Input is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldSha256Input requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSha256Input: %w", err)
+	}
+	return oldValue.Sha256Input, nil
+}
+
+// ClearSha256Input clears the value of the "sha256_input" field.
+func (m *ChunkMutation) ClearSha256Input() {
+	m.sha256_input = nil
+	m.clearedFields[chunk.FieldSha256Input] = struct{}{}
+}
+
+// Sha256InputCleared returns if the "sha256_input" field was cleared in this mutation.
+func (m *ChunkMutation) Sha256InputCleared() bool {
+	_, ok := m.clearedFields[chunk.FieldSha256Input]
+	return ok
+}
+
+// ResetSha256Input resets all changes to the "sha256_input" field.
+func (m *ChunkMutation) ResetSha256Input() {
+	m.sha256_input = nil
+	delete(m.clearedFields, chunk.FieldSha256Input)
+}
+
+// SetSha256Content sets the "sha256_content" field.
+func (m *ChunkMutation) SetSha256Content(s string) {
+	m.sha256_content = &s
+}
+
+// Sha256Content returns the value of the "sha256_content" field in the mutation.
+func (m *ChunkMutation) Sha256Content() (r string, exists bool) {
+	v := m.sha256_content
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSha256Content returns the old "sha256_content" field's value of the Chunk entity.
+// If the Chunk object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChunkMutation) OldSha256Content(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldSha256Content is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldSha256Content requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSha256Content: %w", err)
+	}
+	return oldValue.Sha256Content, nil
+}
+
+// ClearSha256Content clears the value of the "sha256_content" field.
+func (m *ChunkMutation) ClearSha256Content() {
+	m.sha256_content = nil
+	m.clearedFields[chunk.FieldSha256Content] = struct{}{}
+}
+
+// Sha256ContentCleared returns if the "sha256_content" field was cleared in this mutation.
+func (m *ChunkMutation) Sha256ContentCleared() bool {
+	_, ok := m.clearedFields[chunk.FieldSha256Content]
+	return ok
+}
+
+// ResetSha256Content resets all changes to the "sha256_content" field.
+func (m *ChunkMutation) ResetSha256Content() {
+	m.sha256_content = nil
+	delete(m.clearedFields, chunk.FieldSha256Content)
+}
+
+// SetSha256Output sets the "sha256_output" field.
+func (m *ChunkMutation) SetSha256Output(s string) {
+	m.sha256_output = &s
+}
+
+// Sha256Output returns the value of the "sha256_output" field in the mutation.
+func (m *ChunkMutation) Sha256Output() (r string, exists bool) {
+	v := m.sha256_output
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSha256Output returns the old "sha256_output" field's value of the Chunk entity.
+// If the Chunk object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChunkMutation) OldSha256Output(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldSha256Output is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldSha256Output requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSha256Output: %w", err)
+	}
+	return oldValue.Sha256Output, nil
+}
+
+// ClearSha256Output clears the value of the "sha256_output" field.
+func (m *ChunkMutation) ClearSha256Output() {
+	m.sha256_output = nil
+	m.clearedFields[chunk.FieldSha256Output] = struct{}{}
+}
+
+// Sha256OutputCleared returns if the "sha256_output" field was cleared in this mutation.
+func (m *ChunkMutation) Sha256OutputCleared() bool {
+	_, ok := m.clearedFields[chunk.FieldSha256Output]
+	return ok
+}
+
+// ResetSha256Output resets all changes to the "sha256_output" field.
+func (m *ChunkMutation) ResetSha256Output() {
+	m.sha256_output = nil
+	delete(m.clearedFields, chunk.FieldSha256Output)
+}
+
 // Where appends a list predicates to the ChunkMutation builder.
 func (m *ChunkMutation) Where(ps ...predicate.Chunk) {
 	m.predicates = append(m.predicates, ps...)
@@ -258,7 +493,7 @@ func (m *ChunkMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChunkMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 8)
 	if m.created_at != nil {
 		fields = append(fields, chunk.FieldCreatedAt)
 	}
@@ -267,6 +502,21 @@ func (m *ChunkMutation) Fields() []string {
 	}
 	if m.start != nil {
 		fields = append(fields, chunk.FieldStart)
+	}
+	if m.lease_expires_at != nil {
+		fields = append(fields, chunk.FieldLeaseExpiresAt)
+	}
+	if m.state != nil {
+		fields = append(fields, chunk.FieldState)
+	}
+	if m.sha256_input != nil {
+		fields = append(fields, chunk.FieldSha256Input)
+	}
+	if m.sha256_content != nil {
+		fields = append(fields, chunk.FieldSha256Content)
+	}
+	if m.sha256_output != nil {
+		fields = append(fields, chunk.FieldSha256Output)
 	}
 	return fields
 }
@@ -282,6 +532,16 @@ func (m *ChunkMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case chunk.FieldStart:
 		return m.Start()
+	case chunk.FieldLeaseExpiresAt:
+		return m.LeaseExpiresAt()
+	case chunk.FieldState:
+		return m.State()
+	case chunk.FieldSha256Input:
+		return m.Sha256Input()
+	case chunk.FieldSha256Content:
+		return m.Sha256Content()
+	case chunk.FieldSha256Output:
+		return m.Sha256Output()
 	}
 	return nil, false
 }
@@ -297,6 +557,16 @@ func (m *ChunkMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldUpdatedAt(ctx)
 	case chunk.FieldStart:
 		return m.OldStart(ctx)
+	case chunk.FieldLeaseExpiresAt:
+		return m.OldLeaseExpiresAt(ctx)
+	case chunk.FieldState:
+		return m.OldState(ctx)
+	case chunk.FieldSha256Input:
+		return m.OldSha256Input(ctx)
+	case chunk.FieldSha256Content:
+		return m.OldSha256Content(ctx)
+	case chunk.FieldSha256Output:
+		return m.OldSha256Output(ctx)
 	}
 	return nil, fmt.Errorf("unknown Chunk field %s", name)
 }
@@ -327,6 +597,41 @@ func (m *ChunkMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStart(v)
 		return nil
+	case chunk.FieldLeaseExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeaseExpiresAt(v)
+		return nil
+	case chunk.FieldState:
+		v, ok := value.(chunk.State)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetState(v)
+		return nil
+	case chunk.FieldSha256Input:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSha256Input(v)
+		return nil
+	case chunk.FieldSha256Content:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSha256Content(v)
+		return nil
+	case chunk.FieldSha256Output:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSha256Output(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Chunk field %s", name)
 }
@@ -356,7 +661,20 @@ func (m *ChunkMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *ChunkMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(chunk.FieldLeaseExpiresAt) {
+		fields = append(fields, chunk.FieldLeaseExpiresAt)
+	}
+	if m.FieldCleared(chunk.FieldSha256Input) {
+		fields = append(fields, chunk.FieldSha256Input)
+	}
+	if m.FieldCleared(chunk.FieldSha256Content) {
+		fields = append(fields, chunk.FieldSha256Content)
+	}
+	if m.FieldCleared(chunk.FieldSha256Output) {
+		fields = append(fields, chunk.FieldSha256Output)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -369,6 +687,20 @@ func (m *ChunkMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *ChunkMutation) ClearField(name string) error {
+	switch name {
+	case chunk.FieldLeaseExpiresAt:
+		m.ClearLeaseExpiresAt()
+		return nil
+	case chunk.FieldSha256Input:
+		m.ClearSha256Input()
+		return nil
+	case chunk.FieldSha256Content:
+		m.ClearSha256Content()
+		return nil
+	case chunk.FieldSha256Output:
+		m.ClearSha256Output()
+		return nil
+	}
 	return fmt.Errorf("unknown Chunk nullable field %s", name)
 }
 
@@ -384,6 +716,21 @@ func (m *ChunkMutation) ResetField(name string) error {
 		return nil
 	case chunk.FieldStart:
 		m.ResetStart()
+		return nil
+	case chunk.FieldLeaseExpiresAt:
+		m.ResetLeaseExpiresAt()
+		return nil
+	case chunk.FieldState:
+		m.ResetState()
+		return nil
+	case chunk.FieldSha256Input:
+		m.ResetSha256Input()
+		return nil
+	case chunk.FieldSha256Content:
+		m.ResetSha256Content()
+		return nil
+	case chunk.FieldSha256Output:
+		m.ResetSha256Output()
 		return nil
 	}
 	return fmt.Errorf("unknown Chunk field %s", name)
@@ -435,358 +782,6 @@ func (m *ChunkMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ChunkMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Chunk edge %s", name)
-}
-
-// DownloadMutation represents an operation that mutates the Download nodes in the graph.
-type DownloadMutation struct {
-	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	created_at    *time.Time
-	updated_at    *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Download, error)
-	predicates    []predicate.Download
-}
-
-var _ ent.Mutation = (*DownloadMutation)(nil)
-
-// downloadOption allows management of the mutation configuration using functional options.
-type downloadOption func(*DownloadMutation)
-
-// newDownloadMutation creates new mutation for the Download entity.
-func newDownloadMutation(c config, op Op, opts ...downloadOption) *DownloadMutation {
-	m := &DownloadMutation{
-		config:        c,
-		op:            op,
-		typ:           TypeDownload,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withDownloadID sets the ID field of the mutation.
-func withDownloadID(id uuid.UUID) downloadOption {
-	return func(m *DownloadMutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *Download
-		)
-		m.oldValue = func(ctx context.Context) (*Download, error) {
-			once.Do(func() {
-				if m.done {
-					err = fmt.Errorf("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().Download.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withDownload sets the old Download of the mutation.
-func withDownload(node *Download) downloadOption {
-	return func(m *DownloadMutation) {
-		m.oldValue = func(context.Context) (*Download, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m DownloadMutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m DownloadMutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of Download entities.
-func (m *DownloadMutation) SetID(id uuid.UUID) {
-	m.id = &id
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *DownloadMutation) ID() (id uuid.UUID, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (m *DownloadMutation) SetCreatedAt(t time.Time) {
-	m.created_at = &t
-}
-
-// CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *DownloadMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.created_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCreatedAt returns the old "created_at" field's value of the Download entity.
-// If the Download object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DownloadMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldCreatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldCreatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
-	}
-	return oldValue.CreatedAt, nil
-}
-
-// ResetCreatedAt resets all changes to the "created_at" field.
-func (m *DownloadMutation) ResetCreatedAt() {
-	m.created_at = nil
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (m *DownloadMutation) SetUpdatedAt(t time.Time) {
-	m.updated_at = &t
-}
-
-// UpdatedAt returns the value of the "updated_at" field in the mutation.
-func (m *DownloadMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updated_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUpdatedAt returns the old "updated_at" field's value of the Download entity.
-// If the Download object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DownloadMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldUpdatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldUpdatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
-	}
-	return oldValue.UpdatedAt, nil
-}
-
-// ResetUpdatedAt resets all changes to the "updated_at" field.
-func (m *DownloadMutation) ResetUpdatedAt() {
-	m.updated_at = nil
-}
-
-// Where appends a list predicates to the DownloadMutation builder.
-func (m *DownloadMutation) Where(ps ...predicate.Download) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// Op returns the operation name.
-func (m *DownloadMutation) Op() Op {
-	return m.op
-}
-
-// Type returns the node type of this mutation (Download).
-func (m *DownloadMutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *DownloadMutation) Fields() []string {
-	fields := make([]string, 0, 2)
-	if m.created_at != nil {
-		fields = append(fields, download.FieldCreatedAt)
-	}
-	if m.updated_at != nil {
-		fields = append(fields, download.FieldUpdatedAt)
-	}
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *DownloadMutation) Field(name string) (ent.Value, bool) {
-	switch name {
-	case download.FieldCreatedAt:
-		return m.CreatedAt()
-	case download.FieldUpdatedAt:
-		return m.UpdatedAt()
-	}
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *DownloadMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	switch name {
-	case download.FieldCreatedAt:
-		return m.OldCreatedAt(ctx)
-	case download.FieldUpdatedAt:
-		return m.OldUpdatedAt(ctx)
-	}
-	return nil, fmt.Errorf("unknown Download field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *DownloadMutation) SetField(name string, value ent.Value) error {
-	switch name {
-	case download.FieldCreatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCreatedAt(v)
-		return nil
-	case download.FieldUpdatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUpdatedAt(v)
-		return nil
-	}
-	return fmt.Errorf("unknown Download field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *DownloadMutation) AddedFields() []string {
-	return nil
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *DownloadMutation) AddedField(name string) (ent.Value, bool) {
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *DownloadMutation) AddField(name string, value ent.Value) error {
-	switch name {
-	}
-	return fmt.Errorf("unknown Download numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *DownloadMutation) ClearedFields() []string {
-	return nil
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *DownloadMutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *DownloadMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown Download nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *DownloadMutation) ResetField(name string) error {
-	switch name {
-	case download.FieldCreatedAt:
-		m.ResetCreatedAt()
-		return nil
-	case download.FieldUpdatedAt:
-		m.ResetUpdatedAt()
-		return nil
-	}
-	return fmt.Errorf("unknown Download field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *DownloadMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *DownloadMutation) AddedIDs(name string) []ent.Value {
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *DownloadMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *DownloadMutation) RemovedIDs(name string) []ent.Value {
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *DownloadMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *DownloadMutation) EdgeCleared(name string) bool {
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *DownloadMutation) ClearEdge(name string) error {
-	return fmt.Errorf("unknown Download unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *DownloadMutation) ResetEdge(name string) error {
-	return fmt.Errorf("unknown Download edge %s", name)
 }
 
 // WorkerMutation represents an operation that mutates the Worker nodes in the graph.

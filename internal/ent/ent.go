@@ -9,7 +9,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/go-faster/gha/internal/ent/chunk"
-	"github.com/go-faster/gha/internal/ent/download"
 	"github.com/go-faster/gha/internal/ent/worker"
 )
 
@@ -31,9 +30,8 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		chunk.Table:    chunk.ValidColumn,
-		download.Table: download.ValidColumn,
-		worker.Table:   worker.ValidColumn,
+		chunk.Table:  chunk.ValidColumn,
+		worker.Table: worker.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

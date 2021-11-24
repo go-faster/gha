@@ -54,6 +54,76 @@ func (cc *ChunkCreate) SetStart(t time.Time) *ChunkCreate {
 	return cc
 }
 
+// SetLeaseExpiresAt sets the "lease_expires_at" field.
+func (cc *ChunkCreate) SetLeaseExpiresAt(t time.Time) *ChunkCreate {
+	cc.mutation.SetLeaseExpiresAt(t)
+	return cc
+}
+
+// SetNillableLeaseExpiresAt sets the "lease_expires_at" field if the given value is not nil.
+func (cc *ChunkCreate) SetNillableLeaseExpiresAt(t *time.Time) *ChunkCreate {
+	if t != nil {
+		cc.SetLeaseExpiresAt(*t)
+	}
+	return cc
+}
+
+// SetState sets the "state" field.
+func (cc *ChunkCreate) SetState(c chunk.State) *ChunkCreate {
+	cc.mutation.SetState(c)
+	return cc
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (cc *ChunkCreate) SetNillableState(c *chunk.State) *ChunkCreate {
+	if c != nil {
+		cc.SetState(*c)
+	}
+	return cc
+}
+
+// SetSha256Input sets the "sha256_input" field.
+func (cc *ChunkCreate) SetSha256Input(s string) *ChunkCreate {
+	cc.mutation.SetSha256Input(s)
+	return cc
+}
+
+// SetNillableSha256Input sets the "sha256_input" field if the given value is not nil.
+func (cc *ChunkCreate) SetNillableSha256Input(s *string) *ChunkCreate {
+	if s != nil {
+		cc.SetSha256Input(*s)
+	}
+	return cc
+}
+
+// SetSha256Content sets the "sha256_content" field.
+func (cc *ChunkCreate) SetSha256Content(s string) *ChunkCreate {
+	cc.mutation.SetSha256Content(s)
+	return cc
+}
+
+// SetNillableSha256Content sets the "sha256_content" field if the given value is not nil.
+func (cc *ChunkCreate) SetNillableSha256Content(s *string) *ChunkCreate {
+	if s != nil {
+		cc.SetSha256Content(*s)
+	}
+	return cc
+}
+
+// SetSha256Output sets the "sha256_output" field.
+func (cc *ChunkCreate) SetSha256Output(s string) *ChunkCreate {
+	cc.mutation.SetSha256Output(s)
+	return cc
+}
+
+// SetNillableSha256Output sets the "sha256_output" field if the given value is not nil.
+func (cc *ChunkCreate) SetNillableSha256Output(s *string) *ChunkCreate {
+	if s != nil {
+		cc.SetSha256Output(*s)
+	}
+	return cc
+}
+
 // SetID sets the "id" field.
 func (cc *ChunkCreate) SetID(s string) *ChunkCreate {
 	cc.mutation.SetID(s)
@@ -139,6 +209,10 @@ func (cc *ChunkCreate) defaults() {
 		v := chunk.DefaultUpdatedAt()
 		cc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := cc.mutation.State(); !ok {
+		v := chunk.DefaultState
+		cc.mutation.SetState(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -151,6 +225,14 @@ func (cc *ChunkCreate) check() error {
 	}
 	if _, ok := cc.mutation.Start(); !ok {
 		return &ValidationError{Name: "start", err: errors.New(`ent: missing required field "start"`)}
+	}
+	if _, ok := cc.mutation.State(); !ok {
+		return &ValidationError{Name: "state", err: errors.New(`ent: missing required field "state"`)}
+	}
+	if v, ok := cc.mutation.State(); ok {
+		if err := chunk.StateValidator(v); err != nil {
+			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "state": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -207,6 +289,46 @@ func (cc *ChunkCreate) createSpec() (*Chunk, *sqlgraph.CreateSpec) {
 			Column: chunk.FieldStart,
 		})
 		_node.Start = value
+	}
+	if value, ok := cc.mutation.LeaseExpiresAt(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: chunk.FieldLeaseExpiresAt,
+		})
+		_node.LeaseExpiresAt = value
+	}
+	if value, ok := cc.mutation.State(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  value,
+			Column: chunk.FieldState,
+		})
+		_node.State = value
+	}
+	if value, ok := cc.mutation.Sha256Input(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chunk.FieldSha256Input,
+		})
+		_node.Sha256Input = &value
+	}
+	if value, ok := cc.mutation.Sha256Content(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chunk.FieldSha256Content,
+		})
+		_node.Sha256Content = &value
+	}
+	if value, ok := cc.mutation.Sha256Output(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chunk.FieldSha256Output,
+		})
+		_node.Sha256Output = &value
 	}
 	return _node, _spec
 }

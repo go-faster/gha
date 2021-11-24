@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-faster/gha/internal/ent/chunk"
-	"github.com/go-faster/gha/internal/ent/download"
 	"github.com/go-faster/gha/internal/ent/schema"
 	"github.com/go-faster/gha/internal/ent/worker"
 	"github.com/google/uuid"
@@ -31,27 +30,6 @@ func init() {
 	chunk.DefaultUpdatedAt = chunkDescUpdatedAt.Default.(func() time.Time)
 	// chunk.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	chunk.UpdateDefaultUpdatedAt = chunkDescUpdatedAt.UpdateDefault.(func() time.Time)
-	downloadMixin := schema.Download{}.Mixin()
-	downloadMixinFields0 := downloadMixin[0].Fields()
-	_ = downloadMixinFields0
-	downloadMixinFields1 := downloadMixin[1].Fields()
-	_ = downloadMixinFields1
-	downloadFields := schema.Download{}.Fields()
-	_ = downloadFields
-	// downloadDescCreatedAt is the schema descriptor for created_at field.
-	downloadDescCreatedAt := downloadMixinFields1[0].Descriptor()
-	// download.DefaultCreatedAt holds the default value on creation for the created_at field.
-	download.DefaultCreatedAt = downloadDescCreatedAt.Default.(func() time.Time)
-	// downloadDescUpdatedAt is the schema descriptor for updated_at field.
-	downloadDescUpdatedAt := downloadMixinFields1[1].Descriptor()
-	// download.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	download.DefaultUpdatedAt = downloadDescUpdatedAt.Default.(func() time.Time)
-	// download.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	download.UpdateDefaultUpdatedAt = downloadDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// downloadDescID is the schema descriptor for id field.
-	downloadDescID := downloadMixinFields0[0].Descriptor()
-	// download.DefaultID holds the default value on creation for the id field.
-	download.DefaultID = downloadDescID.Default.(func() uuid.UUID)
 	workerMixin := schema.Worker{}.Mixin()
 	workerMixinFields0 := workerMixin[0].Fields()
 	_ = workerMixinFields0

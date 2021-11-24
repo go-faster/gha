@@ -9,8 +9,5 @@ import (
 // Chunk is the predicate function for chunk builders.
 type Chunk func(*sql.Selector)
 
-// Download is the predicate function for download builders.
-type Download func(*sql.Selector)
-
 // Worker is the predicate function for worker builders.
 type Worker func(*sql.Selector)

@@ -113,6 +113,34 @@ func Start(v time.Time) predicate.Chunk {
 	})
 }
 
+// LeaseExpiresAt applies equality check predicate on the "lease_expires_at" field. It's identical to LeaseExpiresAtEQ.
+func LeaseExpiresAt(v time.Time) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldLeaseExpiresAt), v))
+	})
+}
+
+// Sha256Input applies equality check predicate on the "sha256_input" field. It's identical to Sha256InputEQ.
+func Sha256Input(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256Content applies equality check predicate on the "sha256_content" field. It's identical to Sha256ContentEQ.
+func Sha256Content(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256Output applies equality check predicate on the "sha256_output" field. It's identical to Sha256OutputEQ.
+func Sha256Output(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSha256Output), v))
+	})
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Chunk {
 	return predicate.Chunk(func(s *sql.Selector) {
@@ -338,6 +366,519 @@ func StartLT(v time.Time) predicate.Chunk {
 func StartLTE(v time.Time) predicate.Chunk {
 	return predicate.Chunk(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldStart), v))
+	})
+}
+
+// LeaseExpiresAtEQ applies the EQ predicate on the "lease_expires_at" field.
+func LeaseExpiresAtEQ(v time.Time) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldLeaseExpiresAt), v))
+	})
+}
+
+// LeaseExpiresAtNEQ applies the NEQ predicate on the "lease_expires_at" field.
+func LeaseExpiresAtNEQ(v time.Time) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldLeaseExpiresAt), v))
+	})
+}
+
+// LeaseExpiresAtIn applies the In predicate on the "lease_expires_at" field.
+func LeaseExpiresAtIn(vs ...time.Time) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldLeaseExpiresAt), v...))
+	})
+}
+
+// LeaseExpiresAtNotIn applies the NotIn predicate on the "lease_expires_at" field.
+func LeaseExpiresAtNotIn(vs ...time.Time) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldLeaseExpiresAt), v...))
+	})
+}
+
+// LeaseExpiresAtGT applies the GT predicate on the "lease_expires_at" field.
+func LeaseExpiresAtGT(v time.Time) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldLeaseExpiresAt), v))
+	})
+}
+
+// LeaseExpiresAtGTE applies the GTE predicate on the "lease_expires_at" field.
+func LeaseExpiresAtGTE(v time.Time) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldLeaseExpiresAt), v))
+	})
+}
+
+// LeaseExpiresAtLT applies the LT predicate on the "lease_expires_at" field.
+func LeaseExpiresAtLT(v time.Time) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldLeaseExpiresAt), v))
+	})
+}
+
+// LeaseExpiresAtLTE applies the LTE predicate on the "lease_expires_at" field.
+func LeaseExpiresAtLTE(v time.Time) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldLeaseExpiresAt), v))
+	})
+}
+
+// LeaseExpiresAtIsNil applies the IsNil predicate on the "lease_expires_at" field.
+func LeaseExpiresAtIsNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldLeaseExpiresAt)))
+	})
+}
+
+// LeaseExpiresAtNotNil applies the NotNil predicate on the "lease_expires_at" field.
+func LeaseExpiresAtNotNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldLeaseExpiresAt)))
+	})
+}
+
+// StateEQ applies the EQ predicate on the "state" field.
+func StateEQ(v State) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldState), v))
+	})
+}
+
+// StateNEQ applies the NEQ predicate on the "state" field.
+func StateNEQ(v State) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldState), v))
+	})
+}
+
+// StateIn applies the In predicate on the "state" field.
+func StateIn(vs ...State) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldState), v...))
+	})
+}
+
+// StateNotIn applies the NotIn predicate on the "state" field.
+func StateNotIn(vs ...State) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldState), v...))
+	})
+}
+
+// Sha256InputEQ applies the EQ predicate on the "sha256_input" field.
+func Sha256InputEQ(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256InputNEQ applies the NEQ predicate on the "sha256_input" field.
+func Sha256InputNEQ(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256InputIn applies the In predicate on the "sha256_input" field.
+func Sha256InputIn(vs ...string) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldSha256Input), v...))
+	})
+}
+
+// Sha256InputNotIn applies the NotIn predicate on the "sha256_input" field.
+func Sha256InputNotIn(vs ...string) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldSha256Input), v...))
+	})
+}
+
+// Sha256InputGT applies the GT predicate on the "sha256_input" field.
+func Sha256InputGT(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256InputGTE applies the GTE predicate on the "sha256_input" field.
+func Sha256InputGTE(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256InputLT applies the LT predicate on the "sha256_input" field.
+func Sha256InputLT(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256InputLTE applies the LTE predicate on the "sha256_input" field.
+func Sha256InputLTE(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256InputContains applies the Contains predicate on the "sha256_input" field.
+func Sha256InputContains(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256InputHasPrefix applies the HasPrefix predicate on the "sha256_input" field.
+func Sha256InputHasPrefix(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256InputHasSuffix applies the HasSuffix predicate on the "sha256_input" field.
+func Sha256InputHasSuffix(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256InputIsNil applies the IsNil predicate on the "sha256_input" field.
+func Sha256InputIsNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldSha256Input)))
+	})
+}
+
+// Sha256InputNotNil applies the NotNil predicate on the "sha256_input" field.
+func Sha256InputNotNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldSha256Input)))
+	})
+}
+
+// Sha256InputEqualFold applies the EqualFold predicate on the "sha256_input" field.
+func Sha256InputEqualFold(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256InputContainsFold applies the ContainsFold predicate on the "sha256_input" field.
+func Sha256InputContainsFold(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldSha256Input), v))
+	})
+}
+
+// Sha256ContentEQ applies the EQ predicate on the "sha256_content" field.
+func Sha256ContentEQ(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256ContentNEQ applies the NEQ predicate on the "sha256_content" field.
+func Sha256ContentNEQ(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256ContentIn applies the In predicate on the "sha256_content" field.
+func Sha256ContentIn(vs ...string) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldSha256Content), v...))
+	})
+}
+
+// Sha256ContentNotIn applies the NotIn predicate on the "sha256_content" field.
+func Sha256ContentNotIn(vs ...string) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldSha256Content), v...))
+	})
+}
+
+// Sha256ContentGT applies the GT predicate on the "sha256_content" field.
+func Sha256ContentGT(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256ContentGTE applies the GTE predicate on the "sha256_content" field.
+func Sha256ContentGTE(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256ContentLT applies the LT predicate on the "sha256_content" field.
+func Sha256ContentLT(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256ContentLTE applies the LTE predicate on the "sha256_content" field.
+func Sha256ContentLTE(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256ContentContains applies the Contains predicate on the "sha256_content" field.
+func Sha256ContentContains(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256ContentHasPrefix applies the HasPrefix predicate on the "sha256_content" field.
+func Sha256ContentHasPrefix(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256ContentHasSuffix applies the HasSuffix predicate on the "sha256_content" field.
+func Sha256ContentHasSuffix(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256ContentIsNil applies the IsNil predicate on the "sha256_content" field.
+func Sha256ContentIsNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldSha256Content)))
+	})
+}
+
+// Sha256ContentNotNil applies the NotNil predicate on the "sha256_content" field.
+func Sha256ContentNotNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldSha256Content)))
+	})
+}
+
+// Sha256ContentEqualFold applies the EqualFold predicate on the "sha256_content" field.
+func Sha256ContentEqualFold(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256ContentContainsFold applies the ContainsFold predicate on the "sha256_content" field.
+func Sha256ContentContainsFold(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldSha256Content), v))
+	})
+}
+
+// Sha256OutputEQ applies the EQ predicate on the "sha256_output" field.
+func Sha256OutputEQ(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSha256Output), v))
+	})
+}
+
+// Sha256OutputNEQ applies the NEQ predicate on the "sha256_output" field.
+func Sha256OutputNEQ(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldSha256Output), v))
+	})
+}
+
+// Sha256OutputIn applies the In predicate on the "sha256_output" field.
+func Sha256OutputIn(vs ...string) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldSha256Output), v...))
+	})
+}
+
+// Sha256OutputNotIn applies the NotIn predicate on the "sha256_output" field.
+func Sha256OutputNotIn(vs ...string) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldSha256Output), v...))
+	})
+}
+
+// Sha256OutputGT applies the GT predicate on the "sha256_output" field.
+func Sha256OutputGT(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldSha256Output), v))
+	})
+}
+
+// Sha256OutputGTE applies the GTE predicate on the "sha256_output" field.
+func Sha256OutputGTE(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldSha256Output), v))
+	})
+}
+
+// Sha256OutputLT applies the LT predicate on the "sha256_output" field.
+func Sha256OutputLT(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldSha256Output), v))
+	})
+}
+
+// Sha256OutputLTE applies the LTE predicate on the "sha256_output" field.
+func Sha256OutputLTE(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldSha256Output), v))
+	})
+}
+
+// Sha256OutputContains applies the Contains predicate on the "sha256_output" field.
+func Sha256OutputContains(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldSha256Output), v))
+	})
+}
+
+// Sha256OutputHasPrefix applies the HasPrefix predicate on the "sha256_output" field.
+func Sha256OutputHasPrefix(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldSha256Output), v))
+	})
+}
+
+// Sha256OutputHasSuffix applies the HasSuffix predicate on the "sha256_output" field.
+func Sha256OutputHasSuffix(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldSha256Output), v))
+	})
+}
+
+// Sha256OutputIsNil applies the IsNil predicate on the "sha256_output" field.
+func Sha256OutputIsNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldSha256Output)))
+	})
+}
+
+// Sha256OutputNotNil applies the NotNil predicate on the "sha256_output" field.
+func Sha256OutputNotNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldSha256Output)))
+	})
+}
+
+// Sha256OutputEqualFold applies the EqualFold predicate on the "sha256_output" field.
+func Sha256OutputEqualFold(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldSha256Output), v))
+	})
+}
+
+// Sha256OutputContainsFold applies the ContainsFold predicate on the "sha256_output" field.
+func Sha256OutputContainsFold(v string) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldSha256Output), v))
 	})
 }
 

@@ -3,6 +3,7 @@
 package chunk
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -17,6 +18,16 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldStart holds the string denoting the start field in the database.
 	FieldStart = "start"
+	// FieldLeaseExpiresAt holds the string denoting the lease_expires_at field in the database.
+	FieldLeaseExpiresAt = "lease_expires_at"
+	// FieldState holds the string denoting the state field in the database.
+	FieldState = "state"
+	// FieldSha256Input holds the string denoting the sha256_input field in the database.
+	FieldSha256Input = "sha256_input"
+	// FieldSha256Content holds the string denoting the sha256_content field in the database.
+	FieldSha256Content = "sha256_content"
+	// FieldSha256Output holds the string denoting the sha256_output field in the database.
+	FieldSha256Output = "sha256_output"
 	// Table holds the table name of the chunk in the database.
 	Table = "chunks"
 )
@@ -27,6 +38,11 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldStart,
+	FieldLeaseExpiresAt,
+	FieldState,
+	FieldSha256Input,
+	FieldSha256Content,
+	FieldSha256Output,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -47,3 +63,32 @@ var (
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
 )
+
+// State defines the type for the "state" enum field.
+type State string
+
+// StateNew is the default value of the State enum.
+const DefaultState = StateNew
+
+// State values.
+const (
+	StateNew         State = "New"
+	StateDownloading State = "Downloading"
+	StateDownloaded  State = "Downloaded"
+	StateProcessing  State = "Processing"
+	StateDone        State = "Done"
+)
+
+func (s State) String() string {
+	return string(s)
+}
+
+// StateValidator is a validator for the "state" field enum values. It is called by the builders before save.
+func StateValidator(s State) error {
+	switch s {
+	case StateNew, StateDownloading, StateDownloaded, StateProcessing, StateDone:
+		return nil
+	default:
+		return fmt.Errorf("chunk: invalid enum value for state field: %q", s)
+	}
+}

@@ -18,6 +18,17 @@ func (Chunk) Fields() []ent.Field {
 			Comment("Like 2006-01-02T15"),
 		field.Time("start").
 			Comment("Minimum possible time of entry in chunk"),
+
+		field.Time("lease_expires_at").
+			Comment("State expiration like heartbeat").Optional(),
+
+		field.Enum("state").
+			Values("New", "Downloading", "Downloaded", "Processing", "Done").
+			Default("New"),
+
+		field.String("sha256_input").Nillable().Optional(),
+		field.String("sha256_content").Nillable().Optional(),
+		field.String("sha256_output").Nillable().Optional(),
 	}
 }
 

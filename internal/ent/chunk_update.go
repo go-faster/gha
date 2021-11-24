@@ -39,6 +39,100 @@ func (cu *ChunkUpdate) SetStart(t time.Time) *ChunkUpdate {
 	return cu
 }
 
+// SetLeaseExpiresAt sets the "lease_expires_at" field.
+func (cu *ChunkUpdate) SetLeaseExpiresAt(t time.Time) *ChunkUpdate {
+	cu.mutation.SetLeaseExpiresAt(t)
+	return cu
+}
+
+// SetNillableLeaseExpiresAt sets the "lease_expires_at" field if the given value is not nil.
+func (cu *ChunkUpdate) SetNillableLeaseExpiresAt(t *time.Time) *ChunkUpdate {
+	if t != nil {
+		cu.SetLeaseExpiresAt(*t)
+	}
+	return cu
+}
+
+// ClearLeaseExpiresAt clears the value of the "lease_expires_at" field.
+func (cu *ChunkUpdate) ClearLeaseExpiresAt() *ChunkUpdate {
+	cu.mutation.ClearLeaseExpiresAt()
+	return cu
+}
+
+// SetState sets the "state" field.
+func (cu *ChunkUpdate) SetState(c chunk.State) *ChunkUpdate {
+	cu.mutation.SetState(c)
+	return cu
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (cu *ChunkUpdate) SetNillableState(c *chunk.State) *ChunkUpdate {
+	if c != nil {
+		cu.SetState(*c)
+	}
+	return cu
+}
+
+// SetSha256Input sets the "sha256_input" field.
+func (cu *ChunkUpdate) SetSha256Input(s string) *ChunkUpdate {
+	cu.mutation.SetSha256Input(s)
+	return cu
+}
+
+// SetNillableSha256Input sets the "sha256_input" field if the given value is not nil.
+func (cu *ChunkUpdate) SetNillableSha256Input(s *string) *ChunkUpdate {
+	if s != nil {
+		cu.SetSha256Input(*s)
+	}
+	return cu
+}
+
+// ClearSha256Input clears the value of the "sha256_input" field.
+func (cu *ChunkUpdate) ClearSha256Input() *ChunkUpdate {
+	cu.mutation.ClearSha256Input()
+	return cu
+}
+
+// SetSha256Content sets the "sha256_content" field.
+func (cu *ChunkUpdate) SetSha256Content(s string) *ChunkUpdate {
+	cu.mutation.SetSha256Content(s)
+	return cu
+}
+
+// SetNillableSha256Content sets the "sha256_content" field if the given value is not nil.
+func (cu *ChunkUpdate) SetNillableSha256Content(s *string) *ChunkUpdate {
+	if s != nil {
+		cu.SetSha256Content(*s)
+	}
+	return cu
+}
+
+// ClearSha256Content clears the value of the "sha256_content" field.
+func (cu *ChunkUpdate) ClearSha256Content() *ChunkUpdate {
+	cu.mutation.ClearSha256Content()
+	return cu
+}
+
+// SetSha256Output sets the "sha256_output" field.
+func (cu *ChunkUpdate) SetSha256Output(s string) *ChunkUpdate {
+	cu.mutation.SetSha256Output(s)
+	return cu
+}
+
+// SetNillableSha256Output sets the "sha256_output" field if the given value is not nil.
+func (cu *ChunkUpdate) SetNillableSha256Output(s *string) *ChunkUpdate {
+	if s != nil {
+		cu.SetSha256Output(*s)
+	}
+	return cu
+}
+
+// ClearSha256Output clears the value of the "sha256_output" field.
+func (cu *ChunkUpdate) ClearSha256Output() *ChunkUpdate {
+	cu.mutation.ClearSha256Output()
+	return cu
+}
+
 // Mutation returns the ChunkMutation object of the builder.
 func (cu *ChunkUpdate) Mutation() *ChunkMutation {
 	return cu.mutation
@@ -52,12 +146,18 @@ func (cu *ChunkUpdate) Save(ctx context.Context) (int, error) {
 	)
 	cu.defaults()
 	if len(cu.hooks) == 0 {
+		if err = cu.check(); err != nil {
+			return 0, err
+		}
 		affected, err = cu.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*ChunkMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = cu.check(); err != nil {
+				return 0, err
 			}
 			cu.mutation = mutation
 			affected, err = cu.sqlSave(ctx)
@@ -107,6 +207,16 @@ func (cu *ChunkUpdate) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (cu *ChunkUpdate) check() error {
+	if v, ok := cu.mutation.State(); ok {
+		if err := chunk.StateValidator(v); err != nil {
+			return &ValidationError{Name: "state", err: fmt.Errorf("ent: validator failed for field \"state\": %w", err)}
+		}
+	}
+	return nil
+}
+
 func (cu *ChunkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -137,6 +247,65 @@ func (cu *ChunkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeTime,
 			Value:  value,
 			Column: chunk.FieldStart,
+		})
+	}
+	if value, ok := cu.mutation.LeaseExpiresAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: chunk.FieldLeaseExpiresAt,
+		})
+	}
+	if cu.mutation.LeaseExpiresAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: chunk.FieldLeaseExpiresAt,
+		})
+	}
+	if value, ok := cu.mutation.State(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  value,
+			Column: chunk.FieldState,
+		})
+	}
+	if value, ok := cu.mutation.Sha256Input(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chunk.FieldSha256Input,
+		})
+	}
+	if cu.mutation.Sha256InputCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: chunk.FieldSha256Input,
+		})
+	}
+	if value, ok := cu.mutation.Sha256Content(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chunk.FieldSha256Content,
+		})
+	}
+	if cu.mutation.Sha256ContentCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: chunk.FieldSha256Content,
+		})
+	}
+	if value, ok := cu.mutation.Sha256Output(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chunk.FieldSha256Output,
+		})
+	}
+	if cu.mutation.Sha256OutputCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: chunk.FieldSha256Output,
 		})
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
@@ -170,6 +339,100 @@ func (cuo *ChunkUpdateOne) SetStart(t time.Time) *ChunkUpdateOne {
 	return cuo
 }
 
+// SetLeaseExpiresAt sets the "lease_expires_at" field.
+func (cuo *ChunkUpdateOne) SetLeaseExpiresAt(t time.Time) *ChunkUpdateOne {
+	cuo.mutation.SetLeaseExpiresAt(t)
+	return cuo
+}
+
+// SetNillableLeaseExpiresAt sets the "lease_expires_at" field if the given value is not nil.
+func (cuo *ChunkUpdateOne) SetNillableLeaseExpiresAt(t *time.Time) *ChunkUpdateOne {
+	if t != nil {
+		cuo.SetLeaseExpiresAt(*t)
+	}
+	return cuo
+}
+
+// ClearLeaseExpiresAt clears the value of the "lease_expires_at" field.
+func (cuo *ChunkUpdateOne) ClearLeaseExpiresAt() *ChunkUpdateOne {
+	cuo.mutation.ClearLeaseExpiresAt()
+	return cuo
+}
+
+// SetState sets the "state" field.
+func (cuo *ChunkUpdateOne) SetState(c chunk.State) *ChunkUpdateOne {
+	cuo.mutation.SetState(c)
+	return cuo
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (cuo *ChunkUpdateOne) SetNillableState(c *chunk.State) *ChunkUpdateOne {
+	if c != nil {
+		cuo.SetState(*c)
+	}
+	return cuo
+}
+
+// SetSha256Input sets the "sha256_input" field.
+func (cuo *ChunkUpdateOne) SetSha256Input(s string) *ChunkUpdateOne {
+	cuo.mutation.SetSha256Input(s)
+	return cuo
+}
+
+// SetNillableSha256Input sets the "sha256_input" field if the given value is not nil.
+func (cuo *ChunkUpdateOne) SetNillableSha256Input(s *string) *ChunkUpdateOne {
+	if s != nil {
+		cuo.SetSha256Input(*s)
+	}
+	return cuo
+}
+
+// ClearSha256Input clears the value of the "sha256_input" field.
+func (cuo *ChunkUpdateOne) ClearSha256Input() *ChunkUpdateOne {
+	cuo.mutation.ClearSha256Input()
+	return cuo
+}
+
+// SetSha256Content sets the "sha256_content" field.
+func (cuo *ChunkUpdateOne) SetSha256Content(s string) *ChunkUpdateOne {
+	cuo.mutation.SetSha256Content(s)
+	return cuo
+}
+
+// SetNillableSha256Content sets the "sha256_content" field if the given value is not nil.
+func (cuo *ChunkUpdateOne) SetNillableSha256Content(s *string) *ChunkUpdateOne {
+	if s != nil {
+		cuo.SetSha256Content(*s)
+	}
+	return cuo
+}
+
+// ClearSha256Content clears the value of the "sha256_content" field.
+func (cuo *ChunkUpdateOne) ClearSha256Content() *ChunkUpdateOne {
+	cuo.mutation.ClearSha256Content()
+	return cuo
+}
+
+// SetSha256Output sets the "sha256_output" field.
+func (cuo *ChunkUpdateOne) SetSha256Output(s string) *ChunkUpdateOne {
+	cuo.mutation.SetSha256Output(s)
+	return cuo
+}
+
+// SetNillableSha256Output sets the "sha256_output" field if the given value is not nil.
+func (cuo *ChunkUpdateOne) SetNillableSha256Output(s *string) *ChunkUpdateOne {
+	if s != nil {
+		cuo.SetSha256Output(*s)
+	}
+	return cuo
+}
+
+// ClearSha256Output clears the value of the "sha256_output" field.
+func (cuo *ChunkUpdateOne) ClearSha256Output() *ChunkUpdateOne {
+	cuo.mutation.ClearSha256Output()
+	return cuo
+}
+
 // Mutation returns the ChunkMutation object of the builder.
 func (cuo *ChunkUpdateOne) Mutation() *ChunkMutation {
 	return cuo.mutation
@@ -190,12 +453,18 @@ func (cuo *ChunkUpdateOne) Save(ctx context.Context) (*Chunk, error) {
 	)
 	cuo.defaults()
 	if len(cuo.hooks) == 0 {
+		if err = cuo.check(); err != nil {
+			return nil, err
+		}
 		node, err = cuo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*ChunkMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = cuo.check(); err != nil {
+				return nil, err
 			}
 			cuo.mutation = mutation
 			node, err = cuo.sqlSave(ctx)
@@ -245,6 +514,16 @@ func (cuo *ChunkUpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (cuo *ChunkUpdateOne) check() error {
+	if v, ok := cuo.mutation.State(); ok {
+		if err := chunk.StateValidator(v); err != nil {
+			return &ValidationError{Name: "state", err: fmt.Errorf("ent: validator failed for field \"state\": %w", err)}
+		}
+	}
+	return nil
+}
+
 func (cuo *ChunkUpdateOne) sqlSave(ctx context.Context) (_node *Chunk, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -292,6 +571,65 @@ func (cuo *ChunkUpdateOne) sqlSave(ctx context.Context) (_node *Chunk, err error
 			Type:   field.TypeTime,
 			Value:  value,
 			Column: chunk.FieldStart,
+		})
+	}
+	if value, ok := cuo.mutation.LeaseExpiresAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: chunk.FieldLeaseExpiresAt,
+		})
+	}
+	if cuo.mutation.LeaseExpiresAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: chunk.FieldLeaseExpiresAt,
+		})
+	}
+	if value, ok := cuo.mutation.State(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  value,
+			Column: chunk.FieldState,
+		})
+	}
+	if value, ok := cuo.mutation.Sha256Input(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chunk.FieldSha256Input,
+		})
+	}
+	if cuo.mutation.Sha256InputCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: chunk.FieldSha256Input,
+		})
+	}
+	if value, ok := cuo.mutation.Sha256Content(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chunk.FieldSha256Content,
+		})
+	}
+	if cuo.mutation.Sha256ContentCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: chunk.FieldSha256Content,
+		})
+	}
+	if value, ok := cuo.mutation.Sha256Output(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chunk.FieldSha256Output,
+		})
+	}
+	if cuo.mutation.Sha256OutputCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: chunk.FieldSha256Output,
 		})
 	}
 	_node = &Chunk{config: cuo.config}

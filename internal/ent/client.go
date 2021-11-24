@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/go-faster/gha/internal/ent/chunk"
-	"github.com/go-faster/gha/internal/ent/download"
 	"github.com/go-faster/gha/internal/ent/worker"
 
 	"entgo.io/ent/dialect"
@@ -25,8 +24,6 @@ type Client struct {
 	Schema *migrate.Schema
 	// Chunk is the client for interacting with the Chunk builders.
 	Chunk *ChunkClient
-	// Download is the client for interacting with the Download builders.
-	Download *DownloadClient
 	// Worker is the client for interacting with the Worker builders.
 	Worker *WorkerClient
 }
@@ -43,7 +40,6 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Chunk = NewChunkClient(c.config)
-	c.Download = NewDownloadClient(c.config)
 	c.Worker = NewWorkerClient(c.config)
 }
 
@@ -76,11 +72,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		Chunk:    NewChunkClient(cfg),
-		Download: NewDownloadClient(cfg),
-		Worker:   NewWorkerClient(cfg),
+		ctx:    ctx,
+		config: cfg,
+		Chunk:  NewChunkClient(cfg),
+		Worker: NewWorkerClient(cfg),
 	}, nil
 }
 
@@ -98,10 +93,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		config:   cfg,
-		Chunk:    NewChunkClient(cfg),
-		Download: NewDownloadClient(cfg),
-		Worker:   NewWorkerClient(cfg),
+		config: cfg,
+		Chunk:  NewChunkClient(cfg),
+		Worker: NewWorkerClient(cfg),
 	}, nil
 }
 
@@ -132,7 +126,6 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Chunk.Use(hooks...)
-	c.Download.Use(hooks...)
 	c.Worker.Use(hooks...)
 }
 
@@ -224,96 +217,6 @@ func (c *ChunkClient) GetX(ctx context.Context, id string) *Chunk {
 // Hooks returns the client hooks.
 func (c *ChunkClient) Hooks() []Hook {
 	return c.hooks.Chunk
-}
-
-// DownloadClient is a client for the Download schema.
-type DownloadClient struct {
-	config
-}
-
-// NewDownloadClient returns a client for the Download from the given config.
-func NewDownloadClient(c config) *DownloadClient {
-	return &DownloadClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `download.Hooks(f(g(h())))`.
-func (c *DownloadClient) Use(hooks ...Hook) {
-	c.hooks.Download = append(c.hooks.Download, hooks...)
-}
-
-// Create returns a create builder for Download.
-func (c *DownloadClient) Create() *DownloadCreate {
-	mutation := newDownloadMutation(c.config, OpCreate)
-	return &DownloadCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of Download entities.
-func (c *DownloadClient) CreateBulk(builders ...*DownloadCreate) *DownloadCreateBulk {
-	return &DownloadCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for Download.
-func (c *DownloadClient) Update() *DownloadUpdate {
-	mutation := newDownloadMutation(c.config, OpUpdate)
-	return &DownloadUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *DownloadClient) UpdateOne(d *Download) *DownloadUpdateOne {
-	mutation := newDownloadMutation(c.config, OpUpdateOne, withDownload(d))
-	return &DownloadUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *DownloadClient) UpdateOneID(id uuid.UUID) *DownloadUpdateOne {
-	mutation := newDownloadMutation(c.config, OpUpdateOne, withDownloadID(id))
-	return &DownloadUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for Download.
-func (c *DownloadClient) Delete() *DownloadDelete {
-	mutation := newDownloadMutation(c.config, OpDelete)
-	return &DownloadDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a delete builder for the given entity.
-func (c *DownloadClient) DeleteOne(d *Download) *DownloadDeleteOne {
-	return c.DeleteOneID(d.ID)
-}
-
-// DeleteOneID returns a delete builder for the given id.
-func (c *DownloadClient) DeleteOneID(id uuid.UUID) *DownloadDeleteOne {
-	builder := c.Delete().Where(download.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &DownloadDeleteOne{builder}
-}
-
-// Query returns a query builder for Download.
-func (c *DownloadClient) Query() *DownloadQuery {
-	return &DownloadQuery{
-		config: c.config,
-	}
-}
-
-// Get returns a Download entity by its id.
-func (c *DownloadClient) Get(ctx context.Context, id uuid.UUID) (*Download, error) {
-	return c.Query().Where(download.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *DownloadClient) GetX(ctx context.Context, id uuid.UUID) *Download {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *DownloadClient) Hooks() []Hook {
-	return c.hooks.Download
 }
 
 // WorkerClient is a client for the Worker schema.

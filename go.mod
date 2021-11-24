@@ -8,11 +8,13 @@ require (
 	github.com/go-faster/jx v0.24.0
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/compress v1.13.6
+	github.com/lib/pq v1.10.4
 	github.com/ogen-go/ogen v0.0.0-20211124125951-180f74ba9985
 	go.opentelemetry.io/otel v1.2.0
 	go.opentelemetry.io/otel/metric v0.25.0
 	go.opentelemetry.io/otel/trace v1.2.0
 	go.uber.org/zap v1.19.1
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
 
 require (
@@ -21,7 +23,6 @@ require (
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/goccy/go-yaml v1.9.4 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/lib/pq v1.10.4 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect

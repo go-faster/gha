@@ -22,19 +22,6 @@ func (f ChunkFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return f(ctx, mv)
 }
 
-// The DownloadFunc type is an adapter to allow the use of ordinary
-// function as Download mutator.
-type DownloadFunc func(context.Context, *ent.DownloadMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f DownloadFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.DownloadMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DownloadMutation", m)
-	}
-	return f(ctx, mv)
-}
-
 // The WorkerFunc type is an adapter to allow the use of ordinary
 // function as Worker mutator.
 type WorkerFunc func(context.Context, *ent.WorkerMutation) (ent.Value, error)

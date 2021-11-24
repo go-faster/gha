@@ -26,6 +26,17 @@ type Chunk struct {
 	// Start holds the value of the "start" field.
 	// Minimum possible time of entry in chunk
 	Start time.Time `json:"start,omitempty"`
+	// LeaseExpiresAt holds the value of the "lease_expires_at" field.
+	// State expiration like heartbeat
+	LeaseExpiresAt time.Time `json:"lease_expires_at,omitempty"`
+	// State holds the value of the "state" field.
+	State chunk.State `json:"state,omitempty"`
+	// Sha256Input holds the value of the "sha256_input" field.
+	Sha256Input *string `json:"sha256_input,omitempty"`
+	// Sha256Content holds the value of the "sha256_content" field.
+	Sha256Content *string `json:"sha256_content,omitempty"`
+	// Sha256Output holds the value of the "sha256_output" field.
+	Sha256Output *string `json:"sha256_output,omitempty"`
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -33,9 +44,9 @@ func (*Chunk) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case chunk.FieldID:
+		case chunk.FieldID, chunk.FieldState, chunk.FieldSha256Input, chunk.FieldSha256Content, chunk.FieldSha256Output:
 			values[i] = new(sql.NullString)
-		case chunk.FieldCreatedAt, chunk.FieldUpdatedAt, chunk.FieldStart:
+		case chunk.FieldCreatedAt, chunk.FieldUpdatedAt, chunk.FieldStart, chunk.FieldLeaseExpiresAt:
 			values[i] = new(sql.NullTime)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Chunk", columns[i])
@@ -76,6 +87,39 @@ func (c *Chunk) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				c.Start = value.Time
 			}
+		case chunk.FieldLeaseExpiresAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field lease_expires_at", values[i])
+			} else if value.Valid {
+				c.LeaseExpiresAt = value.Time
+			}
+		case chunk.FieldState:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field state", values[i])
+			} else if value.Valid {
+				c.State = chunk.State(value.String)
+			}
+		case chunk.FieldSha256Input:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field sha256_input", values[i])
+			} else if value.Valid {
+				c.Sha256Input = new(string)
+				*c.Sha256Input = value.String
+			}
+		case chunk.FieldSha256Content:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field sha256_content", values[i])
+			} else if value.Valid {
+				c.Sha256Content = new(string)
+				*c.Sha256Content = value.String
+			}
+		case chunk.FieldSha256Output:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field sha256_output", values[i])
+			} else if value.Valid {
+				c.Sha256Output = new(string)
+				*c.Sha256Output = value.String
+			}
 		}
 	}
 	return nil
@@ -110,6 +154,22 @@ func (c *Chunk) String() string {
 	builder.WriteString(c.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", start=")
 	builder.WriteString(c.Start.Format(time.ANSIC))
+	builder.WriteString(", lease_expires_at=")
+	builder.WriteString(c.LeaseExpiresAt.Format(time.ANSIC))
+	builder.WriteString(", state=")
+	builder.WriteString(fmt.Sprintf("%v", c.State))
+	if v := c.Sha256Input; v != nil {
+		builder.WriteString(", sha256_input=")
+		builder.WriteString(*v)
+	}
+	if v := c.Sha256Content; v != nil {
+		builder.WriteString(", sha256_content=")
+		builder.WriteString(*v)
+	}
+	if v := c.Sha256Output; v != nil {
+		builder.WriteString(", sha256_output=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }
