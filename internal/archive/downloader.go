@@ -134,6 +134,10 @@ func (p *Progress) Consume() int64 {
 	return last
 }
 
+func (p *Progress) ReadyBytes() int64 {
+	return p.ready.Load()
+}
+
 // Ready returns [0..1] value of readiness.
 func (p *Progress) Ready() float64 {
 	if p == nil {
