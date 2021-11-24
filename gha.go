@@ -18,7 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// adjusted original layout to march a prefix of RFC3339.
+// adjusted original layout to be a prefix of RFC3339.
 const layout = "2006-01-02T15"
 
 type DateVar struct {
