@@ -3,8 +3,11 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"flag"
 	"fmt"
+	"hash"
 	"io"
 	"net/http"
 	"os"
@@ -98,9 +101,15 @@ func run(ctx context.Context) (err error) {
 		zap.Duration("duration", time.Since(start).Round(time.Millisecond)),
 	)
 
+	var (
+		hInput  = sha256.New() // hash for input file
+		hData   = sha256.New() // hash for json
+		hOutput = sha256.New() // hash for gzipped data
+	)
+
 	// Reading body as gzip.
 	bodyBuf := bufio.NewReader(res.Body)
-	reader, err := gzip.NewReader(bodyBuf)
+	reader, err := gzip.NewReader(io.TeeReader(bodyBuf, hInput))
 	if err != nil {
 		return errors.Wrap(err, "gzip")
 	}
@@ -127,14 +136,14 @@ func run(ctx context.Context) (err error) {
 		}
 	}()
 
-	outWriter, err := zstd.NewWriter(out)
+	outWriter, err := zstd.NewWriter(io.MultiWriter(out, hOutput))
 	if err != nil {
 		return errors.Wrap(err, "zstd writer init")
 	}
 
 	// Up to 1 MiB for copy.
 	buf := make([]byte, 1024*1024)
-	total, err := io.CopyBuffer(outWriter, reader, buf)
+	total, err := io.CopyBuffer(io.MultiWriter(outWriter, hData), reader, buf)
 	if err != nil {
 		return errors.Wrap(err, "copy")
 	}
@@ -155,6 +164,10 @@ func run(ctx context.Context) (err error) {
 		return errors.Wrap(err, "close file")
 	}
 
+	h := func(v hash.Hash) string {
+		return hex.EncodeToString(v.Sum(nil))
+	}
+
 	lg.Info("Processed",
 		zap.String("path", outPath),
 		zap.String("date", arg.Date.Format(layout)),
@@ -164,6 +177,10 @@ func run(ctx context.Context) (err error) {
 		zap.String("relative_ratio", fmt.Sprintf("%.0f%%", ratio*100)),
 		zap.String("absolute_ratio", fmt.Sprintf("%.0f%%", totalRatio*100)),
 		zap.Duration("duration", time.Since(start).Round(time.Millisecond)),
+
+		zap.String("sha256_data", h(hData)),
+		zap.String("sha256_input", h(hInput)),
+		zap.String("sha256_output", h(hOutput)),
 	)
 
 	return nil
