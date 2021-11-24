@@ -25,7 +25,7 @@ type DateVar struct {
 }
 
 func (d DateVar) String() string {
-	if d.Date.IsZero() {
+	if d.Date == nil || d.Date.IsZero() {
 		return ""
 	}
 	return d.Date.Format(layout)
