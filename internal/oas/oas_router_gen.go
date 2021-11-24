@@ -127,6 +127,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				s.notFound(w, r)
 				return
 			}
+		case "progress": // -> 3
+			// POST /progress
+			s.handleProgressRequest(args, w, r)
+			return
 		default:
 			s.notFound(w, r)
 			return

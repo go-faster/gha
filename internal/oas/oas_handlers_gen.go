@@ -96,6 +96,46 @@ func (s *Server) handlePollRequest(args map[string]string, w http.ResponseWriter
 	}
 }
 
+// HandleProgressRequest handles progress operation.
+//
+// POST /progress
+func (s *Server) handleProgressRequest(args map[string]string, w http.ResponseWriter, r *http.Request) {
+	ctx, span := s.cfg.Tracer.Start(r.Context(), `Progress`,
+		trace.WithAttributes(otelogen.OperationID(`progress`)),
+		trace.WithSpanKind(trace.SpanKindServer),
+	)
+	defer span.End()
+	params, err := decodeProgressParams(args, r)
+	if err != nil {
+		span.RecordError(err)
+		respondError(w, http.StatusBadRequest, err)
+		return
+	}
+	request, err := decodeProgressRequest(r, span)
+	if err != nil {
+		span.RecordError(err)
+		respondError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	response, err := s.h.Progress(ctx, request, params)
+	if err != nil {
+		span.RecordError(err)
+		var errRes *ErrorStatusCode
+		if errors.As(err, &errRes) {
+			encodeErrorResponse(*errRes, w, span)
+			return
+		}
+		encodeErrorResponse(s.h.NewError(ctx, err), w, span)
+		return
+	}
+
+	if err := encodeProgressResponse(response, w, span); err != nil {
+		span.RecordError(err)
+		return
+	}
+}
+
 // HandleStatusRequest handles status operation.
 //
 // GET /status

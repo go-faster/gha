@@ -61,3 +61,37 @@ var (
 	_ = jx.Null
 	_ = sync.Pool{}
 )
+
+func decodeProgressRequest(r *http.Request, span trace.Span) (req Progress, err error) {
+	switch r.Header.Get("Content-Type") {
+	case "application/json":
+		var request Progress
+		buf := getBuf()
+		defer putBuf(buf)
+		if _, err := io.Copy(buf, r.Body); err != nil {
+			return req, err
+		}
+		d := jx.GetDecoder()
+		defer jx.PutDecoder(d)
+		d.ResetBytes(buf.Bytes())
+		if err := func() error {
+			if err := request.Decode(d); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, err
+		}
+		if err := func() error {
+			if err := request.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return req, errors.Wrap(err, "validate")
+		}
+		return request, nil
+	default:
+		return req, errors.Errorf("unexpected content-type: %s", r.Header.Get("Content-Type"))
+	}
+}

@@ -244,6 +244,137 @@ func (s *JobNothing) Decode(d *jx.Decoder) error {
 	})
 }
 
+// Encode encodes int64 as json.
+func (o OptInt64) Encode(e *jx.Encoder) {
+	e.Int64(int64(o.Value))
+}
+
+// Decode decodes int64 from json.
+func (o *OptInt64) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New(`invalid: unable to decode OptInt64 to nil`)
+	}
+	switch d.Next() {
+	case jx.Number:
+		o.Set = true
+		v, err := d.Int64()
+		if err != nil {
+			return err
+		}
+		o.Value = int64(v)
+		return nil
+	default:
+		return errors.Errorf(`unexpected type %q while reading OptInt64`, d.Next())
+	}
+}
+
+// Encode encodes string as json.
+func (o OptString) Encode(e *jx.Encoder) {
+	e.Str(string(o.Value))
+}
+
+// Decode decodes string from json.
+func (o *OptString) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New(`invalid: unable to decode OptString to nil`)
+	}
+	switch d.Next() {
+	case jx.String:
+		o.Set = true
+		v, err := d.Str()
+		if err != nil {
+			return err
+		}
+		o.Value = string(v)
+		return nil
+	default:
+		return errors.Errorf(`unexpected type %q while reading OptString`, d.Next())
+	}
+}
+
+// Encode implements json.Marshaler.
+func (s Progress) Encode(e *jx.Encoder) {
+	e.ObjStart()
+
+	e.FieldStart("done")
+	e.Bool(s.Done)
+
+	e.FieldStart("key")
+	e.Str(s.Key)
+	if s.SizeBytes.Set {
+		e.FieldStart("size_bytes")
+		s.SizeBytes.Encode(e)
+	}
+	if s.ReadyBytes.Set {
+		e.FieldStart("ready_bytes")
+		s.ReadyBytes.Encode(e)
+	}
+	if s.SHA256Input.Set {
+		e.FieldStart("sha256_input")
+		s.SHA256Input.Encode(e)
+	}
+	if s.SHA256Content.Set {
+		e.FieldStart("sha256_content")
+		s.SHA256Content.Encode(e)
+	}
+	if s.SHA256Output.Set {
+		e.FieldStart("sha256_output")
+		s.SHA256Output.Encode(e)
+	}
+	e.ObjEnd()
+}
+
+// Decode decodes Progress from json.
+func (s *Progress) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New(`invalid: unable to decode Progress to nil`)
+	}
+	return d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "done":
+			v, err := d.Bool()
+			s.Done = bool(v)
+			if err != nil {
+				return err
+			}
+		case "key":
+			v, err := d.Str()
+			s.Key = string(v)
+			if err != nil {
+				return err
+			}
+		case "size_bytes":
+			s.SizeBytes.Reset()
+			if err := s.SizeBytes.Decode(d); err != nil {
+				return err
+			}
+		case "ready_bytes":
+			s.ReadyBytes.Reset()
+			if err := s.ReadyBytes.Decode(d); err != nil {
+				return err
+			}
+		case "sha256_input":
+			s.SHA256Input.Reset()
+			if err := s.SHA256Input.Decode(d); err != nil {
+				return err
+			}
+		case "sha256_content":
+			s.SHA256Content.Reset()
+			if err := s.SHA256Content.Decode(d); err != nil {
+				return err
+			}
+		case "sha256_output":
+			s.SHA256Output.Reset()
+			if err := s.SHA256Output.Decode(d); err != nil {
+				return err
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	})
+}
+
 // Encode implements json.Marshaler.
 func (s Status) Encode(e *jx.Encoder) {
 	e.ObjStart()

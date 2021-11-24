@@ -63,5 +63,9 @@ var (
 )
 
 type PollParams struct {
-	Token string
+	XToken string
+}
+
+type ProgressParams struct {
+	XToken string
 }

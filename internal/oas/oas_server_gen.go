@@ -68,6 +68,10 @@ type Handler interface {
 	//
 	// POST /job/poll
 	Poll(ctx context.Context, params PollParams) (Job, error)
+	// Progress implements progress operation.
+	//
+	// POST /progress
+	Progress(ctx context.Context, req Progress, params ProgressParams) (Status, error)
 	// Status implements status operation.
 	//
 	// GET /status

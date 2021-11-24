@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -25,6 +26,7 @@ type WorkerQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Worker
+	modifiers  []func(s *sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -326,6 +328,9 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context) ([]*Worker, error) {
 		node := nodes[len(nodes)-1]
 		return node.assignValues(columns, values)
 	}
+	if len(wq.modifiers) > 0 {
+		_spec.Modifiers = wq.modifiers
+	}
 	if err := sqlgraph.QueryNodes(ctx, wq.driver, _spec); err != nil {
 		return nil, err
 	}
@@ -337,6 +342,9 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context) ([]*Worker, error) {
 
 func (wq *WorkerQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := wq.querySpec()
+	if len(wq.modifiers) > 0 {
+		_spec.Modifiers = wq.modifiers
+	}
 	return sqlgraph.CountNodes(ctx, wq.driver, _spec)
 }
 
@@ -408,6 +416,9 @@ func (wq *WorkerQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector = wq.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
+	for _, m := range wq.modifiers {
+		m(selector)
+	}
 	for _, p := range wq.predicates {
 		p(selector)
 	}
@@ -423,6 +434,32 @@ func (wq *WorkerQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// ForUpdate locks the selected rows against concurrent updates, and prevent them from being
+// updated, deleted or "selected ... for update" by other sessions, until the transaction is
+// either committed or rolled-back.
+func (wq *WorkerQuery) ForUpdate(opts ...sql.LockOption) *WorkerQuery {
+	if wq.driver.Dialect() == dialect.Postgres {
+		wq.Unique(false)
+	}
+	wq.modifiers = append(wq.modifiers, func(s *sql.Selector) {
+		s.ForUpdate(opts...)
+	})
+	return wq
+}
+
+// ForShare behaves similarly to ForUpdate, except that it acquires a shared mode lock
+// on any rows that are read. Other sessions can read the rows, but cannot modify them
+// until your transaction commits.
+func (wq *WorkerQuery) ForShare(opts ...sql.LockOption) *WorkerQuery {
+	if wq.driver.Dialect() == dialect.Postgres {
+		wq.Unique(false)
+	}
+	wq.modifiers = append(wq.modifiers, func(s *sql.Selector) {
+		s.ForShare(opts...)
+	})
+	return wq
 }
 
 // WorkerGroupBy is the group-by builder for Worker entities.

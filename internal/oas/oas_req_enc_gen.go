@@ -61,3 +61,17 @@ var (
 	_ = jx.Null
 	_ = sync.Pool{}
 )
+
+func encodeProgressRequestJSON(req Progress, span trace.Span) (data *bytes.Buffer, err error) {
+	buf := getBuf()
+	e := jx.GetEncoder()
+	defer jx.PutEncoder(e)
+
+	req.Encode(e)
+	if _, err := e.WriteTo(buf); err != nil {
+		putBuf(buf)
+		return nil, err
+	}
+
+	return buf, nil
+}

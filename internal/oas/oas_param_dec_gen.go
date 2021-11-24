@@ -64,16 +64,14 @@ var (
 
 func decodePollParams(args map[string]string, r *http.Request) (PollParams, error) {
 	var params PollParams
-	// Decode query: token.
+	// Decode header: X-Token.
 	{
-		values, ok := r.URL.Query()["token"]
-		if ok {
-			d := uri.NewQueryDecoder(uri.QueryDecoderConfig{
-				Values:  values,
-				Style:   uri.QueryStyleForm,
-				Explode: true,
+		param := r.Header.Get("X-Token")
+		if len(param) > 0 {
+			d := uri.NewHeaderDecoder(uri.HeaderDecoderConfig{
+				Value:   param,
+				Explode: false,
 			})
-
 			if err := func() error {
 				s, err := d.DecodeValue()
 				if err != nil {
@@ -85,13 +83,46 @@ func decodePollParams(args map[string]string, r *http.Request) (PollParams, erro
 					return err
 				}
 
-				params.Token = c
+				params.XToken = c
 				return nil
 			}(); err != nil {
-				return params, errors.Wrap(err, `query: token: parse`)
+				return params, errors.Wrap(err, `header: X-Token: parse`)
 			}
 		} else {
-			return params, errors.New(`query: token: not specified`)
+			return params, errors.New(`header: X-Token: not specified`)
+		}
+	}
+	return params, nil
+}
+
+func decodeProgressParams(args map[string]string, r *http.Request) (ProgressParams, error) {
+	var params ProgressParams
+	// Decode header: X-Token.
+	{
+		param := r.Header.Get("X-Token")
+		if len(param) > 0 {
+			d := uri.NewHeaderDecoder(uri.HeaderDecoderConfig{
+				Value:   param,
+				Explode: false,
+			})
+			if err := func() error {
+				s, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(s)
+				if err != nil {
+					return err
+				}
+
+				params.XToken = c
+				return nil
+			}(); err != nil {
+				return params, errors.Wrap(err, `header: X-Token: parse`)
+			}
+		} else {
+			return params, errors.New(`header: X-Token: not specified`)
 		}
 	}
 	return params, nil

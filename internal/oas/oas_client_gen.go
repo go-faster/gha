@@ -116,24 +116,22 @@ func (c *Client) Poll(ctx context.Context, params PollParams) (res Job, err erro
 	u := uri.Clone(c.serverURL)
 	u.Path += "/job/poll"
 
-	q := u.Query()
-	{
-		// Encode "token" parameter.
-		e := uri.NewQueryEncoder(uri.QueryEncoderConfig{
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.Token))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-		q["token"] = e.Result()
-	}
-	u.RawQuery = q.Encode()
-
 	r := ht.NewRequest(ctx, "POST", u, nil)
 	defer ht.PutRequest(r)
+
+	{
+		e := uri.NewHeaderEncoder(uri.HeaderEncoderConfig{
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.XToken))
+		}(); err != nil {
+			return res, errors.Wrap(err, `encode header param X-Token`)
+		}
+		if v, ok := e.Result(); ok {
+			r.Header.Set("X-Token", v)
+		}
+	}
 
 	resp, err := c.cfg.Client.Do(r)
 	if err != nil {
@@ -142,6 +140,81 @@ func (c *Client) Poll(ctx context.Context, params PollParams) (res Job, err erro
 	defer resp.Body.Close()
 
 	result, err := decodePollResponse(resp, span)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// Progress invokes progress operation.
+//
+// POST /progress
+func (c *Client) Progress(ctx context.Context, request Progress, params ProgressParams) (res Status, err error) {
+	if err := func() error {
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return res, errors.Wrap(err, "validate")
+	}
+	startTime := time.Now()
+	ctx, span := c.cfg.Tracer.Start(ctx, `Progress`,
+		trace.WithAttributes(otelogen.OperationID(`progress`)),
+		trace.WithSpanKind(trace.SpanKindClient),
+	)
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			c.errors.Add(ctx, 1)
+		} else {
+			elapsedDuration := time.Since(startTime)
+			c.duration.Record(ctx, elapsedDuration.Microseconds())
+		}
+		span.End()
+	}()
+	c.requests.Add(ctx, 1)
+	var (
+		contentType string
+		reqBody     io.Reader
+	)
+	contentType = "application/json"
+	buf, err := encodeProgressRequestJSON(request, span)
+	if err != nil {
+		return res, err
+	}
+	defer putBuf(buf)
+	reqBody = buf
+
+	u := uri.Clone(c.serverURL)
+	u.Path += "/progress"
+
+	r := ht.NewRequest(ctx, "POST", u, reqBody)
+	defer ht.PutRequest(r)
+
+	r.Header.Set("Content-Type", contentType)
+	{
+		e := uri.NewHeaderEncoder(uri.HeaderEncoderConfig{
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.XToken))
+		}(); err != nil {
+			return res, errors.Wrap(err, `encode header param X-Token`)
+		}
+		if v, ok := e.Result(); ok {
+			r.Header.Set("X-Token", v)
+		}
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	result, err := decodeProgressResponse(resp, span)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

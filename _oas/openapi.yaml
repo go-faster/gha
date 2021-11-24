@@ -6,6 +6,29 @@ info:
 servers:
   - url: 'https://localhost:8080'
 paths:
+  /progress:
+    post:
+      operationId: progress
+      description: report progress
+      responses:
+        200:
+          description: Status
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Status"
+        default:
+          $ref: "#/components/responses/Error"
+      parameters:
+        - $ref: "#/components/parameters/Token"
+      requestBody:
+        required: true
+
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/Progress"
+
   /status:
     get:
       operationId: "status"
@@ -24,10 +47,7 @@ paths:
       operationId: "poll"
       description: Request job from coordinator
       parameters:
-        - name: token
-          in: query
-          required: true
-          description: Worker token
+        - $ref: "#/components/parameters/Token"
       responses:
         200:
           description: Job is available
@@ -38,6 +58,14 @@ paths:
         default:
           $ref: "#/components/responses/Error"
 components:
+  parameters:
+    Token:
+      in: header
+      required: true
+      name: X-Token
+      description: Worker token
+      schema:
+        type: string
   responses:
     Error:
       description: "Error while processing request"
@@ -46,6 +74,37 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
   schemas:
+    Progress:
+      type: object
+      required:
+        - done
+        - key
+      properties:
+        done:
+          description: ok if completed
+          type: boolean
+        key:
+          description: chunk key
+          type: string
+          minLength: 5
+        size_bytes:
+          type: integer
+          format: int64
+        ready_bytes:
+          type: integer
+          format: int64
+        sha256_input:
+          type: string
+          minLength: 64
+          maxLength: 64
+        sha256_content:
+          type: string
+          minLength: 64
+          maxLength: 64
+        sha256_output:
+          type: string
+          minLength: 64
+          maxLength: 64
     Status:
       type: object
       properties:

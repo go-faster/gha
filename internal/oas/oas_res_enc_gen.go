@@ -76,6 +76,20 @@ func encodePollResponse(response Job, w http.ResponseWriter, span trace.Span) er
 	return nil
 }
 
+func encodeProgressResponse(response Status, w http.ResponseWriter, span trace.Span) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	e := jx.GetEncoder()
+	defer jx.PutEncoder(e)
+
+	response.Encode(e)
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodeStatusResponse(response Status, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
