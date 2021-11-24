@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/md5"
+	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
 	"flag"
@@ -57,6 +59,40 @@ func GetURL(date time.Time) string {
 	)
 }
 
+type Hash struct {
+	io.Writer
+
+	SHA1   hash.Hash
+	SHA256 hash.Hash
+	MD5    hash.Hash
+}
+
+func hexHashField(name string, h hash.Hash) zap.Field {
+	return zap.String(name, hex.EncodeToString(h.Sum(nil)))
+}
+
+func (h Hash) Fields() []zap.Field {
+	return []zap.Field{
+		hexHashField("sha256", h.SHA256),
+		hexHashField("sha1", h.SHA1),
+		hexHashField("md5", h.MD5),
+	}
+}
+
+func NewHash() Hash {
+	h := Hash{
+		SHA1:   sha1.New(),
+		SHA256: sha256.New(),
+		MD5:    md5.New(),
+	}
+	h.Writer = io.MultiWriter(
+		h.SHA1,
+		h.SHA256,
+		h.MD5,
+	)
+	return h
+}
+
 func run(ctx context.Context) (err error) {
 	arg := struct {
 		Date time.Time
@@ -102,9 +138,9 @@ func run(ctx context.Context) (err error) {
 	)
 
 	var (
-		hInput  = sha256.New() // hash for input file
-		hData   = sha256.New() // hash for json
-		hOutput = sha256.New() // hash for gzipped data
+		hInput  = NewHash() // hash for input
+		hData   = NewHash() // hash for json
+		hOutput = NewHash() // hash for output
 	)
 
 	// Reading body as gzip.
@@ -164,10 +200,6 @@ func run(ctx context.Context) (err error) {
 		return errors.Wrap(err, "close file")
 	}
 
-	h := func(v hash.Hash) string {
-		return hex.EncodeToString(v.Sum(nil))
-	}
-
 	lg.Info("Processed",
 		zap.String("path", outPath),
 		zap.String("date", arg.Date.Format(layout)),
@@ -177,11 +209,11 @@ func run(ctx context.Context) (err error) {
 		zap.String("relative_ratio", fmt.Sprintf("%.0f%%", ratio*100)),
 		zap.String("absolute_ratio", fmt.Sprintf("%.0f%%", totalRatio*100)),
 		zap.Duration("duration", time.Since(start).Round(time.Millisecond)),
-
-		zap.String("sha256_data", h(hData)),
-		zap.String("sha256_input", h(hInput)),
-		zap.String("sha256_output", h(hOutput)),
 	)
+
+	lg.Info("Input", hInput.Fields()...)
+	lg.Info("Data", hData.Fields()...)
+	lg.Info("Output", hOutput.Fields()...)
 
 	return nil
 }
