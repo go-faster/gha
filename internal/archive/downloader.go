@@ -3,8 +3,6 @@ package archive
 import (
 	"bufio"
 	"context"
-	"crypto/md5"
-	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -56,9 +54,7 @@ type Result struct {
 type Hash struct {
 	io.Writer
 
-	SHA1   hash.Hash
 	SHA256 hash.Hash
-	MD5    hash.Hash
 }
 
 func hexHashField(name string, h hash.Hash) zap.Field {
@@ -72,21 +68,15 @@ func hexHash(h hash.Hash) string {
 func (h Hash) Fields() []zap.Field {
 	return []zap.Field{
 		hexHashField("sha256", h.SHA256),
-		hexHashField("sha1", h.SHA1),
-		hexHashField("md5", h.MD5),
 	}
 }
 
 func NewHash() Hash {
 	h := Hash{
-		SHA1:   sha1.New(),
 		SHA256: sha256.New(),
-		MD5:    md5.New(),
 	}
 	h.Writer = io.MultiWriter(
-		h.SHA1,
 		h.SHA256,
-		h.MD5,
 	)
 	return h
 }

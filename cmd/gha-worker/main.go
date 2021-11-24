@@ -34,7 +34,15 @@ func main() {
 		flag.Parse()
 
 		dl := archive.New(
-			http.DefaultClient,
+			&http.Client{
+				Timeout: time.Second * 30,
+				Transport: &http.Transport{
+					TLSHandshakeTimeout: time.Second * 3,
+					MaxConnsPerHost:     arg.Jobs,
+					MaxIdleConnsPerHost: 100,
+					MaxIdleConns:        100,
+				},
+			},
 			arg.Dir,
 			lg,
 		)
