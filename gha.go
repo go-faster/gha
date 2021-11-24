@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-faster/errors"
+	"go.uber.org/zap"
 )
 
 const layout = "2006-01-02-15"
@@ -42,18 +45,48 @@ func GetURL(date time.Time) string {
 	)
 }
 
-func main() {
-	var arg struct {
+func run(ctx context.Context) error {
+	arg := struct {
 		Date time.Time
+	}{
+		Date: time.Now().Add(-time.Hour * 6),
 	}
 	dateFlag(&arg.Date, "date", "date to download")
 	flag.Parse()
 
-	link := GetURL(arg.Date)
-	start := time.Now()
-	res, err := http.Head(link)
+	lg, err := zap.NewDevelopment()
 	if err != nil {
-		panic(err)
+		return errors.Wrap(err, "log")
 	}
-	fmt.Println("HEAD", link, res.Status, time.Since(start).Round(time.Millisecond))
+
+	link := GetURL(arg.Date)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, link, http.NoBody)
+	if err != nil {
+		return errors.Wrap(err, "req")
+	}
+	start := time.Now()
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "get")
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	if res.StatusCode != http.StatusOK {
+		return errors.Errorf("%s: bad code %d", link, res.StatusCode)
+	}
+
+	lg.Info("Found",
+		zap.String("method", req.Method),
+		zap.String("url", link),
+		zap.Duration("duration", time.Since(start).Round(time.Millisecond)),
+	)
+	return nil
+}
+
+func main() {
+	if err := run(context.Background()); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "%+v\n", err)
+		os.Exit(2)
+	}
 }
