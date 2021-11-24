@@ -21,10 +21,9 @@ import (
 	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
 	"go.uber.org/zap"
-)
 
-// adjusted original layout to be a prefix of RFC3339.
-const layout = "2006-01-02T15"
+	"github.com/go-faster/gha/internal/entry"
+)
 
 type DateVar struct {
 	Date *time.Time
@@ -34,11 +33,11 @@ func (d DateVar) String() string {
 	if d.Date == nil || d.Date.IsZero() {
 		return ""
 	}
-	return d.Date.Format(layout)
+	return d.Date.Format(entry.Layout)
 }
 
 func (d DateVar) Set(s string) error {
-	v, err := time.ParseInLocation(layout, s, time.UTC)
+	v, err := time.ParseInLocation(entry.Layout, s, time.UTC)
 	if err != nil {
 		return errors.Wrap(err, "parse time")
 	}
@@ -151,7 +150,7 @@ func run(ctx context.Context) (err error) {
 	}
 
 	// Output. Change to file.
-	outName := fmt.Sprintf("%s.json.zst", arg.Date.Format(layout))
+	outName := fmt.Sprintf("%s.json.zst", arg.Date.Format(entry.Layout))
 	outPath := filepath.Join(arg.Dir, outName)
 	out, err := os.Create(outPath)
 	if err != nil {
@@ -202,7 +201,7 @@ func run(ctx context.Context) (err error) {
 
 	lg.Info("Processed",
 		zap.String("path", outPath),
-		zap.String("date", arg.Date.Format(layout)),
+		zap.String("date", arg.Date.Format(entry.Layout)),
 		zap.Int64("bytes_output", stat.Size()),
 		zap.Int64("bytes_total", total),
 		zap.Int64("bytes_input", res.ContentLength),
