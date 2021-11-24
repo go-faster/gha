@@ -145,10 +145,7 @@ func run(ctx context.Context) (err error) {
 		return errors.Wrap(err, "stat")
 	}
 	ratio := float64(res.ContentLength) / float64(stat.Size())
-	sizeReduction := ratio * 100
-
 	totalRatio := float64(total) / float64(stat.Size())
-	totalSizeReduction := totalRatio * 100
 
 	if err := out.Close(); err != nil {
 		return errors.Wrap(err, "close file")
@@ -160,8 +157,8 @@ func run(ctx context.Context) (err error) {
 		zap.Int64("bytes_output", stat.Size()),
 		zap.Int64("bytes_total", total),
 		zap.Int64("bytes_input", res.ContentLength),
-		zap.String("relative_ratio", fmt.Sprintf("%.0f%%", sizeReduction)),
-		zap.String("absolute_ratio", fmt.Sprintf("%.0f%%", totalSizeReduction)),
+		zap.String("relative_ratio", fmt.Sprintf("%.0f%%", ratio*100)),
+		zap.String("absolute_ratio", fmt.Sprintf("%.0f%%", totalRatio*100)),
 		zap.Duration("duration", time.Since(start).Round(time.Millisecond)),
 	)
 
