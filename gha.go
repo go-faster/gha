@@ -1,14 +1,19 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/klauspost/compress/gzip"
+	"github.com/klauspost/compress/zstd"
 	"go.uber.org/zap"
 )
 
@@ -81,6 +86,42 @@ func run(ctx context.Context) error {
 		zap.String("url", link),
 		zap.Duration("duration", time.Since(start).Round(time.Millisecond)),
 	)
+
+	// Reading body as gzip.
+	bodyBuf := bufio.NewReader(res.Body)
+	reader, err := gzip.NewReader(bodyBuf)
+	if err != nil {
+		return errors.Wrap(err, "gzip")
+	}
+
+	// Output. Change to file.
+	out := new(bytes.Buffer)
+	outWriter, err := zstd.NewWriter(out)
+	if err != nil {
+		return errors.Wrap(err, "zstd writer init")
+	}
+
+	// Up to 1 MiB for copy.
+	buf := make([]byte, 1024*1024)
+	if _, err := io.CopyBuffer(outWriter, reader, buf); err != nil {
+		return errors.Wrap(err, "copy")
+	}
+
+	if err := outWriter.Close(); err != nil {
+		return errors.Wrap(err, "zstd")
+	}
+
+	ratio := float64(out.Len()) / float64(res.ContentLength)
+	sizeReductionPercent := (1 - ratio) * 100
+
+	lg.Info("Processed",
+		zap.String("date", arg.Date.Format(layout)),
+		zap.Int("bytes", out.Len()),
+		zap.Int64("bytes_initial", res.ContentLength),
+		zap.String("size_reduction", fmt.Sprintf("%.0f%%", sizeReductionPercent)),
+		zap.Duration("duration", time.Since(start).Round(time.Millisecond)),
+	)
+
 	return nil
 }
 
