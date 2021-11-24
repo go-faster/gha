@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"time"
 
@@ -166,8 +167,11 @@ func run(ctx context.Context) (err error) {
 }
 
 func main() {
-	if err := run(context.Background()); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%+v\n", err)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	if err := run(ctx); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Failed: %+v\n", err)
 		os.Exit(2)
 	}
 }
