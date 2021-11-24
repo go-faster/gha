@@ -18,7 +18,8 @@ import (
 	"go.uber.org/zap"
 )
 
-const layout = "2006-01-02-15"
+// adjusted original layout to march a prefix of RFC3339.
+const layout = "2006-01-02T15"
 
 type DateVar struct {
 	Date *time.Time
@@ -46,8 +47,10 @@ func dateFlag(date *time.Time, name, usage string) {
 }
 
 func GetURL(date time.Time) string {
-	return fmt.Sprintf("https://data.gharchive.org/%s.json.gz",
-		date.Format(layout),
+	// You can't describe 24-hour without leading zero.
+	// Correct format is yyyy-MM-dd-H.
+	return fmt.Sprintf("https://data.gharchive.org/%s-%d.json.gz",
+		date.Format("2006-01-02"), date.Hour(),
 	)
 }
 
@@ -56,7 +59,7 @@ func run(ctx context.Context) (err error) {
 		Date time.Time
 		Dir  string
 	}{
-		// Lags ~4 hours from realtime, pretty fast.
+		// Lags ~4 hours from realtime.
 		Date: time.Now().Add(-time.Hour * 6),
 	}
 	dateFlag(&arg.Date, "date", "date to download")
