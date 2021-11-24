@@ -2,13 +2,13 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"flag"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -50,18 +50,25 @@ func GetURL(date time.Time) string {
 	)
 }
 
-func run(ctx context.Context) error {
+func run(ctx context.Context) (err error) {
 	arg := struct {
 		Date time.Time
+		Dir  string
 	}{
+		// Lags ~4 hours from realtime, pretty fast.
 		Date: time.Now().Add(-time.Hour * 6),
 	}
 	dateFlag(&arg.Date, "date", "date to download")
+	flag.StringVar(&arg.Dir, "dir", filepath.Join(os.TempDir(), "github-archive"), "directory to use")
 	flag.Parse()
 
 	lg, err := zap.NewDevelopment()
 	if err != nil {
 		return errors.Wrap(err, "log")
+	}
+
+	if err := os.MkdirAll(arg.Dir, 0755); err != nil {
+		return errors.Wrap(err, "mkdir")
 	}
 
 	link := GetURL(arg.Date)
@@ -95,7 +102,27 @@ func run(ctx context.Context) error {
 	}
 
 	// Output. Change to file.
-	out := new(bytes.Buffer)
+	outName := fmt.Sprintf("%s.json.zst", arg.Date.Format(layout))
+	outPath := filepath.Join(arg.Dir, outName)
+	out, err := os.Create(outPath)
+	if err != nil {
+		return errors.Wrap(err, "create file")
+	}
+	defer func() {
+		_ = out.Close()
+	}()
+	defer func() {
+		if err == nil {
+			// Cleaning up only on failure.
+			return
+		}
+
+		lg.Warn("Cleaning up file")
+		if err := os.Remove(outPath); err != nil {
+			lg.Error("Failed to cleanup", zap.Error(err))
+		}
+	}()
+
 	outWriter, err := zstd.NewWriter(out)
 	if err != nil {
 		return errors.Wrap(err, "zstd writer init")
@@ -103,7 +130,8 @@ func run(ctx context.Context) error {
 
 	// Up to 1 MiB for copy.
 	buf := make([]byte, 1024*1024)
-	if _, err := io.CopyBuffer(outWriter, reader, buf); err != nil {
+	total, err := io.CopyBuffer(outWriter, reader, buf)
+	if err != nil {
 		return errors.Wrap(err, "copy")
 	}
 
@@ -111,14 +139,29 @@ func run(ctx context.Context) error {
 		return errors.Wrap(err, "zstd")
 	}
 
-	ratio := float64(out.Len()) / float64(res.ContentLength)
-	sizeReductionPercent := (1 - ratio) * 100
+	// Calculating re-compression ratio for fun and profit.
+	stat, err := out.Stat()
+	if err != nil {
+		return errors.Wrap(err, "stat")
+	}
+	ratio := float64(res.ContentLength) / float64(stat.Size())
+	sizeReduction := ratio * 100
+
+	totalRatio := float64(total) / float64(stat.Size())
+	totalSizeReduction := totalRatio * 100
+
+	if err := out.Close(); err != nil {
+		return errors.Wrap(err, "close file")
+	}
 
 	lg.Info("Processed",
+		zap.String("path", outPath),
 		zap.String("date", arg.Date.Format(layout)),
-		zap.Int("bytes", out.Len()),
-		zap.Int64("bytes_initial", res.ContentLength),
-		zap.String("size_reduction", fmt.Sprintf("%.0f%%", sizeReductionPercent)),
+		zap.Int64("bytes_output", stat.Size()),
+		zap.Int64("bytes_total", total),
+		zap.Int64("bytes_input", res.ContentLength),
+		zap.String("relative_ratio", fmt.Sprintf("%.0f%%", sizeReduction)),
+		zap.String("absolute_ratio", fmt.Sprintf("%.0f%%", totalSizeReduction)),
 		zap.Duration("duration", time.Since(start).Round(time.Millisecond)),
 	)
 
