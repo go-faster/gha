@@ -168,29 +168,40 @@ func (h Handler) Poll(ctx context.Context, params oas.PollParams) (oas.Job, erro
 		ForUpdate().
 		First(ctx)
 	if ent.IsNotFound(err) {
-		ch, err := tx.Chunk.Query().Where(
+		q := tx.Chunk.Query().Where(
 			chunk.StateIn(chunk.StateDownloaded),
 			chunk.Not(chunk.HasWorker()),
-		).Limit(1).ForUpdate().First(ctx)
-		if ent.IsNotFound(err) {
+		)
+
+		// NB: Can be not consistent.
+		count, err := q.Count(ctx)
+
+		if count == 0 {
+			// Good, nothing to do.
 			return oas.NewJobNothingJob(oas.JobNothing{
 				Type: "nothing",
 			}), nil
 		}
-		if err := ch.Update().
-			SetState(chunk.StateInventory).
-			Exec(ctx); err != nil {
-			return oas.Job{}, errors.Wrap(err, "lease")
+
+		// NB: Will return this result for every worker,
+		// not changing state.
+		chunks, err := q.Limit(1000).All(ctx)
+		if err != nil {
+			return oas.Job{}, errors.Wrap(err, "list")
 		}
 		if err := tx.Commit(); err != nil {
 			return oas.Job{}, errors.Wrap(err, "commit")
+		}
+		var keys []string
+		for _, c := range chunks {
+			keys = append(keys, c.ID)
 		}
 		h.lg.Info("Scheduled inventory job",
 			zap.String("key", ch.ID),
 		)
 		return oas.NewJobInventoryJob(oas.JobInventory{
 			Type: "inventory",
-			Date: ch.ID,
+			Date: keys,
 		}), err
 	}
 	if err != nil {

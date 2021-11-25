@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -78,29 +77,31 @@ func main() {
 					continue
 				}
 				if !job.IsJobInventory() {
+					// Simple jobs that does not require split.
 					jobs <- job
 					continue
 				}
-				entries, err := os.ReadDir(arg.Dir)
-				if err != nil {
-					return errors.Wrap(err, "read dir")
-				}
-				for _, e := range entries {
-					if e.IsDir() {
-						continue
-					}
-					if !strings.HasSuffix(e.Name(), ".json.zst") {
-						continue
-					}
-
-					job.JobInventory.Date = strings.TrimSuffix(e.Name(), ".json.zst")
-					jobs <- job
+				// Split inventory into sub-jobs.
+				for _, k := range job.JobInventory.Date {
+					jobs <- oas.NewJobInventoryJob(oas.JobInventory{
+						Type: job.JobInventory.Type,
+						Date: []string{k},
+					})
 				}
 			}
 		})
 
 		handleInventory := func(ctx context.Context, j oas.JobInventory) error {
-			key := j.Date
+			if len(j.Date) == 0 {
+				// Nothing to do.
+				lg.Warn("Got blank inventory")
+				return nil
+			}
+			if len(j.Date) != 1 {
+				lg.Warn("Got inventory with unexpected key count")
+			}
+
+			key := j.Date[0]
 			lg.Info("Inventory",
 				zap.String("key", key),
 			)

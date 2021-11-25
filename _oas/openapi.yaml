@@ -161,8 +161,9 @@ components:
         type:
           type: string
         date:
-          type: string
-          format: datetime
+          type: array
+          items:
+            type: string
 
     Job:
       type: object

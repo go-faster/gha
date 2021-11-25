@@ -176,8 +176,8 @@ type JobDownload struct {
 
 // Ref: #/components/schemas/JobInventory
 type JobInventory struct {
-	Type string `json:"type"`
-	Date string `json:"date"`
+	Type string   `json:"type"`
+	Date []string `json:"date"`
 }
 
 // Ref: #/components/schemas/JobNothing

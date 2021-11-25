@@ -232,7 +232,11 @@ func (s JobInventory) Encode(e *jx.Encoder) {
 	e.Str(s.Type)
 
 	e.FieldStart("date")
-	e.Str(s.Date)
+	e.ArrStart()
+	for _, elem := range s.Date {
+		e.Str(elem)
+	}
+	e.ArrEnd()
 	e.ObjEnd()
 }
 
@@ -250,9 +254,17 @@ func (s *JobInventory) Decode(d *jx.Decoder) error {
 				return err
 			}
 		case "date":
-			v, err := d.Str()
-			s.Date = string(v)
-			if err != nil {
+			s.Date = nil
+			if err := d.Arr(func(d *jx.Decoder) error {
+				var elem string
+				v, err := d.Str()
+				elem = string(v)
+				if err != nil {
+					return err
+				}
+				s.Date = append(s.Date, elem)
+				return nil
+			}); err != nil {
 				return err
 			}
 		default:
