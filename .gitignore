@@ -13,3 +13,6 @@
 
 _bin/*
 !_bin/.gitkeep
+
+# hosts list
+hosts.*.txt
