@@ -197,7 +197,7 @@ func (h Handler) Poll(ctx context.Context, params oas.PollParams) (oas.Job, erro
 			keys = append(keys, c.ID)
 		}
 		h.lg.Info("Scheduled inventory job",
-			zap.String("key", ch.ID),
+			zap.Int("keys", len(keys)),
 		)
 		return oas.NewJobInventoryJob(oas.JobInventory{
 			Type: "inventory",
