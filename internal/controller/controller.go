@@ -126,6 +126,9 @@ func (h Handler) authToken(ctx context.Context, tok string) error {
 			},
 		}
 	}
+	if err != nil {
+		return errors.Wrap(err, "token")
+	}
 
 	return nil
 }
@@ -146,6 +149,14 @@ func (h Handler) Poll(ctx context.Context, params oas.PollParams) (oas.Job, erro
 	).Limit(1).
 		ForUpdate().
 		First(ctx)
+	if ent.IsNotFound(err) {
+		return oas.NewJobNothingJob(oas.JobNothing{
+			Type: "nothing",
+		}), nil
+	}
+	if err != nil {
+		return oas.Job{}, errors.Wrap(err, "query")
+	}
 
 	if err := ch.Update().
 		SetLeaseExpiresAt(time.Now().Add(time.Second * 30)).

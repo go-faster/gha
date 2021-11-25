@@ -38,7 +38,7 @@ func main() {
 				Timeout: time.Second * 30,
 				Transport: &http.Transport{
 					TLSHandshakeTimeout: time.Second * 3,
-					MaxConnsPerHost:     arg.Jobs,
+					MaxConnsPerHost:     10,
 					MaxIdleConnsPerHost: 100,
 					MaxIdleConns:        100,
 				},
@@ -106,6 +106,7 @@ func main() {
 									lg.Info("Progress",
 										zap.Float64("done", p.Ready()),
 										zap.Int64("wrote", wrote),
+										zap.String("key", key),
 									)
 									if wrote == 0 {
 										// No progress.
