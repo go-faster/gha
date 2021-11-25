@@ -175,6 +175,9 @@ func (h Handler) Poll(ctx context.Context, params oas.PollParams) (oas.Job, erro
 
 		// NB: Can be not consistent.
 		count, err := q.Count(ctx)
+		if err != nil {
+			return oas.Job{}, errors.Wrap(err, "count")
+		}
 
 		if count == 0 {
 			// Good, nothing to do.
