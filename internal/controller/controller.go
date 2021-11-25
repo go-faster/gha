@@ -45,6 +45,7 @@ func (h Handler) Progress(ctx context.Context, req oas.Progress, params oas.Prog
 	h.lg.Info("Progress",
 		zap.String("key", req.Key),
 		zap.String("event", string(req.Event)),
+		zap.String("worker", w.Name),
 	)
 
 	u := h.db.Chunk.Update().Where(
