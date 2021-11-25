@@ -241,6 +241,7 @@ func (c *Client) Inventory(ctx context.Context, key string) (*Result, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "zstd")
 	}
+	defer r.Close()
 
 	sizeContent, err := io.Copy(io.Discard, r)
 	if err != nil {
