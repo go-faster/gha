@@ -19,9 +19,9 @@ install:
 	go install ./cmd/...
 
 deploy-worker:
-	cat hosts.controller.txt | xargs -I HOST scp _bin/gha-worker HOST:~
+	cat hosts.workers.txt | xargs -I HOST scp _bin/gha-worker HOST:~
 
 deploy-controller:
-	cat hosts.workers.txt | xargs -I HOST scp _bin/gha-controller HOST:~
+	cat hosts.controller.txt | xargs -I HOST scp _bin/gha-controller HOST:~
 
 deploy: build install deploy-worker deploy-controller
