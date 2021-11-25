@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -59,102 +60,179 @@ func main() {
 
 		lg.Info("Got status", zap.String("status", status.Message))
 
+		jobs := make(chan oas.Job)
+
 		g, ctx := errgroup.WithContext(ctx)
-		for i := 0; i < arg.Jobs; i++ {
-			g.Go(func() error {
-				for {
-					if ctx.Err() != nil {
-						return ctx.Err()
+		g.Go(func() error {
+			defer close(jobs)
+			for {
+				if err := ctx.Err(); err != nil {
+					return err
+				}
+				job, err := api.Poll(ctx, oas.PollParams{
+					XToken: arg.Token,
+				})
+				if err != nil {
+					lg.Error("Poll failed", zap.Error(err))
+					time.Sleep(time.Second)
+					continue
+				}
+				if !job.IsJobInventory() {
+					jobs <- job
+					continue
+				}
+				entries, err := os.ReadDir(arg.Dir)
+				if err != nil {
+					return errors.Wrap(err, "read dir")
+				}
+				for _, e := range entries {
+					if e.IsDir() {
+						continue
 					}
-					job, err := api.Poll(ctx, oas.PollParams{
-						XToken: arg.Token,
-					})
-					if err != nil {
-						lg.Error("Poll failed", zap.Error(err))
-						time.Sleep(time.Second)
+					if !strings.HasSuffix(e.Name(), ".json.zst") {
 						continue
 					}
 
-					switch job.Type {
-					case oas.JobNothingJob:
-						lg.Info("Doing nothing")
-						time.Sleep(time.Second * 3)
-					case oas.JobDownloadJob:
-						key := job.JobDownload.Date
-						lg.Info("Downloading",
+					job.JobInventory.Date = strings.TrimSuffix(e.Name(), ".json.zst")
+					jobs <- job
+				}
+			}
+		})
+
+		handleInventory := func(ctx context.Context, j oas.JobInventory) error {
+			key := j.Date
+			lg.Info("Inventory",
+				zap.String("key", key),
+			)
+			params := oas.ProgressParams{
+				XToken: arg.Token,
+			}
+
+			res, err := dl.Inventory(ctx, key)
+			if errors.Is(err, archive.ErrNotFound) {
+				return nil
+			}
+			if err != nil {
+				return errors.Wrap(err, "inventory")
+			}
+			if _, err := api.Progress(ctx, oas.Progress{
+				Event: oas.ProgressEventInventory,
+				Key:   key,
+
+				OutputSizeBytes:  oas.NewOptInt64(res.SizeOutput),
+				ContentSizeBytes: oas.NewOptInt64(res.SizeContent),
+				InputSizeBytes:   oas.NewOptInt64(res.SizeInput),
+			}, params); err != nil {
+				return errors.Wrap(err, "report")
+			}
+
+			return nil
+		}
+
+		handleDownload := func(ctx context.Context, j oas.JobDownload) error {
+			key := j.Date
+			lg.Info("Downloading",
+				zap.String("key", key),
+			)
+
+			params := oas.ProgressParams{
+				XToken: arg.Token,
+			}
+			dlCtx, dlCancel := context.WithCancel(ctx)
+			p := &archive.Progress{
+				Cancel: dlCancel,
+			}
+
+			go func() {
+				t := time.NewTicker(time.Second * 3)
+				defer t.Stop()
+				defer lg.Info("Done")
+				lastProgress := time.Now()
+				for {
+					select {
+					case <-dlCtx.Done():
+						return
+					case <-t.C:
+						wrote := p.Consume()
+						lg.Info("Progress",
+							zap.Float64("done", p.Ready()),
+							zap.Int64("wrote", wrote),
 							zap.String("key", key),
 						)
-
-						params := oas.ProgressParams{
-							XToken: arg.Token,
-						}
-						dlCtx, dlCancel := context.WithCancel(ctx)
-						p := &archive.Progress{
-							Cancel: dlCancel,
-						}
-						go func() {
-							t := time.NewTicker(time.Second * 3)
-							defer t.Stop()
-							defer lg.Info("Done")
-							lastProgress := time.Now()
-							for {
-								select {
-								case <-dlCtx.Done():
-									return
-								case <-t.C:
-									wrote := p.Consume()
-									lg.Info("Progress",
-										zap.Float64("done", p.Ready()),
-										zap.Int64("wrote", wrote),
-										zap.String("key", key),
-									)
-									if wrote == 0 {
-										// No progress.
-										if time.Since(lastProgress) > time.Second*5 {
-											lg.Warn("No progress")
-										}
-										if time.Since(lastProgress) > time.Second*10 {
-											p.Cancel()
-										}
-										continue
-									}
-									lastProgress = time.Now()
-									if _, err := api.Progress(ctx, oas.Progress{
-										Key:        key,
-										SizeBytes:  oas.NewOptInt64(p.Total()),
-										ReadyBytes: oas.NewOptInt64(p.ReadyBytes()),
-									}, params); err != nil {
-										lg.Error("Failed to report progress", zap.Error(err))
-										dlCancel()
-										continue
-									}
-								}
+						if wrote == 0 {
+							// No progress.
+							if time.Since(lastProgress) > time.Second*5 {
+								lg.Warn("No progress")
 							}
-						}()
-						result, err := dl.Download(dlCtx, archive.Options{
-							Progress: p,
-							Key:      key,
-						})
-						if err != nil {
-							lg.Error("Failed to download", zap.Error(err))
+							if time.Since(lastProgress) > time.Second*10 {
+								p.Cancel()
+							}
 							continue
 						}
-
-						lg.Info("Downloaded", zap.String("path", result.Path))
+						lastProgress = time.Now()
 						if _, err := api.Progress(ctx, oas.Progress{
-							Done: true,
-							Key:  key,
-
-							SHA256Content: oas.NewOptString(result.SHA256Data),
-							SHA256Input:   oas.NewOptString(result.SHA256Input),
-							SHA256Output:  oas.NewOptString(result.SHA256Output),
-							SizeBytes:     oas.NewOptInt64(p.Total()),
+							Key:             key,
+							InputSizeBytes:  oas.NewOptInt64(p.Total()),
+							InputReadyBytes: oas.NewOptInt64(p.ReadyBytes()),
 						}, params); err != nil {
 							lg.Error("Failed to report progress", zap.Error(err))
+							dlCancel()
 							continue
 						}
 					}
 				}
+			}()
+
+			res, err := dl.Download(dlCtx, archive.Options{
+				Progress: p,
+				Key:      key,
+			})
+			if err != nil {
+				return errors.Wrap(err, "download")
+			}
+
+			lg.Info("Downloaded", zap.String("path", res.Path))
+			if _, err := api.Progress(ctx, oas.Progress{
+				Event: oas.ProgressEventDone,
+				Key:   key,
+
+				SHA256Content: oas.NewOptString(res.SHA256Content),
+				SHA256Input:   oas.NewOptString(res.SHA256Input),
+				SHA256Output:  oas.NewOptString(res.SHA256Output),
+
+				OutputSizeBytes:  oas.NewOptInt64(res.SizeOutput),
+				ContentSizeBytes: oas.NewOptInt64(res.SizeContent),
+				InputReadyBytes:  oas.NewOptInt64(res.SizeInput),
+			}, params); err != nil {
+				return errors.Wrap(err, "report")
+			}
+
+			return nil
+		}
+		handleJob := func(ctx context.Context, j oas.Job) error {
+			if j.IsJobNothing() {
+				lg.Info("Doing nothing")
+				time.Sleep(time.Second * 3)
+				return nil
+			}
+			if j, ok := j.GetJobInventory(); ok {
+				return handleInventory(ctx, j)
+			}
+			if j, ok := j.GetJobDownload(); ok {
+				return handleDownload(ctx, j)
+			}
+			return errors.Errorf("unknown job: %v", j.Type)
+		}
+
+		for i := 0; i < arg.Jobs; i++ {
+			g.Go(func() error {
+				for job := range jobs {
+					if err := handleJob(ctx, job); err != nil {
+						lg.Warn("Job failed", zap.Error(err))
+						continue
+					}
+				}
+				return nil
 			})
 		}
 		return g.Wait()

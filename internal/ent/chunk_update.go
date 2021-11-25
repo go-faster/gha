@@ -12,6 +12,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/go-faster/gha/internal/ent/chunk"
 	"github.com/go-faster/gha/internal/ent/predicate"
+	"github.com/go-faster/gha/internal/ent/worker"
+	"github.com/google/uuid"
 )
 
 // ChunkUpdate is the builder for updating Chunk entities.
@@ -70,6 +72,87 @@ func (cu *ChunkUpdate) SetNillableState(c *chunk.State) *ChunkUpdate {
 	if c != nil {
 		cu.SetState(*c)
 	}
+	return cu
+}
+
+// SetSizeInput sets the "size_input" field.
+func (cu *ChunkUpdate) SetSizeInput(i int64) *ChunkUpdate {
+	cu.mutation.ResetSizeInput()
+	cu.mutation.SetSizeInput(i)
+	return cu
+}
+
+// SetNillableSizeInput sets the "size_input" field if the given value is not nil.
+func (cu *ChunkUpdate) SetNillableSizeInput(i *int64) *ChunkUpdate {
+	if i != nil {
+		cu.SetSizeInput(*i)
+	}
+	return cu
+}
+
+// AddSizeInput adds i to the "size_input" field.
+func (cu *ChunkUpdate) AddSizeInput(i int64) *ChunkUpdate {
+	cu.mutation.AddSizeInput(i)
+	return cu
+}
+
+// ClearSizeInput clears the value of the "size_input" field.
+func (cu *ChunkUpdate) ClearSizeInput() *ChunkUpdate {
+	cu.mutation.ClearSizeInput()
+	return cu
+}
+
+// SetSizeContent sets the "size_content" field.
+func (cu *ChunkUpdate) SetSizeContent(i int64) *ChunkUpdate {
+	cu.mutation.ResetSizeContent()
+	cu.mutation.SetSizeContent(i)
+	return cu
+}
+
+// SetNillableSizeContent sets the "size_content" field if the given value is not nil.
+func (cu *ChunkUpdate) SetNillableSizeContent(i *int64) *ChunkUpdate {
+	if i != nil {
+		cu.SetSizeContent(*i)
+	}
+	return cu
+}
+
+// AddSizeContent adds i to the "size_content" field.
+func (cu *ChunkUpdate) AddSizeContent(i int64) *ChunkUpdate {
+	cu.mutation.AddSizeContent(i)
+	return cu
+}
+
+// ClearSizeContent clears the value of the "size_content" field.
+func (cu *ChunkUpdate) ClearSizeContent() *ChunkUpdate {
+	cu.mutation.ClearSizeContent()
+	return cu
+}
+
+// SetSizeOutput sets the "size_output" field.
+func (cu *ChunkUpdate) SetSizeOutput(i int64) *ChunkUpdate {
+	cu.mutation.ResetSizeOutput()
+	cu.mutation.SetSizeOutput(i)
+	return cu
+}
+
+// SetNillableSizeOutput sets the "size_output" field if the given value is not nil.
+func (cu *ChunkUpdate) SetNillableSizeOutput(i *int64) *ChunkUpdate {
+	if i != nil {
+		cu.SetSizeOutput(*i)
+	}
+	return cu
+}
+
+// AddSizeOutput adds i to the "size_output" field.
+func (cu *ChunkUpdate) AddSizeOutput(i int64) *ChunkUpdate {
+	cu.mutation.AddSizeOutput(i)
+	return cu
+}
+
+// ClearSizeOutput clears the value of the "size_output" field.
+func (cu *ChunkUpdate) ClearSizeOutput() *ChunkUpdate {
+	cu.mutation.ClearSizeOutput()
 	return cu
 }
 
@@ -133,9 +216,34 @@ func (cu *ChunkUpdate) ClearSha256Output() *ChunkUpdate {
 	return cu
 }
 
+// SetWorkerID sets the "worker" edge to the Worker entity by ID.
+func (cu *ChunkUpdate) SetWorkerID(id uuid.UUID) *ChunkUpdate {
+	cu.mutation.SetWorkerID(id)
+	return cu
+}
+
+// SetNillableWorkerID sets the "worker" edge to the Worker entity by ID if the given value is not nil.
+func (cu *ChunkUpdate) SetNillableWorkerID(id *uuid.UUID) *ChunkUpdate {
+	if id != nil {
+		cu = cu.SetWorkerID(*id)
+	}
+	return cu
+}
+
+// SetWorker sets the "worker" edge to the Worker entity.
+func (cu *ChunkUpdate) SetWorker(w *Worker) *ChunkUpdate {
+	return cu.SetWorkerID(w.ID)
+}
+
 // Mutation returns the ChunkMutation object of the builder.
 func (cu *ChunkUpdate) Mutation() *ChunkMutation {
 	return cu.mutation
+}
+
+// ClearWorker clears the "worker" edge to the Worker entity.
+func (cu *ChunkUpdate) ClearWorker() *ChunkUpdate {
+	cu.mutation.ClearWorker()
+	return cu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -269,6 +377,66 @@ func (cu *ChunkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: chunk.FieldState,
 		})
 	}
+	if value, ok := cu.mutation.SizeInput(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeInput,
+		})
+	}
+	if value, ok := cu.mutation.AddedSizeInput(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeInput,
+		})
+	}
+	if cu.mutation.SizeInputCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Column: chunk.FieldSizeInput,
+		})
+	}
+	if value, ok := cu.mutation.SizeContent(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeContent,
+		})
+	}
+	if value, ok := cu.mutation.AddedSizeContent(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeContent,
+		})
+	}
+	if cu.mutation.SizeContentCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Column: chunk.FieldSizeContent,
+		})
+	}
+	if value, ok := cu.mutation.SizeOutput(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeOutput,
+		})
+	}
+	if value, ok := cu.mutation.AddedSizeOutput(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeOutput,
+		})
+	}
+	if cu.mutation.SizeOutputCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Column: chunk.FieldSizeOutput,
+		})
+	}
 	if value, ok := cu.mutation.Sha256Input(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -307,6 +475,41 @@ func (cu *ChunkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeString,
 			Column: chunk.FieldSha256Output,
 		})
+	}
+	if cu.mutation.WorkerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   chunk.WorkerTable,
+			Columns: []string{chunk.WorkerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: worker.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.WorkerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   chunk.WorkerTable,
+			Columns: []string{chunk.WorkerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: worker.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -373,6 +576,87 @@ func (cuo *ChunkUpdateOne) SetNillableState(c *chunk.State) *ChunkUpdateOne {
 	return cuo
 }
 
+// SetSizeInput sets the "size_input" field.
+func (cuo *ChunkUpdateOne) SetSizeInput(i int64) *ChunkUpdateOne {
+	cuo.mutation.ResetSizeInput()
+	cuo.mutation.SetSizeInput(i)
+	return cuo
+}
+
+// SetNillableSizeInput sets the "size_input" field if the given value is not nil.
+func (cuo *ChunkUpdateOne) SetNillableSizeInput(i *int64) *ChunkUpdateOne {
+	if i != nil {
+		cuo.SetSizeInput(*i)
+	}
+	return cuo
+}
+
+// AddSizeInput adds i to the "size_input" field.
+func (cuo *ChunkUpdateOne) AddSizeInput(i int64) *ChunkUpdateOne {
+	cuo.mutation.AddSizeInput(i)
+	return cuo
+}
+
+// ClearSizeInput clears the value of the "size_input" field.
+func (cuo *ChunkUpdateOne) ClearSizeInput() *ChunkUpdateOne {
+	cuo.mutation.ClearSizeInput()
+	return cuo
+}
+
+// SetSizeContent sets the "size_content" field.
+func (cuo *ChunkUpdateOne) SetSizeContent(i int64) *ChunkUpdateOne {
+	cuo.mutation.ResetSizeContent()
+	cuo.mutation.SetSizeContent(i)
+	return cuo
+}
+
+// SetNillableSizeContent sets the "size_content" field if the given value is not nil.
+func (cuo *ChunkUpdateOne) SetNillableSizeContent(i *int64) *ChunkUpdateOne {
+	if i != nil {
+		cuo.SetSizeContent(*i)
+	}
+	return cuo
+}
+
+// AddSizeContent adds i to the "size_content" field.
+func (cuo *ChunkUpdateOne) AddSizeContent(i int64) *ChunkUpdateOne {
+	cuo.mutation.AddSizeContent(i)
+	return cuo
+}
+
+// ClearSizeContent clears the value of the "size_content" field.
+func (cuo *ChunkUpdateOne) ClearSizeContent() *ChunkUpdateOne {
+	cuo.mutation.ClearSizeContent()
+	return cuo
+}
+
+// SetSizeOutput sets the "size_output" field.
+func (cuo *ChunkUpdateOne) SetSizeOutput(i int64) *ChunkUpdateOne {
+	cuo.mutation.ResetSizeOutput()
+	cuo.mutation.SetSizeOutput(i)
+	return cuo
+}
+
+// SetNillableSizeOutput sets the "size_output" field if the given value is not nil.
+func (cuo *ChunkUpdateOne) SetNillableSizeOutput(i *int64) *ChunkUpdateOne {
+	if i != nil {
+		cuo.SetSizeOutput(*i)
+	}
+	return cuo
+}
+
+// AddSizeOutput adds i to the "size_output" field.
+func (cuo *ChunkUpdateOne) AddSizeOutput(i int64) *ChunkUpdateOne {
+	cuo.mutation.AddSizeOutput(i)
+	return cuo
+}
+
+// ClearSizeOutput clears the value of the "size_output" field.
+func (cuo *ChunkUpdateOne) ClearSizeOutput() *ChunkUpdateOne {
+	cuo.mutation.ClearSizeOutput()
+	return cuo
+}
+
 // SetSha256Input sets the "sha256_input" field.
 func (cuo *ChunkUpdateOne) SetSha256Input(s string) *ChunkUpdateOne {
 	cuo.mutation.SetSha256Input(s)
@@ -433,9 +717,34 @@ func (cuo *ChunkUpdateOne) ClearSha256Output() *ChunkUpdateOne {
 	return cuo
 }
 
+// SetWorkerID sets the "worker" edge to the Worker entity by ID.
+func (cuo *ChunkUpdateOne) SetWorkerID(id uuid.UUID) *ChunkUpdateOne {
+	cuo.mutation.SetWorkerID(id)
+	return cuo
+}
+
+// SetNillableWorkerID sets the "worker" edge to the Worker entity by ID if the given value is not nil.
+func (cuo *ChunkUpdateOne) SetNillableWorkerID(id *uuid.UUID) *ChunkUpdateOne {
+	if id != nil {
+		cuo = cuo.SetWorkerID(*id)
+	}
+	return cuo
+}
+
+// SetWorker sets the "worker" edge to the Worker entity.
+func (cuo *ChunkUpdateOne) SetWorker(w *Worker) *ChunkUpdateOne {
+	return cuo.SetWorkerID(w.ID)
+}
+
 // Mutation returns the ChunkMutation object of the builder.
 func (cuo *ChunkUpdateOne) Mutation() *ChunkMutation {
 	return cuo.mutation
+}
+
+// ClearWorker clears the "worker" edge to the Worker entity.
+func (cuo *ChunkUpdateOne) ClearWorker() *ChunkUpdateOne {
+	cuo.mutation.ClearWorker()
+	return cuo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -593,6 +902,66 @@ func (cuo *ChunkUpdateOne) sqlSave(ctx context.Context) (_node *Chunk, err error
 			Column: chunk.FieldState,
 		})
 	}
+	if value, ok := cuo.mutation.SizeInput(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeInput,
+		})
+	}
+	if value, ok := cuo.mutation.AddedSizeInput(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeInput,
+		})
+	}
+	if cuo.mutation.SizeInputCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Column: chunk.FieldSizeInput,
+		})
+	}
+	if value, ok := cuo.mutation.SizeContent(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeContent,
+		})
+	}
+	if value, ok := cuo.mutation.AddedSizeContent(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeContent,
+		})
+	}
+	if cuo.mutation.SizeContentCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Column: chunk.FieldSizeContent,
+		})
+	}
+	if value, ok := cuo.mutation.SizeOutput(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeOutput,
+		})
+	}
+	if value, ok := cuo.mutation.AddedSizeOutput(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeOutput,
+		})
+	}
+	if cuo.mutation.SizeOutputCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Column: chunk.FieldSizeOutput,
+		})
+	}
 	if value, ok := cuo.mutation.Sha256Input(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -631,6 +1000,41 @@ func (cuo *ChunkUpdateOne) sqlSave(ctx context.Context) (_node *Chunk, err error
 			Type:   field.TypeString,
 			Column: chunk.FieldSha256Output,
 		})
+	}
+	if cuo.mutation.WorkerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   chunk.WorkerTable,
+			Columns: []string{chunk.WorkerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: worker.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.WorkerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   chunk.WorkerTable,
+			Columns: []string{chunk.WorkerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: worker.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Chunk{config: cuo.config}
 	_spec.Assign = _node.assignValues

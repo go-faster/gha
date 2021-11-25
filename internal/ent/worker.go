@@ -27,6 +27,27 @@ type Worker struct {
 	Name string `json:"name,omitempty"`
 	// Token holds the value of the "token" field.
 	Token string `json:"token,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the WorkerQuery when eager-loading is set.
+	Edges WorkerEdges `json:"edges"`
+}
+
+// WorkerEdges holds the relations/edges for other nodes in the graph.
+type WorkerEdges struct {
+	// Chunks holds the value of the chunks edge.
+	Chunks []*Chunk `json:"chunks,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ChunksOrErr returns the Chunks value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkerEdges) ChunksOrErr() ([]*Chunk, error) {
+	if e.loadedTypes[0] {
+		return e.Chunks, nil
+	}
+	return nil, &NotLoadedError{edge: "chunks"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -88,6 +109,11 @@ func (w *Worker) assignValues(columns []string, values []interface{}) error {
 		}
 	}
 	return nil
+}
+
+// QueryChunks queries the "chunks" edge of the Worker entity.
+func (w *Worker) QueryChunks() *ChunkQuery {
+	return (&WorkerClient{config: w.config}).QueryChunks(w)
 }
 
 // Update returns a builder for updating this Worker.

@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -12,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/go-faster/gha/internal/ent/chunk"
 	"github.com/go-faster/gha/internal/ent/predicate"
 	"github.com/go-faster/gha/internal/ent/worker"
 	"github.com/google/uuid"
@@ -26,6 +28,8 @@ type WorkerQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Worker
+	// eager-loading edges.
+	withChunks *ChunkQuery
 	modifiers  []func(s *sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -61,6 +65,28 @@ func (wq *WorkerQuery) Unique(unique bool) *WorkerQuery {
 func (wq *WorkerQuery) Order(o ...OrderFunc) *WorkerQuery {
 	wq.order = append(wq.order, o...)
 	return wq
+}
+
+// QueryChunks chains the current query on the "chunks" edge.
+func (wq *WorkerQuery) QueryChunks() *ChunkQuery {
+	query := &ChunkQuery{config: wq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := wq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := wq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, selector),
+			sqlgraph.To(chunk.Table, chunk.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, worker.ChunksTable, worker.ChunksColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(wq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Worker entity from the query.
@@ -244,10 +270,22 @@ func (wq *WorkerQuery) Clone() *WorkerQuery {
 		offset:     wq.offset,
 		order:      append([]OrderFunc{}, wq.order...),
 		predicates: append([]predicate.Worker{}, wq.predicates...),
+		withChunks: wq.withChunks.Clone(),
 		// clone intermediate query.
 		sql:  wq.sql.Clone(),
 		path: wq.path,
 	}
+}
+
+// WithChunks tells the query-builder to eager-load the nodes that are connected to
+// the "chunks" edge. The optional arguments are used to configure the query builder of the edge.
+func (wq *WorkerQuery) WithChunks(opts ...func(*ChunkQuery)) *WorkerQuery {
+	query := &ChunkQuery{config: wq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	wq.withChunks = query
+	return wq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -313,8 +351,11 @@ func (wq *WorkerQuery) prepareQuery(ctx context.Context) error {
 
 func (wq *WorkerQuery) sqlAll(ctx context.Context) ([]*Worker, error) {
 	var (
-		nodes = []*Worker{}
-		_spec = wq.querySpec()
+		nodes       = []*Worker{}
+		_spec       = wq.querySpec()
+		loadedTypes = [1]bool{
+			wq.withChunks != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Worker{config: wq.config}
@@ -326,6 +367,7 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context) ([]*Worker, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if len(wq.modifiers) > 0 {
@@ -337,6 +379,36 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context) ([]*Worker, error) {
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := wq.withChunks; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[uuid.UUID]*Worker)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Chunks = []*Chunk{}
+		}
+		query.withFKs = true
+		query.Where(predicate.Chunk(func(s *sql.Selector) {
+			s.Where(sql.InValues(worker.ChunksColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.worker_chunks
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "worker_chunks" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "worker_chunks" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Chunks = append(node.Edges.Chunks, n)
+		}
+	}
+
 	return nodes, nil
 }
 

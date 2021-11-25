@@ -21,8 +21,17 @@ const (
 	FieldName = "name"
 	// FieldToken holds the string denoting the token field in the database.
 	FieldToken = "token"
+	// EdgeChunks holds the string denoting the chunks edge name in mutations.
+	EdgeChunks = "chunks"
 	// Table holds the table name of the worker in the database.
 	Table = "workers"
+	// ChunksTable is the table that holds the chunks relation/edge.
+	ChunksTable = "chunks"
+	// ChunksInverseTable is the table name for the Chunk entity.
+	// It exists in this package in order to avoid circular dependency with the "chunk" package.
+	ChunksInverseTable = "chunks"
+	// ChunksColumn is the table column denoting the chunks relation/edge.
+	ChunksColumn = "worker_chunks"
 )
 
 // Columns holds all SQL columns for worker fields.

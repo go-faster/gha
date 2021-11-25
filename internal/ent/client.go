@@ -15,6 +15,7 @@ import (
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -214,6 +215,22 @@ func (c *ChunkClient) GetX(ctx context.Context, id string) *Chunk {
 	return obj
 }
 
+// QueryWorker queries the worker edge of a Chunk.
+func (c *ChunkClient) QueryWorker(ch *Chunk) *WorkerQuery {
+	query := &WorkerQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := ch.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chunk.Table, chunk.FieldID, id),
+			sqlgraph.To(worker.Table, worker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, chunk.WorkerTable, chunk.WorkerColumn),
+		)
+		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ChunkClient) Hooks() []Hook {
 	return c.hooks.Chunk
@@ -302,6 +319,22 @@ func (c *WorkerClient) GetX(ctx context.Context, id uuid.UUID) *Worker {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryChunks queries the chunks edge of a Worker.
+func (c *WorkerClient) QueryChunks(w *Worker) *ChunkQuery {
+	query := &ChunkQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := w.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, id),
+			sqlgraph.To(chunk.Table, chunk.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, worker.ChunksTable, worker.ChunksColumn),
+		)
+		fromV = sqlgraph.Neighbors(w.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.

@@ -77,20 +77,29 @@ components:
     Progress:
       type: object
       required:
-        - done
+        - event
         - key
       properties:
-        done:
-          description: ok if completed
-          type: boolean
+        event:
+          type: string
+          enum:
+            - Done
+            - Downloading
+            - Inventory
         key:
           description: chunk key
           type: string
           minLength: 5
-        size_bytes:
+        input_size_bytes:
           type: integer
           format: int64
-        ready_bytes:
+        content_size_bytes:
+          type: integer
+          format: int64
+        output_size_bytes:
+          type: integer
+          format: int64
+        input_ready_bytes:
           type: integer
           format: int64
         sha256_input:
@@ -142,6 +151,19 @@ components:
           type: string
           format: datetime
 
+    JobInventory:
+      type: object
+      description: Report local chunk info
+      required:
+        - type
+        - date
+      properties:
+        type:
+          type: string
+        date:
+          type: string
+          format: datetime
+
     Job:
       type: object
       description: job to perform on worker
@@ -150,6 +172,8 @@ components:
         mapping:
           nothing: JobNothing
           download: JobDownload
+          inventory: JobInventory
       oneOf:
         - $ref: "#/components/schemas/JobNothing"
         - $ref: "#/components/schemas/JobDownload"
+        - $ref: "#/components/schemas/JobInventory"

@@ -65,6 +65,17 @@ var (
 func (s Progress) Validate() error {
 	var failures []validate.FieldError
 	if err := func() error {
+		if err := s.Event.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "event",
+			Error: err,
+		})
+	}
+	if err := func() error {
 		if err := (validate.String{
 			MinLength:    5,
 			MinLengthSet: true,
@@ -168,4 +179,16 @@ func (s Progress) Validate() error {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
+}
+func (s ProgressEvent) Validate() error {
+	switch s {
+	case "Done":
+		return nil
+	case "Downloading":
+		return nil
+	case "Inventory":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
 }

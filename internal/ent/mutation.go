@@ -40,10 +40,18 @@ type ChunkMutation struct {
 	start            *time.Time
 	lease_expires_at *time.Time
 	state            *chunk.State
+	size_input       *int64
+	addsize_input    *int64
+	size_content     *int64
+	addsize_content  *int64
+	size_output      *int64
+	addsize_output   *int64
 	sha256_input     *string
 	sha256_content   *string
 	sha256_output    *string
 	clearedFields    map[string]struct{}
+	worker           *uuid.UUID
+	clearedworker    bool
 	done             bool
 	oldValue         func(context.Context) (*Chunk, error)
 	predicates       []predicate.Chunk
@@ -327,6 +335,216 @@ func (m *ChunkMutation) ResetState() {
 	m.state = nil
 }
 
+// SetSizeInput sets the "size_input" field.
+func (m *ChunkMutation) SetSizeInput(i int64) {
+	m.size_input = &i
+	m.addsize_input = nil
+}
+
+// SizeInput returns the value of the "size_input" field in the mutation.
+func (m *ChunkMutation) SizeInput() (r int64, exists bool) {
+	v := m.size_input
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSizeInput returns the old "size_input" field's value of the Chunk entity.
+// If the Chunk object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChunkMutation) OldSizeInput(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldSizeInput is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldSizeInput requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSizeInput: %w", err)
+	}
+	return oldValue.SizeInput, nil
+}
+
+// AddSizeInput adds i to the "size_input" field.
+func (m *ChunkMutation) AddSizeInput(i int64) {
+	if m.addsize_input != nil {
+		*m.addsize_input += i
+	} else {
+		m.addsize_input = &i
+	}
+}
+
+// AddedSizeInput returns the value that was added to the "size_input" field in this mutation.
+func (m *ChunkMutation) AddedSizeInput() (r int64, exists bool) {
+	v := m.addsize_input
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSizeInput clears the value of the "size_input" field.
+func (m *ChunkMutation) ClearSizeInput() {
+	m.size_input = nil
+	m.addsize_input = nil
+	m.clearedFields[chunk.FieldSizeInput] = struct{}{}
+}
+
+// SizeInputCleared returns if the "size_input" field was cleared in this mutation.
+func (m *ChunkMutation) SizeInputCleared() bool {
+	_, ok := m.clearedFields[chunk.FieldSizeInput]
+	return ok
+}
+
+// ResetSizeInput resets all changes to the "size_input" field.
+func (m *ChunkMutation) ResetSizeInput() {
+	m.size_input = nil
+	m.addsize_input = nil
+	delete(m.clearedFields, chunk.FieldSizeInput)
+}
+
+// SetSizeContent sets the "size_content" field.
+func (m *ChunkMutation) SetSizeContent(i int64) {
+	m.size_content = &i
+	m.addsize_content = nil
+}
+
+// SizeContent returns the value of the "size_content" field in the mutation.
+func (m *ChunkMutation) SizeContent() (r int64, exists bool) {
+	v := m.size_content
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSizeContent returns the old "size_content" field's value of the Chunk entity.
+// If the Chunk object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChunkMutation) OldSizeContent(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldSizeContent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldSizeContent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSizeContent: %w", err)
+	}
+	return oldValue.SizeContent, nil
+}
+
+// AddSizeContent adds i to the "size_content" field.
+func (m *ChunkMutation) AddSizeContent(i int64) {
+	if m.addsize_content != nil {
+		*m.addsize_content += i
+	} else {
+		m.addsize_content = &i
+	}
+}
+
+// AddedSizeContent returns the value that was added to the "size_content" field in this mutation.
+func (m *ChunkMutation) AddedSizeContent() (r int64, exists bool) {
+	v := m.addsize_content
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSizeContent clears the value of the "size_content" field.
+func (m *ChunkMutation) ClearSizeContent() {
+	m.size_content = nil
+	m.addsize_content = nil
+	m.clearedFields[chunk.FieldSizeContent] = struct{}{}
+}
+
+// SizeContentCleared returns if the "size_content" field was cleared in this mutation.
+func (m *ChunkMutation) SizeContentCleared() bool {
+	_, ok := m.clearedFields[chunk.FieldSizeContent]
+	return ok
+}
+
+// ResetSizeContent resets all changes to the "size_content" field.
+func (m *ChunkMutation) ResetSizeContent() {
+	m.size_content = nil
+	m.addsize_content = nil
+	delete(m.clearedFields, chunk.FieldSizeContent)
+}
+
+// SetSizeOutput sets the "size_output" field.
+func (m *ChunkMutation) SetSizeOutput(i int64) {
+	m.size_output = &i
+	m.addsize_output = nil
+}
+
+// SizeOutput returns the value of the "size_output" field in the mutation.
+func (m *ChunkMutation) SizeOutput() (r int64, exists bool) {
+	v := m.size_output
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSizeOutput returns the old "size_output" field's value of the Chunk entity.
+// If the Chunk object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChunkMutation) OldSizeOutput(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldSizeOutput is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldSizeOutput requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSizeOutput: %w", err)
+	}
+	return oldValue.SizeOutput, nil
+}
+
+// AddSizeOutput adds i to the "size_output" field.
+func (m *ChunkMutation) AddSizeOutput(i int64) {
+	if m.addsize_output != nil {
+		*m.addsize_output += i
+	} else {
+		m.addsize_output = &i
+	}
+}
+
+// AddedSizeOutput returns the value that was added to the "size_output" field in this mutation.
+func (m *ChunkMutation) AddedSizeOutput() (r int64, exists bool) {
+	v := m.addsize_output
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSizeOutput clears the value of the "size_output" field.
+func (m *ChunkMutation) ClearSizeOutput() {
+	m.size_output = nil
+	m.addsize_output = nil
+	m.clearedFields[chunk.FieldSizeOutput] = struct{}{}
+}
+
+// SizeOutputCleared returns if the "size_output" field was cleared in this mutation.
+func (m *ChunkMutation) SizeOutputCleared() bool {
+	_, ok := m.clearedFields[chunk.FieldSizeOutput]
+	return ok
+}
+
+// ResetSizeOutput resets all changes to the "size_output" field.
+func (m *ChunkMutation) ResetSizeOutput() {
+	m.size_output = nil
+	m.addsize_output = nil
+	delete(m.clearedFields, chunk.FieldSizeOutput)
+}
+
 // SetSha256Input sets the "sha256_input" field.
 func (m *ChunkMutation) SetSha256Input(s string) {
 	m.sha256_input = &s
@@ -474,6 +692,45 @@ func (m *ChunkMutation) ResetSha256Output() {
 	delete(m.clearedFields, chunk.FieldSha256Output)
 }
 
+// SetWorkerID sets the "worker" edge to the Worker entity by id.
+func (m *ChunkMutation) SetWorkerID(id uuid.UUID) {
+	m.worker = &id
+}
+
+// ClearWorker clears the "worker" edge to the Worker entity.
+func (m *ChunkMutation) ClearWorker() {
+	m.clearedworker = true
+}
+
+// WorkerCleared reports if the "worker" edge to the Worker entity was cleared.
+func (m *ChunkMutation) WorkerCleared() bool {
+	return m.clearedworker
+}
+
+// WorkerID returns the "worker" edge ID in the mutation.
+func (m *ChunkMutation) WorkerID() (id uuid.UUID, exists bool) {
+	if m.worker != nil {
+		return *m.worker, true
+	}
+	return
+}
+
+// WorkerIDs returns the "worker" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkerID instead. It exists only for internal usage by the builders.
+func (m *ChunkMutation) WorkerIDs() (ids []uuid.UUID) {
+	if id := m.worker; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorker resets all changes to the "worker" edge.
+func (m *ChunkMutation) ResetWorker() {
+	m.worker = nil
+	m.clearedworker = false
+}
+
 // Where appends a list predicates to the ChunkMutation builder.
 func (m *ChunkMutation) Where(ps ...predicate.Chunk) {
 	m.predicates = append(m.predicates, ps...)
@@ -493,7 +750,7 @@ func (m *ChunkMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChunkMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 11)
 	if m.created_at != nil {
 		fields = append(fields, chunk.FieldCreatedAt)
 	}
@@ -508,6 +765,15 @@ func (m *ChunkMutation) Fields() []string {
 	}
 	if m.state != nil {
 		fields = append(fields, chunk.FieldState)
+	}
+	if m.size_input != nil {
+		fields = append(fields, chunk.FieldSizeInput)
+	}
+	if m.size_content != nil {
+		fields = append(fields, chunk.FieldSizeContent)
+	}
+	if m.size_output != nil {
+		fields = append(fields, chunk.FieldSizeOutput)
 	}
 	if m.sha256_input != nil {
 		fields = append(fields, chunk.FieldSha256Input)
@@ -536,6 +802,12 @@ func (m *ChunkMutation) Field(name string) (ent.Value, bool) {
 		return m.LeaseExpiresAt()
 	case chunk.FieldState:
 		return m.State()
+	case chunk.FieldSizeInput:
+		return m.SizeInput()
+	case chunk.FieldSizeContent:
+		return m.SizeContent()
+	case chunk.FieldSizeOutput:
+		return m.SizeOutput()
 	case chunk.FieldSha256Input:
 		return m.Sha256Input()
 	case chunk.FieldSha256Content:
@@ -561,6 +833,12 @@ func (m *ChunkMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldLeaseExpiresAt(ctx)
 	case chunk.FieldState:
 		return m.OldState(ctx)
+	case chunk.FieldSizeInput:
+		return m.OldSizeInput(ctx)
+	case chunk.FieldSizeContent:
+		return m.OldSizeContent(ctx)
+	case chunk.FieldSizeOutput:
+		return m.OldSizeOutput(ctx)
 	case chunk.FieldSha256Input:
 		return m.OldSha256Input(ctx)
 	case chunk.FieldSha256Content:
@@ -611,6 +889,27 @@ func (m *ChunkMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetState(v)
 		return nil
+	case chunk.FieldSizeInput:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSizeInput(v)
+		return nil
+	case chunk.FieldSizeContent:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSizeContent(v)
+		return nil
+	case chunk.FieldSizeOutput:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSizeOutput(v)
+		return nil
 	case chunk.FieldSha256Input:
 		v, ok := value.(string)
 		if !ok {
@@ -639,13 +938,31 @@ func (m *ChunkMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ChunkMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addsize_input != nil {
+		fields = append(fields, chunk.FieldSizeInput)
+	}
+	if m.addsize_content != nil {
+		fields = append(fields, chunk.FieldSizeContent)
+	}
+	if m.addsize_output != nil {
+		fields = append(fields, chunk.FieldSizeOutput)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ChunkMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case chunk.FieldSizeInput:
+		return m.AddedSizeInput()
+	case chunk.FieldSizeContent:
+		return m.AddedSizeContent()
+	case chunk.FieldSizeOutput:
+		return m.AddedSizeOutput()
+	}
 	return nil, false
 }
 
@@ -654,6 +971,27 @@ func (m *ChunkMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ChunkMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case chunk.FieldSizeInput:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSizeInput(v)
+		return nil
+	case chunk.FieldSizeContent:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSizeContent(v)
+		return nil
+	case chunk.FieldSizeOutput:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSizeOutput(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Chunk numeric field %s", name)
 }
@@ -664,6 +1002,15 @@ func (m *ChunkMutation) ClearedFields() []string {
 	var fields []string
 	if m.FieldCleared(chunk.FieldLeaseExpiresAt) {
 		fields = append(fields, chunk.FieldLeaseExpiresAt)
+	}
+	if m.FieldCleared(chunk.FieldSizeInput) {
+		fields = append(fields, chunk.FieldSizeInput)
+	}
+	if m.FieldCleared(chunk.FieldSizeContent) {
+		fields = append(fields, chunk.FieldSizeContent)
+	}
+	if m.FieldCleared(chunk.FieldSizeOutput) {
+		fields = append(fields, chunk.FieldSizeOutput)
 	}
 	if m.FieldCleared(chunk.FieldSha256Input) {
 		fields = append(fields, chunk.FieldSha256Input)
@@ -690,6 +1037,15 @@ func (m *ChunkMutation) ClearField(name string) error {
 	switch name {
 	case chunk.FieldLeaseExpiresAt:
 		m.ClearLeaseExpiresAt()
+		return nil
+	case chunk.FieldSizeInput:
+		m.ClearSizeInput()
+		return nil
+	case chunk.FieldSizeContent:
+		m.ClearSizeContent()
+		return nil
+	case chunk.FieldSizeOutput:
+		m.ClearSizeOutput()
 		return nil
 	case chunk.FieldSha256Input:
 		m.ClearSha256Input()
@@ -723,6 +1079,15 @@ func (m *ChunkMutation) ResetField(name string) error {
 	case chunk.FieldState:
 		m.ResetState()
 		return nil
+	case chunk.FieldSizeInput:
+		m.ResetSizeInput()
+		return nil
+	case chunk.FieldSizeContent:
+		m.ResetSizeContent()
+		return nil
+	case chunk.FieldSizeOutput:
+		m.ResetSizeOutput()
+		return nil
 	case chunk.FieldSha256Input:
 		m.ResetSha256Input()
 		return nil
@@ -738,49 +1103,77 @@ func (m *ChunkMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ChunkMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.worker != nil {
+		edges = append(edges, chunk.EdgeWorker)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *ChunkMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case chunk.EdgeWorker:
+		if id := m.worker; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ChunkMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *ChunkMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ChunkMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedworker {
+		edges = append(edges, chunk.EdgeWorker)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *ChunkMutation) EdgeCleared(name string) bool {
+	switch name {
+	case chunk.EdgeWorker:
+		return m.clearedworker
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *ChunkMutation) ClearEdge(name string) error {
+	switch name {
+	case chunk.EdgeWorker:
+		m.ClearWorker()
+		return nil
+	}
 	return fmt.Errorf("unknown Chunk unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *ChunkMutation) ResetEdge(name string) error {
+	switch name {
+	case chunk.EdgeWorker:
+		m.ResetWorker()
+		return nil
+	}
 	return fmt.Errorf("unknown Chunk edge %s", name)
 }
 
@@ -795,6 +1188,9 @@ type WorkerMutation struct {
 	name          *string
 	token         *string
 	clearedFields map[string]struct{}
+	chunks        map[string]struct{}
+	removedchunks map[string]struct{}
+	clearedchunks bool
 	done          bool
 	oldValue      func(context.Context) (*Worker, error)
 	predicates    []predicate.Worker
@@ -1029,6 +1425,60 @@ func (m *WorkerMutation) ResetToken() {
 	m.token = nil
 }
 
+// AddChunkIDs adds the "chunks" edge to the Chunk entity by ids.
+func (m *WorkerMutation) AddChunkIDs(ids ...string) {
+	if m.chunks == nil {
+		m.chunks = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.chunks[ids[i]] = struct{}{}
+	}
+}
+
+// ClearChunks clears the "chunks" edge to the Chunk entity.
+func (m *WorkerMutation) ClearChunks() {
+	m.clearedchunks = true
+}
+
+// ChunksCleared reports if the "chunks" edge to the Chunk entity was cleared.
+func (m *WorkerMutation) ChunksCleared() bool {
+	return m.clearedchunks
+}
+
+// RemoveChunkIDs removes the "chunks" edge to the Chunk entity by IDs.
+func (m *WorkerMutation) RemoveChunkIDs(ids ...string) {
+	if m.removedchunks == nil {
+		m.removedchunks = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.chunks, ids[i])
+		m.removedchunks[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedChunks returns the removed IDs of the "chunks" edge to the Chunk entity.
+func (m *WorkerMutation) RemovedChunksIDs() (ids []string) {
+	for id := range m.removedchunks {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ChunksIDs returns the "chunks" edge IDs in the mutation.
+func (m *WorkerMutation) ChunksIDs() (ids []string) {
+	for id := range m.chunks {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetChunks resets all changes to the "chunks" edge.
+func (m *WorkerMutation) ResetChunks() {
+	m.chunks = nil
+	m.clearedchunks = false
+	m.removedchunks = nil
+}
+
 // Where appends a list predicates to the WorkerMutation builder.
 func (m *WorkerMutation) Where(ps ...predicate.Worker) {
 	m.predicates = append(m.predicates, ps...)
@@ -1198,48 +1648,84 @@ func (m *WorkerMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkerMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.chunks != nil {
+		edges = append(edges, worker.EdgeChunks)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *WorkerMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case worker.EdgeChunks:
+		ids := make([]ent.Value, 0, len(m.chunks))
+		for id := range m.chunks {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkerMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedchunks != nil {
+		edges = append(edges, worker.EdgeChunks)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *WorkerMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case worker.EdgeChunks:
+		ids := make([]ent.Value, 0, len(m.removedchunks))
+		for id := range m.removedchunks {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkerMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedchunks {
+		edges = append(edges, worker.EdgeChunks)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *WorkerMutation) EdgeCleared(name string) bool {
+	switch name {
+	case worker.EdgeChunks:
+		return m.clearedchunks
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *WorkerMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Worker unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *WorkerMutation) ResetEdge(name string) error {
+	switch name {
+	case worker.EdgeChunks:
+		m.ResetChunks()
+		return nil
+	}
 	return fmt.Errorf("unknown Worker edge %s", name)
 }

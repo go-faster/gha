@@ -11,6 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/go-faster/gha/internal/ent/chunk"
+	"github.com/go-faster/gha/internal/ent/worker"
+	"github.com/google/uuid"
 )
 
 // ChunkCreate is the builder for creating a Chunk entity.
@@ -82,6 +84,48 @@ func (cc *ChunkCreate) SetNillableState(c *chunk.State) *ChunkCreate {
 	return cc
 }
 
+// SetSizeInput sets the "size_input" field.
+func (cc *ChunkCreate) SetSizeInput(i int64) *ChunkCreate {
+	cc.mutation.SetSizeInput(i)
+	return cc
+}
+
+// SetNillableSizeInput sets the "size_input" field if the given value is not nil.
+func (cc *ChunkCreate) SetNillableSizeInput(i *int64) *ChunkCreate {
+	if i != nil {
+		cc.SetSizeInput(*i)
+	}
+	return cc
+}
+
+// SetSizeContent sets the "size_content" field.
+func (cc *ChunkCreate) SetSizeContent(i int64) *ChunkCreate {
+	cc.mutation.SetSizeContent(i)
+	return cc
+}
+
+// SetNillableSizeContent sets the "size_content" field if the given value is not nil.
+func (cc *ChunkCreate) SetNillableSizeContent(i *int64) *ChunkCreate {
+	if i != nil {
+		cc.SetSizeContent(*i)
+	}
+	return cc
+}
+
+// SetSizeOutput sets the "size_output" field.
+func (cc *ChunkCreate) SetSizeOutput(i int64) *ChunkCreate {
+	cc.mutation.SetSizeOutput(i)
+	return cc
+}
+
+// SetNillableSizeOutput sets the "size_output" field if the given value is not nil.
+func (cc *ChunkCreate) SetNillableSizeOutput(i *int64) *ChunkCreate {
+	if i != nil {
+		cc.SetSizeOutput(*i)
+	}
+	return cc
+}
+
 // SetSha256Input sets the "sha256_input" field.
 func (cc *ChunkCreate) SetSha256Input(s string) *ChunkCreate {
 	cc.mutation.SetSha256Input(s)
@@ -128,6 +172,25 @@ func (cc *ChunkCreate) SetNillableSha256Output(s *string) *ChunkCreate {
 func (cc *ChunkCreate) SetID(s string) *ChunkCreate {
 	cc.mutation.SetID(s)
 	return cc
+}
+
+// SetWorkerID sets the "worker" edge to the Worker entity by ID.
+func (cc *ChunkCreate) SetWorkerID(id uuid.UUID) *ChunkCreate {
+	cc.mutation.SetWorkerID(id)
+	return cc
+}
+
+// SetNillableWorkerID sets the "worker" edge to the Worker entity by ID if the given value is not nil.
+func (cc *ChunkCreate) SetNillableWorkerID(id *uuid.UUID) *ChunkCreate {
+	if id != nil {
+		cc = cc.SetWorkerID(*id)
+	}
+	return cc
+}
+
+// SetWorker sets the "worker" edge to the Worker entity.
+func (cc *ChunkCreate) SetWorker(w *Worker) *ChunkCreate {
+	return cc.SetWorkerID(w.ID)
 }
 
 // Mutation returns the ChunkMutation object of the builder.
@@ -306,6 +369,30 @@ func (cc *ChunkCreate) createSpec() (*Chunk, *sqlgraph.CreateSpec) {
 		})
 		_node.State = value
 	}
+	if value, ok := cc.mutation.SizeInput(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeInput,
+		})
+		_node.SizeInput = value
+	}
+	if value, ok := cc.mutation.SizeContent(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeContent,
+		})
+		_node.SizeContent = value
+	}
+	if value, ok := cc.mutation.SizeOutput(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: chunk.FieldSizeOutput,
+		})
+		_node.SizeOutput = value
+	}
 	if value, ok := cc.mutation.Sha256Input(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -329,6 +416,26 @@ func (cc *ChunkCreate) createSpec() (*Chunk, *sqlgraph.CreateSpec) {
 			Column: chunk.FieldSha256Output,
 		})
 		_node.Sha256Output = &value
+	}
+	if nodes := cc.mutation.WorkerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   chunk.WorkerTable,
+			Columns: []string{chunk.WorkerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: worker.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.worker_chunks = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

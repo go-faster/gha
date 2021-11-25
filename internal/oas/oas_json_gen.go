@@ -118,6 +118,8 @@ func (s Job) Encode(e *jx.Encoder) {
 		s.JobNothing.Encode(e)
 	case JobDownloadJob:
 		s.JobDownload.Encode(e)
+	case JobInventoryJob:
+		s.JobInventory.Encode(e)
 	}
 }
 
@@ -146,6 +148,9 @@ func (s *Job) Decode(d *jx.Decoder) error {
 				case "download":
 					s.Type = JobDownloadJob
 					found = true
+				case "inventory":
+					s.Type = JobInventoryJob
+					found = true
 				case "nothing":
 					s.Type = JobNothingJob
 					found = true
@@ -171,6 +176,10 @@ func (s *Job) Decode(d *jx.Decoder) error {
 		if err := s.JobDownload.Decode(d); err != nil {
 			return err
 		}
+	case JobInventoryJob:
+		if err := s.JobInventory.Decode(d); err != nil {
+			return err
+		}
 	default:
 		return errors.Errorf("inferred invalid type: %s", s.Type)
 	}
@@ -193,6 +202,44 @@ func (s JobDownload) Encode(e *jx.Encoder) {
 func (s *JobDownload) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New(`invalid: unable to decode JobDownload to nil`)
+	}
+	return d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "type":
+			v, err := d.Str()
+			s.Type = string(v)
+			if err != nil {
+				return err
+			}
+		case "date":
+			v, err := d.Str()
+			s.Date = string(v)
+			if err != nil {
+				return err
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	})
+}
+
+// Encode implements json.Marshaler.
+func (s JobInventory) Encode(e *jx.Encoder) {
+	e.ObjStart()
+
+	e.FieldStart("type")
+	e.Str(s.Type)
+
+	e.FieldStart("date")
+	e.Str(s.Date)
+	e.ObjEnd()
+}
+
+// Decode decodes JobInventory from json.
+func (s *JobInventory) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New(`invalid: unable to decode JobInventory to nil`)
 	}
 	return d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -296,18 +343,26 @@ func (o *OptString) Decode(d *jx.Decoder) error {
 func (s Progress) Encode(e *jx.Encoder) {
 	e.ObjStart()
 
-	e.FieldStart("done")
-	e.Bool(s.Done)
+	e.FieldStart("event")
+	s.Event.Encode(e)
 
 	e.FieldStart("key")
 	e.Str(s.Key)
-	if s.SizeBytes.Set {
-		e.FieldStart("size_bytes")
-		s.SizeBytes.Encode(e)
+	if s.InputSizeBytes.Set {
+		e.FieldStart("input_size_bytes")
+		s.InputSizeBytes.Encode(e)
 	}
-	if s.ReadyBytes.Set {
-		e.FieldStart("ready_bytes")
-		s.ReadyBytes.Encode(e)
+	if s.ContentSizeBytes.Set {
+		e.FieldStart("content_size_bytes")
+		s.ContentSizeBytes.Encode(e)
+	}
+	if s.OutputSizeBytes.Set {
+		e.FieldStart("output_size_bytes")
+		s.OutputSizeBytes.Encode(e)
+	}
+	if s.InputReadyBytes.Set {
+		e.FieldStart("input_ready_bytes")
+		s.InputReadyBytes.Encode(e)
 	}
 	if s.SHA256Input.Set {
 		e.FieldStart("sha256_input")
@@ -331,10 +386,8 @@ func (s *Progress) Decode(d *jx.Decoder) error {
 	}
 	return d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "done":
-			v, err := d.Bool()
-			s.Done = bool(v)
-			if err != nil {
+		case "event":
+			if err := s.Event.Decode(d); err != nil {
 				return err
 			}
 		case "key":
@@ -343,14 +396,24 @@ func (s *Progress) Decode(d *jx.Decoder) error {
 			if err != nil {
 				return err
 			}
-		case "size_bytes":
-			s.SizeBytes.Reset()
-			if err := s.SizeBytes.Decode(d); err != nil {
+		case "input_size_bytes":
+			s.InputSizeBytes.Reset()
+			if err := s.InputSizeBytes.Decode(d); err != nil {
 				return err
 			}
-		case "ready_bytes":
-			s.ReadyBytes.Reset()
-			if err := s.ReadyBytes.Decode(d); err != nil {
+		case "content_size_bytes":
+			s.ContentSizeBytes.Reset()
+			if err := s.ContentSizeBytes.Decode(d); err != nil {
+				return err
+			}
+		case "output_size_bytes":
+			s.OutputSizeBytes.Reset()
+			if err := s.OutputSizeBytes.Decode(d); err != nil {
+				return err
+			}
+		case "input_ready_bytes":
+			s.InputReadyBytes.Reset()
+			if err := s.InputReadyBytes.Decode(d); err != nil {
 				return err
 			}
 		case "sha256_input":
@@ -373,6 +436,24 @@ func (s *Progress) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	})
+}
+
+// Encode encodes ProgressEvent as json.
+func (s ProgressEvent) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes ProgressEvent from json.
+func (s *ProgressEvent) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New(`invalid: unable to decode ProgressEvent to nil`)
+	}
+	v, err := d.Str()
+	if err != nil {
+		return err
+	}
+	*s = ProgressEvent(v)
+	return nil
 }
 
 // Encode implements json.Marshaler.

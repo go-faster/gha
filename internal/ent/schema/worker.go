@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -20,7 +21,9 @@ func (Worker) Fields() []ent.Field {
 
 // Edges of the Worker.
 func (Worker) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("chunks", Chunk.Type),
+	}
 }
 
 func (Worker) Mixin() []ent.Mixin {

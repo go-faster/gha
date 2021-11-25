@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/go-faster/gha/internal/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -492,6 +493,34 @@ func TokenEqualFold(v string) predicate.Worker {
 func TokenContainsFold(v string) predicate.Worker {
 	return predicate.Worker(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldToken), v))
+	})
+}
+
+// HasChunks applies the HasEdge predicate on the "chunks" edge.
+func HasChunks() predicate.Worker {
+	return predicate.Worker(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ChunksTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ChunksTable, ChunksColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasChunksWith applies the HasEdge predicate on the "chunks" edge with a given conditions (other predicates).
+func HasChunksWith(preds ...predicate.Chunk) predicate.Worker {
+	return predicate.Worker(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ChunksInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ChunksTable, ChunksColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	})
 }
 

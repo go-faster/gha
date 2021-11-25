@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/go-faster/gha/internal/ent/chunk"
 	"github.com/go-faster/gha/internal/ent/worker"
 	"github.com/google/uuid"
 )
@@ -65,6 +66,21 @@ func (wc *WorkerCreate) SetToken(s string) *WorkerCreate {
 func (wc *WorkerCreate) SetID(u uuid.UUID) *WorkerCreate {
 	wc.mutation.SetID(u)
 	return wc
+}
+
+// AddChunkIDs adds the "chunks" edge to the Chunk entity by IDs.
+func (wc *WorkerCreate) AddChunkIDs(ids ...string) *WorkerCreate {
+	wc.mutation.AddChunkIDs(ids...)
+	return wc
+}
+
+// AddChunks adds the "chunks" edges to the Chunk entity.
+func (wc *WorkerCreate) AddChunks(c ...*Chunk) *WorkerCreate {
+	ids := make([]string, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return wc.AddChunkIDs(ids...)
 }
 
 // Mutation returns the WorkerMutation object of the builder.
@@ -229,6 +245,25 @@ func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 			Column: worker.FieldToken,
 		})
 		_node.Token = value
+	}
+	if nodes := wc.mutation.ChunksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.ChunksTable,
+			Columns: []string{worker.ChunksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: chunk.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

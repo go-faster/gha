@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/go-faster/gha/internal/ent/chunk"
 	"github.com/go-faster/gha/internal/ent/predicate"
 	"github.com/go-faster/gha/internal/ent/worker"
 )
@@ -45,9 +46,45 @@ func (wu *WorkerUpdate) SetToken(s string) *WorkerUpdate {
 	return wu
 }
 
+// AddChunkIDs adds the "chunks" edge to the Chunk entity by IDs.
+func (wu *WorkerUpdate) AddChunkIDs(ids ...string) *WorkerUpdate {
+	wu.mutation.AddChunkIDs(ids...)
+	return wu
+}
+
+// AddChunks adds the "chunks" edges to the Chunk entity.
+func (wu *WorkerUpdate) AddChunks(c ...*Chunk) *WorkerUpdate {
+	ids := make([]string, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return wu.AddChunkIDs(ids...)
+}
+
 // Mutation returns the WorkerMutation object of the builder.
 func (wu *WorkerUpdate) Mutation() *WorkerMutation {
 	return wu.mutation
+}
+
+// ClearChunks clears all "chunks" edges to the Chunk entity.
+func (wu *WorkerUpdate) ClearChunks() *WorkerUpdate {
+	wu.mutation.ClearChunks()
+	return wu
+}
+
+// RemoveChunkIDs removes the "chunks" edge to Chunk entities by IDs.
+func (wu *WorkerUpdate) RemoveChunkIDs(ids ...string) *WorkerUpdate {
+	wu.mutation.RemoveChunkIDs(ids...)
+	return wu
+}
+
+// RemoveChunks removes "chunks" edges to Chunk entities.
+func (wu *WorkerUpdate) RemoveChunks(c ...*Chunk) *WorkerUpdate {
+	ids := make([]string, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return wu.RemoveChunkIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -152,6 +189,60 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: worker.FieldToken,
 		})
 	}
+	if wu.mutation.ChunksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.ChunksTable,
+			Columns: []string{worker.ChunksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: chunk.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wu.mutation.RemovedChunksIDs(); len(nodes) > 0 && !wu.mutation.ChunksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.ChunksTable,
+			Columns: []string{worker.ChunksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: chunk.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wu.mutation.ChunksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.ChunksTable,
+			Columns: []string{worker.ChunksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: chunk.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, wu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{worker.Label}
@@ -189,9 +280,45 @@ func (wuo *WorkerUpdateOne) SetToken(s string) *WorkerUpdateOne {
 	return wuo
 }
 
+// AddChunkIDs adds the "chunks" edge to the Chunk entity by IDs.
+func (wuo *WorkerUpdateOne) AddChunkIDs(ids ...string) *WorkerUpdateOne {
+	wuo.mutation.AddChunkIDs(ids...)
+	return wuo
+}
+
+// AddChunks adds the "chunks" edges to the Chunk entity.
+func (wuo *WorkerUpdateOne) AddChunks(c ...*Chunk) *WorkerUpdateOne {
+	ids := make([]string, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return wuo.AddChunkIDs(ids...)
+}
+
 // Mutation returns the WorkerMutation object of the builder.
 func (wuo *WorkerUpdateOne) Mutation() *WorkerMutation {
 	return wuo.mutation
+}
+
+// ClearChunks clears all "chunks" edges to the Chunk entity.
+func (wuo *WorkerUpdateOne) ClearChunks() *WorkerUpdateOne {
+	wuo.mutation.ClearChunks()
+	return wuo
+}
+
+// RemoveChunkIDs removes the "chunks" edge to Chunk entities by IDs.
+func (wuo *WorkerUpdateOne) RemoveChunkIDs(ids ...string) *WorkerUpdateOne {
+	wuo.mutation.RemoveChunkIDs(ids...)
+	return wuo
+}
+
+// RemoveChunks removes "chunks" edges to Chunk entities.
+func (wuo *WorkerUpdateOne) RemoveChunks(c ...*Chunk) *WorkerUpdateOne {
+	ids := make([]string, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return wuo.RemoveChunkIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -319,6 +446,60 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 			Value:  value,
 			Column: worker.FieldToken,
 		})
+	}
+	if wuo.mutation.ChunksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.ChunksTable,
+			Columns: []string{worker.ChunksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: chunk.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wuo.mutation.RemovedChunksIDs(); len(nodes) > 0 && !wuo.mutation.ChunksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.ChunksTable,
+			Columns: []string{worker.ChunksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: chunk.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wuo.mutation.ChunksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.ChunksTable,
+			Columns: []string{worker.ChunksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: chunk.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Worker{config: wuo.config}
 	_spec.Assign = _node.assignValues

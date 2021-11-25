@@ -22,14 +22,29 @@ const (
 	FieldLeaseExpiresAt = "lease_expires_at"
 	// FieldState holds the string denoting the state field in the database.
 	FieldState = "state"
+	// FieldSizeInput holds the string denoting the size_input field in the database.
+	FieldSizeInput = "size_input"
+	// FieldSizeContent holds the string denoting the size_content field in the database.
+	FieldSizeContent = "size_content"
+	// FieldSizeOutput holds the string denoting the size_output field in the database.
+	FieldSizeOutput = "size_output"
 	// FieldSha256Input holds the string denoting the sha256_input field in the database.
 	FieldSha256Input = "sha256_input"
 	// FieldSha256Content holds the string denoting the sha256_content field in the database.
 	FieldSha256Content = "sha256_content"
 	// FieldSha256Output holds the string denoting the sha256_output field in the database.
 	FieldSha256Output = "sha256_output"
+	// EdgeWorker holds the string denoting the worker edge name in mutations.
+	EdgeWorker = "worker"
 	// Table holds the table name of the chunk in the database.
 	Table = "chunks"
+	// WorkerTable is the table that holds the worker relation/edge.
+	WorkerTable = "chunks"
+	// WorkerInverseTable is the table name for the Worker entity.
+	// It exists in this package in order to avoid circular dependency with the "worker" package.
+	WorkerInverseTable = "workers"
+	// WorkerColumn is the table column denoting the worker relation/edge.
+	WorkerColumn = "worker_chunks"
 )
 
 // Columns holds all SQL columns for chunk fields.
@@ -40,15 +55,29 @@ var Columns = []string{
 	FieldStart,
 	FieldLeaseExpiresAt,
 	FieldState,
+	FieldSizeInput,
+	FieldSizeContent,
+	FieldSizeOutput,
 	FieldSha256Input,
 	FieldSha256Content,
 	FieldSha256Output,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "chunks"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"worker_chunks",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -75,6 +104,8 @@ const (
 	StateNew         State = "New"
 	StateDownloading State = "Downloading"
 	StateDownloaded  State = "Downloaded"
+	StateInventory   State = "Inventory"
+	StateReady       State = "Ready"
 	StateProcessing  State = "Processing"
 	StateDone        State = "Done"
 )
@@ -86,7 +117,7 @@ func (s State) String() string {
 // StateValidator is a validator for the "state" field enum values. It is called by the builders before save.
 func StateValidator(s State) error {
 	switch s {
-	case StateNew, StateDownloading, StateDownloaded, StateProcessing, StateDone:
+	case StateNew, StateDownloading, StateDownloaded, StateInventory, StateReady, StateProcessing, StateDone:
 		return nil
 	default:
 		return fmt.Errorf("chunk: invalid enum value for state field: %q", s)

@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -23,8 +24,12 @@ func (Chunk) Fields() []ent.Field {
 			Comment("State expiration like heartbeat").Optional(),
 
 		field.Enum("state").
-			Values("New", "Downloading", "Downloaded", "Processing", "Done").
+			Values("New", "Downloading", "Downloaded", "Inventory", "Ready", "Processing", "Done").
 			Default("New"),
+
+		field.Int64("size_input").Optional(),
+		field.Int64("size_content").Optional(),
+		field.Int64("size_output").Optional(),
 
 		field.String("sha256_input").Nillable().Optional(),
 		field.String("sha256_content").Nillable().Optional(),
@@ -34,7 +39,9 @@ func (Chunk) Fields() []ent.Field {
 
 // Edges of the Chunk.
 func (Chunk) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.From("worker", Worker.Type).Ref("chunks").Unique(),
+	}
 }
 
 func (Chunk) Mixin() []ent.Mixin {

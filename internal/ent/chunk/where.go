@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/go-faster/gha/internal/ent/predicate"
 )
 
@@ -117,6 +118,27 @@ func Start(v time.Time) predicate.Chunk {
 func LeaseExpiresAt(v time.Time) predicate.Chunk {
 	return predicate.Chunk(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldLeaseExpiresAt), v))
+	})
+}
+
+// SizeInput applies equality check predicate on the "size_input" field. It's identical to SizeInputEQ.
+func SizeInput(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSizeInput), v))
+	})
+}
+
+// SizeContent applies equality check predicate on the "size_content" field. It's identical to SizeContentEQ.
+func SizeContent(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSizeContent), v))
+	})
+}
+
+// SizeOutput applies equality check predicate on the "size_output" field. It's identical to SizeOutputEQ.
+func SizeOutput(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSizeOutput), v))
 	})
 }
 
@@ -507,6 +529,276 @@ func StateNotIn(vs ...State) predicate.Chunk {
 	})
 }
 
+// SizeInputEQ applies the EQ predicate on the "size_input" field.
+func SizeInputEQ(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSizeInput), v))
+	})
+}
+
+// SizeInputNEQ applies the NEQ predicate on the "size_input" field.
+func SizeInputNEQ(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldSizeInput), v))
+	})
+}
+
+// SizeInputIn applies the In predicate on the "size_input" field.
+func SizeInputIn(vs ...int64) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldSizeInput), v...))
+	})
+}
+
+// SizeInputNotIn applies the NotIn predicate on the "size_input" field.
+func SizeInputNotIn(vs ...int64) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldSizeInput), v...))
+	})
+}
+
+// SizeInputGT applies the GT predicate on the "size_input" field.
+func SizeInputGT(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldSizeInput), v))
+	})
+}
+
+// SizeInputGTE applies the GTE predicate on the "size_input" field.
+func SizeInputGTE(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldSizeInput), v))
+	})
+}
+
+// SizeInputLT applies the LT predicate on the "size_input" field.
+func SizeInputLT(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldSizeInput), v))
+	})
+}
+
+// SizeInputLTE applies the LTE predicate on the "size_input" field.
+func SizeInputLTE(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldSizeInput), v))
+	})
+}
+
+// SizeInputIsNil applies the IsNil predicate on the "size_input" field.
+func SizeInputIsNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldSizeInput)))
+	})
+}
+
+// SizeInputNotNil applies the NotNil predicate on the "size_input" field.
+func SizeInputNotNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldSizeInput)))
+	})
+}
+
+// SizeContentEQ applies the EQ predicate on the "size_content" field.
+func SizeContentEQ(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSizeContent), v))
+	})
+}
+
+// SizeContentNEQ applies the NEQ predicate on the "size_content" field.
+func SizeContentNEQ(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldSizeContent), v))
+	})
+}
+
+// SizeContentIn applies the In predicate on the "size_content" field.
+func SizeContentIn(vs ...int64) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldSizeContent), v...))
+	})
+}
+
+// SizeContentNotIn applies the NotIn predicate on the "size_content" field.
+func SizeContentNotIn(vs ...int64) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldSizeContent), v...))
+	})
+}
+
+// SizeContentGT applies the GT predicate on the "size_content" field.
+func SizeContentGT(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldSizeContent), v))
+	})
+}
+
+// SizeContentGTE applies the GTE predicate on the "size_content" field.
+func SizeContentGTE(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldSizeContent), v))
+	})
+}
+
+// SizeContentLT applies the LT predicate on the "size_content" field.
+func SizeContentLT(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldSizeContent), v))
+	})
+}
+
+// SizeContentLTE applies the LTE predicate on the "size_content" field.
+func SizeContentLTE(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldSizeContent), v))
+	})
+}
+
+// SizeContentIsNil applies the IsNil predicate on the "size_content" field.
+func SizeContentIsNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldSizeContent)))
+	})
+}
+
+// SizeContentNotNil applies the NotNil predicate on the "size_content" field.
+func SizeContentNotNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldSizeContent)))
+	})
+}
+
+// SizeOutputEQ applies the EQ predicate on the "size_output" field.
+func SizeOutputEQ(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSizeOutput), v))
+	})
+}
+
+// SizeOutputNEQ applies the NEQ predicate on the "size_output" field.
+func SizeOutputNEQ(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldSizeOutput), v))
+	})
+}
+
+// SizeOutputIn applies the In predicate on the "size_output" field.
+func SizeOutputIn(vs ...int64) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldSizeOutput), v...))
+	})
+}
+
+// SizeOutputNotIn applies the NotIn predicate on the "size_output" field.
+func SizeOutputNotIn(vs ...int64) predicate.Chunk {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Chunk(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldSizeOutput), v...))
+	})
+}
+
+// SizeOutputGT applies the GT predicate on the "size_output" field.
+func SizeOutputGT(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldSizeOutput), v))
+	})
+}
+
+// SizeOutputGTE applies the GTE predicate on the "size_output" field.
+func SizeOutputGTE(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldSizeOutput), v))
+	})
+}
+
+// SizeOutputLT applies the LT predicate on the "size_output" field.
+func SizeOutputLT(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldSizeOutput), v))
+	})
+}
+
+// SizeOutputLTE applies the LTE predicate on the "size_output" field.
+func SizeOutputLTE(v int64) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldSizeOutput), v))
+	})
+}
+
+// SizeOutputIsNil applies the IsNil predicate on the "size_output" field.
+func SizeOutputIsNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldSizeOutput)))
+	})
+}
+
+// SizeOutputNotNil applies the NotNil predicate on the "size_output" field.
+func SizeOutputNotNil() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldSizeOutput)))
+	})
+}
+
 // Sha256InputEQ applies the EQ predicate on the "sha256_input" field.
 func Sha256InputEQ(v string) predicate.Chunk {
 	return predicate.Chunk(func(s *sql.Selector) {
@@ -879,6 +1171,34 @@ func Sha256OutputEqualFold(v string) predicate.Chunk {
 func Sha256OutputContainsFold(v string) predicate.Chunk {
 	return predicate.Chunk(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldSha256Output), v))
+	})
+}
+
+// HasWorker applies the HasEdge predicate on the "worker" edge.
+func HasWorker() predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(WorkerTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, WorkerTable, WorkerColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWorkerWith applies the HasEdge predicate on the "worker" edge with a given conditions (other predicates).
+func HasWorkerWith(preds ...predicate.Worker) predicate.Chunk {
+	return predicate.Chunk(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(WorkerInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, WorkerTable, WorkerColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	})
 }
 

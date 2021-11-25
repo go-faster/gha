@@ -46,9 +46,13 @@ type Options struct {
 type Result struct {
 	Path string
 
-	SHA256Data   string
-	SHA256Input  string
-	SHA256Output string
+	SizeOutput  int64
+	SizeInput   int64
+	SizeContent int64
+
+	SHA256Content string
+	SHA256Input   string
+	SHA256Output  string
 }
 
 type Hash struct {
@@ -182,6 +186,74 @@ func (p *Progress) done() {
 	p.Cancel()
 }
 
+var ErrNotFound = errors.New("not found")
+
+func (c *Client) Inventory(ctx context.Context, key string) (*Result, error) {
+	lg := c.lg.With(
+		zap.String("key", key),
+	)
+
+	date, err := time.Parse(entry.Layout, key)
+	if err != nil {
+		return nil, errors.Wrap(err, "key parse")
+	}
+
+	outName := fmt.Sprintf("%s.json.zst", date.Format(entry.Layout))
+	outPath := filepath.Join(c.dir, outName)
+	f, err := os.Open(outPath)
+	if os.IsNotExist(err) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "open")
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	link := GetURL(date)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, link, http.NoBody)
+	if err != nil {
+		return nil, errors.Wrap(err, "req")
+	}
+	start := time.Now()
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "get")
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+	if res.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("%s: bad code %d", link, res.StatusCode)
+	}
+	lg.Info("HEAD",
+		zap.String("url", link),
+		zap.Duration("duration", time.Since(start).Round(time.Millisecond)),
+	)
+
+	stat, err := f.Stat()
+	if err != nil {
+		return nil, errors.Wrap(err, "stat")
+	}
+
+	r, err := zstd.NewReader(f)
+	if err != nil {
+		return nil, errors.Wrap(err, "zstd")
+	}
+
+	sizeContent, err := io.Copy(io.Discard, r)
+	if err != nil {
+		return nil, errors.Wrap(err, "copy")
+	}
+
+	return &Result{
+		SizeContent: sizeContent,
+		SizeInput:   res.ContentLength,
+		SizeOutput:  stat.Size(),
+	}, nil
+}
+
 func (c *Client) Download(ctx context.Context, opt Options) (*Result, error) {
 	defer opt.Progress.done()
 
@@ -223,9 +295,9 @@ func (c *Client) Download(ctx context.Context, opt Options) (*Result, error) {
 	)
 
 	var (
-		hInput  = NewHash() // hash for input
-		hData   = NewHash() // hash for json
-		hOutput = NewHash() // hash for output
+		hInput   = NewHash() // hash for input
+		hContent = NewHash() // hash for json
+		hOutput  = NewHash() // hash for output
 	)
 
 	// Reading body as gzip.
@@ -240,7 +312,6 @@ func (c *Client) Download(ctx context.Context, opt Options) (*Result, error) {
 		return nil, errors.Wrap(err, "gzip")
 	}
 
-	// Output. Change to file.
 	outName := fmt.Sprintf("%s.json.zst", date.Format(entry.Layout))
 	outPath := filepath.Join(c.dir, outName)
 	out, err := os.Create(outPath)
@@ -271,7 +342,7 @@ func (c *Client) Download(ctx context.Context, opt Options) (*Result, error) {
 
 	// Up to 1 MiB for copy.
 	buf := make([]byte, 1024*1024)
-	total, err := io.CopyBuffer(io.MultiWriter(outWriter, hData), reader, buf)
+	content, err := io.CopyBuffer(io.MultiWriter(outWriter, hContent), reader, buf)
 	if err != nil {
 		return nil, errors.Wrap(err, "copy")
 	}
@@ -286,7 +357,7 @@ func (c *Client) Download(ctx context.Context, opt Options) (*Result, error) {
 		return nil, errors.Wrap(err, "stat")
 	}
 	ratio := float64(res.ContentLength) / float64(stat.Size())
-	totalRatio := float64(total) / float64(stat.Size())
+	absRatio := float64(content) / float64(stat.Size())
 
 	if err := out.Close(); err != nil {
 		return nil, errors.Wrap(err, "close file")
@@ -296,21 +367,26 @@ func (c *Client) Download(ctx context.Context, opt Options) (*Result, error) {
 		zap.String("path", outPath),
 		zap.String("date", date.Format(entry.Layout)),
 		zap.Int64("bytes_output", stat.Size()),
-		zap.Int64("bytes_total", total),
+		zap.Int64("bytes_content", content),
 		zap.Int64("bytes_input", res.ContentLength),
 		zap.String("relative_ratio", fmt.Sprintf("%.0f%%", ratio*100)),
-		zap.String("absolute_ratio", fmt.Sprintf("%.0f%%", totalRatio*100)),
+		zap.String("absolute_ratio", fmt.Sprintf("%.0f%%", absRatio*100)),
 		zap.Duration("duration", time.Since(start).Round(time.Millisecond)),
 	)
 
 	lg.Info("Input", hInput.Fields()...)
-	lg.Info("Data", hData.Fields()...)
+	lg.Info("Content", hContent.Fields()...)
 	lg.Info("Output", hOutput.Fields()...)
 
 	return &Result{
-		Path:         outPath,
-		SHA256Data:   hexHash(hData.SHA256),
-		SHA256Input:  hexHash(hInput.SHA256),
-		SHA256Output: hexHash(hOutput.SHA256),
+		Path: outPath,
+
+		SizeContent: content,
+		SizeInput:   res.ContentLength,
+		SizeOutput:  stat.Size(),
+
+		SHA256Content: hexHash(hContent.SHA256),
+		SHA256Input:   hexHash(hInput.SHA256),
+		SHA256Output:  hexHash(hOutput.SHA256),
 	}, nil
 }

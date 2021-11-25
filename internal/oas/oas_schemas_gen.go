@@ -80,9 +80,10 @@ type ErrorStatusCode struct {
 // Ref: #/components/schemas/Job
 // Job represents sum type.
 type Job struct {
-	Type        JobType // switch on this field
-	JobNothing  JobNothing
-	JobDownload JobDownload
+	Type         JobType // switch on this field
+	JobNothing   JobNothing
+	JobDownload  JobDownload
+	JobInventory JobInventory
 }
 
 // JobType is oneOf type of Job.
@@ -90,8 +91,9 @@ type JobType string
 
 // Possible values for JobType.
 const (
-	JobNothingJob  JobType = "JobNothing"
-	JobDownloadJob JobType = "JobDownload"
+	JobNothingJob   JobType = "JobNothing"
+	JobDownloadJob  JobType = "JobDownload"
+	JobInventoryJob JobType = "JobInventory"
 )
 
 // IsJobNothing reports whether Job is JobNothing.
@@ -99,6 +101,9 @@ func (s Job) IsJobNothing() bool { return s.Type == JobNothingJob }
 
 // IsJobDownload reports whether Job is JobDownload.
 func (s Job) IsJobDownload() bool { return s.Type == JobDownloadJob }
+
+// IsJobInventory reports whether Job is JobInventory.
+func (s Job) IsJobInventory() bool { return s.Type == JobInventoryJob }
 
 // SetJobNothing sets Job to JobNothing.
 func (s *Job) SetJobNothing(v JobNothing) {
@@ -142,8 +147,35 @@ func NewJobDownloadJob(v JobDownload) Job {
 	return s
 }
 
+// SetJobInventory sets Job to JobInventory.
+func (s *Job) SetJobInventory(v JobInventory) {
+	s.Type = JobInventoryJob
+	s.JobInventory = v
+}
+
+// GetJobInventory returns JobInventory and true boolean if Job is JobInventory.
+func (s Job) GetJobInventory() (v JobInventory, ok bool) {
+	if !s.IsJobInventory() {
+		return v, false
+	}
+	return s.JobInventory, true
+}
+
+// NewJobInventoryJob returns new Job from JobInventory.
+func NewJobInventoryJob(v JobInventory) Job {
+	var s Job
+	s.SetJobInventory(v)
+	return s
+}
+
 // Ref: #/components/schemas/JobDownload
 type JobDownload struct {
+	Type string `json:"type"`
+	Date string `json:"date"`
+}
+
+// Ref: #/components/schemas/JobInventory
+type JobInventory struct {
 	Type string `json:"type"`
 	Date string `json:"date"`
 }
@@ -231,14 +263,24 @@ func (o OptString) Get() (v string, ok bool) {
 
 // Ref: #/components/schemas/Progress
 type Progress struct {
-	Done          bool      `json:"done"`
-	Key           string    `json:"key"`
-	SizeBytes     OptInt64  `json:"size_bytes"`
-	ReadyBytes    OptInt64  `json:"ready_bytes"`
-	SHA256Input   OptString `json:"sha256_input"`
-	SHA256Content OptString `json:"sha256_content"`
-	SHA256Output  OptString `json:"sha256_output"`
+	Event            ProgressEvent `json:"event"`
+	Key              string        `json:"key"`
+	InputSizeBytes   OptInt64      `json:"input_size_bytes"`
+	ContentSizeBytes OptInt64      `json:"content_size_bytes"`
+	OutputSizeBytes  OptInt64      `json:"output_size_bytes"`
+	InputReadyBytes  OptInt64      `json:"input_ready_bytes"`
+	SHA256Input      OptString     `json:"sha256_input"`
+	SHA256Content    OptString     `json:"sha256_content"`
+	SHA256Output     OptString     `json:"sha256_output"`
 }
+
+type ProgressEvent string
+
+const (
+	ProgressEventDone        ProgressEvent = "Done"
+	ProgressEventDownloading ProgressEvent = "Downloading"
+	ProgressEventInventory   ProgressEvent = "Inventory"
+)
 
 // Ref: #/components/schemas/Status
 type Status struct {

@@ -14,6 +14,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/go-faster/gha/internal/ent/chunk"
 	"github.com/go-faster/gha/internal/ent/predicate"
+	"github.com/go-faster/gha/internal/ent/worker"
+	"github.com/google/uuid"
 )
 
 // ChunkQuery is the builder for querying Chunk entities.
@@ -25,6 +27,9 @@ type ChunkQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Chunk
+	// eager-loading edges.
+	withWorker *WorkerQuery
+	withFKs    bool
 	modifiers  []func(s *sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -60,6 +65,28 @@ func (cq *ChunkQuery) Unique(unique bool) *ChunkQuery {
 func (cq *ChunkQuery) Order(o ...OrderFunc) *ChunkQuery {
 	cq.order = append(cq.order, o...)
 	return cq
+}
+
+// QueryWorker chains the current query on the "worker" edge.
+func (cq *ChunkQuery) QueryWorker() *WorkerQuery {
+	query := &WorkerQuery{config: cq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chunk.Table, chunk.FieldID, selector),
+			sqlgraph.To(worker.Table, worker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, chunk.WorkerTable, chunk.WorkerColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Chunk entity from the query.
@@ -243,10 +270,22 @@ func (cq *ChunkQuery) Clone() *ChunkQuery {
 		offset:     cq.offset,
 		order:      append([]OrderFunc{}, cq.order...),
 		predicates: append([]predicate.Chunk{}, cq.predicates...),
+		withWorker: cq.withWorker.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
 	}
+}
+
+// WithWorker tells the query-builder to eager-load the nodes that are connected to
+// the "worker" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *ChunkQuery) WithWorker(opts ...func(*WorkerQuery)) *ChunkQuery {
+	query := &WorkerQuery{config: cq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withWorker = query
+	return cq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -312,9 +351,19 @@ func (cq *ChunkQuery) prepareQuery(ctx context.Context) error {
 
 func (cq *ChunkQuery) sqlAll(ctx context.Context) ([]*Chunk, error) {
 	var (
-		nodes = []*Chunk{}
-		_spec = cq.querySpec()
+		nodes       = []*Chunk{}
+		withFKs     = cq.withFKs
+		_spec       = cq.querySpec()
+		loadedTypes = [1]bool{
+			cq.withWorker != nil,
+		}
 	)
+	if cq.withWorker != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, chunk.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Chunk{config: cq.config}
 		nodes = append(nodes, node)
@@ -325,6 +374,7 @@ func (cq *ChunkQuery) sqlAll(ctx context.Context) ([]*Chunk, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if len(cq.modifiers) > 0 {
@@ -336,6 +386,36 @@ func (cq *ChunkQuery) sqlAll(ctx context.Context) ([]*Chunk, error) {
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := cq.withWorker; query != nil {
+		ids := make([]uuid.UUID, 0, len(nodes))
+		nodeids := make(map[uuid.UUID][]*Chunk)
+		for i := range nodes {
+			if nodes[i].worker_chunks == nil {
+				continue
+			}
+			fk := *nodes[i].worker_chunks
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(worker.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "worker_chunks" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Worker = n
+			}
+		}
+	}
+
 	return nodes, nil
 }
 

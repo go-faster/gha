@@ -9,6 +9,8 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/go-faster/gha/internal/ent/chunk"
+	"github.com/go-faster/gha/internal/ent/worker"
+	"github.com/google/uuid"
 )
 
 // Chunk is the model entity for the Chunk schema.
@@ -31,12 +33,45 @@ type Chunk struct {
 	LeaseExpiresAt time.Time `json:"lease_expires_at,omitempty"`
 	// State holds the value of the "state" field.
 	State chunk.State `json:"state,omitempty"`
+	// SizeInput holds the value of the "size_input" field.
+	SizeInput int64 `json:"size_input,omitempty"`
+	// SizeContent holds the value of the "size_content" field.
+	SizeContent int64 `json:"size_content,omitempty"`
+	// SizeOutput holds the value of the "size_output" field.
+	SizeOutput int64 `json:"size_output,omitempty"`
 	// Sha256Input holds the value of the "sha256_input" field.
 	Sha256Input *string `json:"sha256_input,omitempty"`
 	// Sha256Content holds the value of the "sha256_content" field.
 	Sha256Content *string `json:"sha256_content,omitempty"`
 	// Sha256Output holds the value of the "sha256_output" field.
 	Sha256Output *string `json:"sha256_output,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ChunkQuery when eager-loading is set.
+	Edges         ChunkEdges `json:"edges"`
+	worker_chunks *uuid.UUID
+}
+
+// ChunkEdges holds the relations/edges for other nodes in the graph.
+type ChunkEdges struct {
+	// Worker holds the value of the worker edge.
+	Worker *Worker `json:"worker,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// WorkerOrErr returns the Worker value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ChunkEdges) WorkerOrErr() (*Worker, error) {
+	if e.loadedTypes[0] {
+		if e.Worker == nil {
+			// The edge worker was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: worker.Label}
+		}
+		return e.Worker, nil
+	}
+	return nil, &NotLoadedError{edge: "worker"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -44,10 +79,14 @@ func (*Chunk) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case chunk.FieldSizeInput, chunk.FieldSizeContent, chunk.FieldSizeOutput:
+			values[i] = new(sql.NullInt64)
 		case chunk.FieldID, chunk.FieldState, chunk.FieldSha256Input, chunk.FieldSha256Content, chunk.FieldSha256Output:
 			values[i] = new(sql.NullString)
 		case chunk.FieldCreatedAt, chunk.FieldUpdatedAt, chunk.FieldStart, chunk.FieldLeaseExpiresAt:
 			values[i] = new(sql.NullTime)
+		case chunk.ForeignKeys[0]: // worker_chunks
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Chunk", columns[i])
 		}
@@ -99,6 +138,24 @@ func (c *Chunk) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				c.State = chunk.State(value.String)
 			}
+		case chunk.FieldSizeInput:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field size_input", values[i])
+			} else if value.Valid {
+				c.SizeInput = value.Int64
+			}
+		case chunk.FieldSizeContent:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field size_content", values[i])
+			} else if value.Valid {
+				c.SizeContent = value.Int64
+			}
+		case chunk.FieldSizeOutput:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field size_output", values[i])
+			} else if value.Valid {
+				c.SizeOutput = value.Int64
+			}
 		case chunk.FieldSha256Input:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field sha256_input", values[i])
@@ -120,9 +177,21 @@ func (c *Chunk) assignValues(columns []string, values []interface{}) error {
 				c.Sha256Output = new(string)
 				*c.Sha256Output = value.String
 			}
+		case chunk.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field worker_chunks", values[i])
+			} else if value.Valid {
+				c.worker_chunks = new(uuid.UUID)
+				*c.worker_chunks = *value.S.(*uuid.UUID)
+			}
 		}
 	}
 	return nil
+}
+
+// QueryWorker queries the "worker" edge of the Chunk entity.
+func (c *Chunk) QueryWorker() *WorkerQuery {
+	return (&ChunkClient{config: c.config}).QueryWorker(c)
 }
 
 // Update returns a builder for updating this Chunk.
@@ -158,6 +227,12 @@ func (c *Chunk) String() string {
 	builder.WriteString(c.LeaseExpiresAt.Format(time.ANSIC))
 	builder.WriteString(", state=")
 	builder.WriteString(fmt.Sprintf("%v", c.State))
+	builder.WriteString(", size_input=")
+	builder.WriteString(fmt.Sprintf("%v", c.SizeInput))
+	builder.WriteString(", size_content=")
+	builder.WriteString(fmt.Sprintf("%v", c.SizeContent))
+	builder.WriteString(", size_output=")
+	builder.WriteString(fmt.Sprintf("%v", c.SizeOutput))
 	if v := c.Sha256Input; v != nil {
 		builder.WriteString(", sha256_input=")
 		builder.WriteString(*v)
