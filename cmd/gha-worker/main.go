@@ -172,6 +172,7 @@ func main() {
 						}
 						lastProgress = time.Now()
 						if _, err := api.Progress(ctx, oas.Progress{
+							Event:           oas.ProgressEventDownloading,
 							Key:             key,
 							InputSizeBytes:  oas.NewOptInt64(p.Total()),
 							InputReadyBytes: oas.NewOptInt64(p.ReadyBytes()),

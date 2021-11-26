@@ -4,31 +4,49 @@ import (
 	"context"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/go-faster/errors"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/go-faster/gha/internal/ent"
 	"github.com/go-faster/gha/internal/ent/chunk"
 	"github.com/go-faster/gha/internal/ent/worker"
+	"github.com/go-faster/gha/internal/entry"
 	"github.com/go-faster/gha/internal/oas"
 )
 
-func EnsureRollback(tx *ent.Tx) func() {
-	var done bool
-	tx.OnRollback(func(rollbacker ent.Rollbacker) ent.Rollbacker {
-		done = true
-		return rollbacker
-	})
-	tx.OnCommit(func(committer ent.Committer) ent.Committer {
-		done = true
-		return committer
-	})
-	return func() {
-		if done {
-			return
-		}
-		_ = tx.Rollback()
+// Ensure condition on transaction state change.
+func Ensure(tx *ent.Tx) *State {
+	s := &State{
+		tx: tx,
 	}
+	tx.OnRollback(s.rollback)
+	tx.OnCommit(s.commit)
+	return s
+}
+
+type State struct {
+	done bool
+	tx   *ent.Tx
+}
+
+func (s *State) rollback(r ent.Rollbacker) ent.Rollbacker {
+	s.done = true
+	return r
+}
+
+func (s *State) commit(c ent.Committer) ent.Committer {
+	s.done = true
+	return c
+}
+
+// Rollback ensures rollback for transactions that are not done.
+func (s *State) Rollback() {
+	if s.done {
+		return
+	}
+	_ = s.tx.Rollback()
 }
 
 type Handler struct {
@@ -99,25 +117,87 @@ func New(db *ent.Client, lg *zap.Logger) *Handler {
 
 var _ oas.Handler = (*Handler)(nil)
 
-func (h Handler) Run(ctx context.Context) error {
+func (h Handler) lastTime(ctx context.Context) (time.Time, error) {
+	last, err := h.db.Chunk.Query().Order(ent.Desc(chunk.FieldID)).First(ctx)
+	if ent.IsNotFound(err) {
+		return entry.Start(), nil
+	}
+	if err != nil {
+		return time.Time{}, errors.Wrap(err, "query")
+	}
+	return last.Start, err
+}
+
+func (h Handler) addChunks(ctx context.Context, now time.Time) error {
+	h.lg.Info("Adding new chunks")
+
+	// Chunks are available ~4h from realtime.
+	to := now.Add(-time.Hour * 6).UTC()
+
+	start, err := h.lastTime(ctx)
+	if err != nil {
+		return errors.Wrap(err, "get list time")
+	}
+
+	tx, err := h.db.Tx(ctx)
+	defer Ensure(tx).Rollback()
+
+	if err != nil {
+		return errors.Wrap(err, "begin")
+	}
+
+	var created int
+	for current := start.UTC(); current.Before(to); current = current.Add(entry.Delta) {
+		id := current.Format(entry.Layout)
+
+		// HACK.
+		// See https://github.com/ernado/ent-upsert-no-rows
+		exist, err := tx.Chunk.Query().Where(
+			chunk.IDEQ(id),
+		).Exist(ctx)
+		if err != nil {
+			return errors.Wrap(err, "query")
+		}
+		if exist {
+			continue
+		}
+
+		created++
+		if err := tx.Chunk.Create().
+			SetID(current.Format(entry.Layout)).
+			SetStart(current).
+			SetCreatedAt(now).
+			SetUpdatedAt(now).
+			OnConflict(
+				sql.ConflictColumns(chunk.FieldID),
+				sql.DoNothing(),
+			).Ignore().Exec(ctx); err != nil {
+			return errors.Wrap(err, "save")
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(err, "commit")
+	}
+
+	lg := h.lg.With(
+		zap.String("from", start.Format(entry.Layout)),
+		zap.String("to", to.Format(entry.Layout)),
+	)
+	if created > 0 {
+		lg.Info("Added new chunks")
+	} else {
+		lg.Info("No new chunks")
+	}
+
+	return nil
+}
+
+func (h Handler) bgRun(ctx context.Context, f func(ctx context.Context, now time.Time) error) error {
 	t := time.NewTicker(time.Second * 10)
 	defer t.Stop()
 
-	tick := func(now time.Time) error {
-		if err := h.db.Chunk.Update().
-			Where(
-				chunk.StateEQ(chunk.StateDownloading),
-				chunk.LeaseExpiresAtLT(now),
-			).
-			SetNillableLeaseExpiresAt(nil).
-			SetState(chunk.StateNew).Exec(ctx); err != nil {
-			return errors.Wrap(err, "update")
-		}
-
-		return nil
-	}
-
-	if err := tick(time.Now()); err != nil {
+	if err := f(ctx, time.Now()); err != nil {
 		return errors.Wrap(err, "initial tick")
 	}
 
@@ -126,12 +206,46 @@ func (h Handler) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case now := <-t.C:
-			if err := tick(now); err != nil {
+			if err := f(ctx, now); err != nil {
 				return errors.Wrap(err, "tick")
 			}
 		}
 	}
+}
 
+func (h Handler) expireDownloading(ctx context.Context, now time.Time) error {
+	h.lg.Info("Expiring downloading chunks")
+
+	if err := h.db.Chunk.Update().
+		Where(
+			chunk.StateEQ(chunk.StateDownloading),
+			chunk.LeaseExpiresAtLT(now),
+		).
+		SetNillableLeaseExpiresAt(nil).
+		SetState(chunk.StateNew).Exec(ctx); err != nil {
+		return errors.Wrap(err, "update")
+	}
+
+	return nil
+}
+
+func (h Handler) Run(ctx context.Context) error {
+	g, ctx := errgroup.WithContext(ctx)
+
+	for _, task := range []func(ctx context.Context, now time.Time) error{
+		h.expireDownloading,
+		h.addChunks,
+	} {
+		job := task
+		g.Go(func() error {
+			if err := h.bgRun(ctx, job); err != nil {
+				return errors.Wrap(err, "background run failed")
+			}
+			return nil
+		})
+	}
+
+	return g.Wait()
 }
 
 func (h Handler) authToken(ctx context.Context, tok string) (*ent.Worker, error) {
@@ -160,7 +274,7 @@ func (h Handler) Poll(ctx context.Context, params oas.PollParams) (oas.Job, erro
 	if err != nil {
 		return oas.Job{}, errors.Wrap(err, "tx")
 	}
-	defer EnsureRollback(tx)()
+	defer Ensure(tx).Rollback()
 
 	ch, err := tx.Chunk.Query().Where(
 		chunk.StateIn(chunk.StateNew),

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/go-faster/gha/internal/ent/chunk"
@@ -20,6 +22,7 @@ type ChunkCreate struct {
 	config
 	mutation *ChunkMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -325,6 +328,7 @@ func (cc *ChunkCreate) createSpec() (*Chunk, *sqlgraph.CreateSpec) {
 			},
 		}
 	)
+	_spec.OnConflict = cc.conflict
 	if id, ok := cc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
@@ -440,10 +444,527 @@ func (cc *ChunkCreate) createSpec() (*Chunk, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Chunk.Create().
+//		SetCreatedAt(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ChunkUpsert) {
+//			SetCreatedAt(v+v).
+//		}).
+//		Exec(ctx)
+//
+func (cc *ChunkCreate) OnConflict(opts ...sql.ConflictOption) *ChunkUpsertOne {
+	cc.conflict = opts
+	return &ChunkUpsertOne{
+		create: cc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Chunk.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+//
+func (cc *ChunkCreate) OnConflictColumns(columns ...string) *ChunkUpsertOne {
+	cc.conflict = append(cc.conflict, sql.ConflictColumns(columns...))
+	return &ChunkUpsertOne{
+		create: cc,
+	}
+}
+
+type (
+	// ChunkUpsertOne is the builder for "upsert"-ing
+	//  one Chunk node.
+	ChunkUpsertOne struct {
+		create *ChunkCreate
+	}
+
+	// ChunkUpsert is the "OnConflict" setter.
+	ChunkUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetCreatedAt sets the "created_at" field.
+func (u *ChunkUpsert) SetCreatedAt(v time.Time) *ChunkUpsert {
+	u.Set(chunk.FieldCreatedAt, v)
+	return u
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *ChunkUpsert) UpdateCreatedAt() *ChunkUpsert {
+	u.SetExcluded(chunk.FieldCreatedAt)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ChunkUpsert) SetUpdatedAt(v time.Time) *ChunkUpsert {
+	u.Set(chunk.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ChunkUpsert) UpdateUpdatedAt() *ChunkUpsert {
+	u.SetExcluded(chunk.FieldUpdatedAt)
+	return u
+}
+
+// SetStart sets the "start" field.
+func (u *ChunkUpsert) SetStart(v time.Time) *ChunkUpsert {
+	u.Set(chunk.FieldStart, v)
+	return u
+}
+
+// UpdateStart sets the "start" field to the value that was provided on create.
+func (u *ChunkUpsert) UpdateStart() *ChunkUpsert {
+	u.SetExcluded(chunk.FieldStart)
+	return u
+}
+
+// SetLeaseExpiresAt sets the "lease_expires_at" field.
+func (u *ChunkUpsert) SetLeaseExpiresAt(v time.Time) *ChunkUpsert {
+	u.Set(chunk.FieldLeaseExpiresAt, v)
+	return u
+}
+
+// UpdateLeaseExpiresAt sets the "lease_expires_at" field to the value that was provided on create.
+func (u *ChunkUpsert) UpdateLeaseExpiresAt() *ChunkUpsert {
+	u.SetExcluded(chunk.FieldLeaseExpiresAt)
+	return u
+}
+
+// ClearLeaseExpiresAt clears the value of the "lease_expires_at" field.
+func (u *ChunkUpsert) ClearLeaseExpiresAt() *ChunkUpsert {
+	u.SetNull(chunk.FieldLeaseExpiresAt)
+	return u
+}
+
+// SetState sets the "state" field.
+func (u *ChunkUpsert) SetState(v chunk.State) *ChunkUpsert {
+	u.Set(chunk.FieldState, v)
+	return u
+}
+
+// UpdateState sets the "state" field to the value that was provided on create.
+func (u *ChunkUpsert) UpdateState() *ChunkUpsert {
+	u.SetExcluded(chunk.FieldState)
+	return u
+}
+
+// SetSizeInput sets the "size_input" field.
+func (u *ChunkUpsert) SetSizeInput(v int64) *ChunkUpsert {
+	u.Set(chunk.FieldSizeInput, v)
+	return u
+}
+
+// UpdateSizeInput sets the "size_input" field to the value that was provided on create.
+func (u *ChunkUpsert) UpdateSizeInput() *ChunkUpsert {
+	u.SetExcluded(chunk.FieldSizeInput)
+	return u
+}
+
+// ClearSizeInput clears the value of the "size_input" field.
+func (u *ChunkUpsert) ClearSizeInput() *ChunkUpsert {
+	u.SetNull(chunk.FieldSizeInput)
+	return u
+}
+
+// SetSizeContent sets the "size_content" field.
+func (u *ChunkUpsert) SetSizeContent(v int64) *ChunkUpsert {
+	u.Set(chunk.FieldSizeContent, v)
+	return u
+}
+
+// UpdateSizeContent sets the "size_content" field to the value that was provided on create.
+func (u *ChunkUpsert) UpdateSizeContent() *ChunkUpsert {
+	u.SetExcluded(chunk.FieldSizeContent)
+	return u
+}
+
+// ClearSizeContent clears the value of the "size_content" field.
+func (u *ChunkUpsert) ClearSizeContent() *ChunkUpsert {
+	u.SetNull(chunk.FieldSizeContent)
+	return u
+}
+
+// SetSizeOutput sets the "size_output" field.
+func (u *ChunkUpsert) SetSizeOutput(v int64) *ChunkUpsert {
+	u.Set(chunk.FieldSizeOutput, v)
+	return u
+}
+
+// UpdateSizeOutput sets the "size_output" field to the value that was provided on create.
+func (u *ChunkUpsert) UpdateSizeOutput() *ChunkUpsert {
+	u.SetExcluded(chunk.FieldSizeOutput)
+	return u
+}
+
+// ClearSizeOutput clears the value of the "size_output" field.
+func (u *ChunkUpsert) ClearSizeOutput() *ChunkUpsert {
+	u.SetNull(chunk.FieldSizeOutput)
+	return u
+}
+
+// SetSha256Input sets the "sha256_input" field.
+func (u *ChunkUpsert) SetSha256Input(v string) *ChunkUpsert {
+	u.Set(chunk.FieldSha256Input, v)
+	return u
+}
+
+// UpdateSha256Input sets the "sha256_input" field to the value that was provided on create.
+func (u *ChunkUpsert) UpdateSha256Input() *ChunkUpsert {
+	u.SetExcluded(chunk.FieldSha256Input)
+	return u
+}
+
+// ClearSha256Input clears the value of the "sha256_input" field.
+func (u *ChunkUpsert) ClearSha256Input() *ChunkUpsert {
+	u.SetNull(chunk.FieldSha256Input)
+	return u
+}
+
+// SetSha256Content sets the "sha256_content" field.
+func (u *ChunkUpsert) SetSha256Content(v string) *ChunkUpsert {
+	u.Set(chunk.FieldSha256Content, v)
+	return u
+}
+
+// UpdateSha256Content sets the "sha256_content" field to the value that was provided on create.
+func (u *ChunkUpsert) UpdateSha256Content() *ChunkUpsert {
+	u.SetExcluded(chunk.FieldSha256Content)
+	return u
+}
+
+// ClearSha256Content clears the value of the "sha256_content" field.
+func (u *ChunkUpsert) ClearSha256Content() *ChunkUpsert {
+	u.SetNull(chunk.FieldSha256Content)
+	return u
+}
+
+// SetSha256Output sets the "sha256_output" field.
+func (u *ChunkUpsert) SetSha256Output(v string) *ChunkUpsert {
+	u.Set(chunk.FieldSha256Output, v)
+	return u
+}
+
+// UpdateSha256Output sets the "sha256_output" field to the value that was provided on create.
+func (u *ChunkUpsert) UpdateSha256Output() *ChunkUpsert {
+	u.SetExcluded(chunk.FieldSha256Output)
+	return u
+}
+
+// ClearSha256Output clears the value of the "sha256_output" field.
+func (u *ChunkUpsert) ClearSha256Output() *ChunkUpsert {
+	u.SetNull(chunk.FieldSha256Output)
+	return u
+}
+
+// UpdateNewValues updates the fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Chunk.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(chunk.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+//
+func (u *ChunkUpsertOne) UpdateNewValues() *ChunkUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(chunk.FieldID)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//  client.Chunk.Create().
+//      OnConflict(sql.ResolveWithIgnore()).
+//      Exec(ctx)
+//
+func (u *ChunkUpsertOne) Ignore() *ChunkUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ChunkUpsertOne) DoNothing() *ChunkUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ChunkCreate.OnConflict
+// documentation for more info.
+func (u *ChunkUpsertOne) Update(set func(*ChunkUpsert)) *ChunkUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ChunkUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (u *ChunkUpsertOne) SetCreatedAt(v time.Time) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetCreatedAt(v)
+	})
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *ChunkUpsertOne) UpdateCreatedAt() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateCreatedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ChunkUpsertOne) SetUpdatedAt(v time.Time) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ChunkUpsertOne) UpdateUpdatedAt() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetStart sets the "start" field.
+func (u *ChunkUpsertOne) SetStart(v time.Time) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetStart(v)
+	})
+}
+
+// UpdateStart sets the "start" field to the value that was provided on create.
+func (u *ChunkUpsertOne) UpdateStart() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateStart()
+	})
+}
+
+// SetLeaseExpiresAt sets the "lease_expires_at" field.
+func (u *ChunkUpsertOne) SetLeaseExpiresAt(v time.Time) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetLeaseExpiresAt(v)
+	})
+}
+
+// UpdateLeaseExpiresAt sets the "lease_expires_at" field to the value that was provided on create.
+func (u *ChunkUpsertOne) UpdateLeaseExpiresAt() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateLeaseExpiresAt()
+	})
+}
+
+// ClearLeaseExpiresAt clears the value of the "lease_expires_at" field.
+func (u *ChunkUpsertOne) ClearLeaseExpiresAt() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearLeaseExpiresAt()
+	})
+}
+
+// SetState sets the "state" field.
+func (u *ChunkUpsertOne) SetState(v chunk.State) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetState(v)
+	})
+}
+
+// UpdateState sets the "state" field to the value that was provided on create.
+func (u *ChunkUpsertOne) UpdateState() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateState()
+	})
+}
+
+// SetSizeInput sets the "size_input" field.
+func (u *ChunkUpsertOne) SetSizeInput(v int64) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSizeInput(v)
+	})
+}
+
+// UpdateSizeInput sets the "size_input" field to the value that was provided on create.
+func (u *ChunkUpsertOne) UpdateSizeInput() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSizeInput()
+	})
+}
+
+// ClearSizeInput clears the value of the "size_input" field.
+func (u *ChunkUpsertOne) ClearSizeInput() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSizeInput()
+	})
+}
+
+// SetSizeContent sets the "size_content" field.
+func (u *ChunkUpsertOne) SetSizeContent(v int64) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSizeContent(v)
+	})
+}
+
+// UpdateSizeContent sets the "size_content" field to the value that was provided on create.
+func (u *ChunkUpsertOne) UpdateSizeContent() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSizeContent()
+	})
+}
+
+// ClearSizeContent clears the value of the "size_content" field.
+func (u *ChunkUpsertOne) ClearSizeContent() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSizeContent()
+	})
+}
+
+// SetSizeOutput sets the "size_output" field.
+func (u *ChunkUpsertOne) SetSizeOutput(v int64) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSizeOutput(v)
+	})
+}
+
+// UpdateSizeOutput sets the "size_output" field to the value that was provided on create.
+func (u *ChunkUpsertOne) UpdateSizeOutput() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSizeOutput()
+	})
+}
+
+// ClearSizeOutput clears the value of the "size_output" field.
+func (u *ChunkUpsertOne) ClearSizeOutput() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSizeOutput()
+	})
+}
+
+// SetSha256Input sets the "sha256_input" field.
+func (u *ChunkUpsertOne) SetSha256Input(v string) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSha256Input(v)
+	})
+}
+
+// UpdateSha256Input sets the "sha256_input" field to the value that was provided on create.
+func (u *ChunkUpsertOne) UpdateSha256Input() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSha256Input()
+	})
+}
+
+// ClearSha256Input clears the value of the "sha256_input" field.
+func (u *ChunkUpsertOne) ClearSha256Input() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSha256Input()
+	})
+}
+
+// SetSha256Content sets the "sha256_content" field.
+func (u *ChunkUpsertOne) SetSha256Content(v string) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSha256Content(v)
+	})
+}
+
+// UpdateSha256Content sets the "sha256_content" field to the value that was provided on create.
+func (u *ChunkUpsertOne) UpdateSha256Content() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSha256Content()
+	})
+}
+
+// ClearSha256Content clears the value of the "sha256_content" field.
+func (u *ChunkUpsertOne) ClearSha256Content() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSha256Content()
+	})
+}
+
+// SetSha256Output sets the "sha256_output" field.
+func (u *ChunkUpsertOne) SetSha256Output(v string) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSha256Output(v)
+	})
+}
+
+// UpdateSha256Output sets the "sha256_output" field to the value that was provided on create.
+func (u *ChunkUpsertOne) UpdateSha256Output() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSha256Output()
+	})
+}
+
+// ClearSha256Output clears the value of the "sha256_output" field.
+func (u *ChunkUpsertOne) ClearSha256Output() *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSha256Output()
+	})
+}
+
+// Exec executes the query.
+func (u *ChunkUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ChunkCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ChunkUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *ChunkUpsertOne) ID(ctx context.Context) (id string, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: ChunkUpsertOne.ID is not supported by MySQL driver. Use ChunkUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *ChunkUpsertOne) IDX(ctx context.Context) string {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // ChunkCreateBulk is the builder for creating many Chunk entities in bulk.
 type ChunkCreateBulk struct {
 	config
 	builders []*ChunkCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Chunk entities in the database.
@@ -470,6 +991,7 @@ func (ccb *ChunkCreateBulk) Save(ctx context.Context) ([]*Chunk, error) {
 					_, err = mutators[i+1].Mutate(root, ccb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = ccb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, ccb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -516,6 +1038,325 @@ func (ccb *ChunkCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (ccb *ChunkCreateBulk) ExecX(ctx context.Context) {
 	if err := ccb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Chunk.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ChunkUpsert) {
+//			SetCreatedAt(v+v).
+//		}).
+//		Exec(ctx)
+//
+func (ccb *ChunkCreateBulk) OnConflict(opts ...sql.ConflictOption) *ChunkUpsertBulk {
+	ccb.conflict = opts
+	return &ChunkUpsertBulk{
+		create: ccb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Chunk.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+//
+func (ccb *ChunkCreateBulk) OnConflictColumns(columns ...string) *ChunkUpsertBulk {
+	ccb.conflict = append(ccb.conflict, sql.ConflictColumns(columns...))
+	return &ChunkUpsertBulk{
+		create: ccb,
+	}
+}
+
+// ChunkUpsertBulk is the builder for "upsert"-ing
+// a bulk of Chunk nodes.
+type ChunkUpsertBulk struct {
+	create *ChunkCreateBulk
+}
+
+// UpdateNewValues updates the fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Chunk.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(chunk.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+//
+func (u *ChunkUpsertBulk) UpdateNewValues() *ChunkUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(chunk.FieldID)
+				return
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Chunk.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+//
+func (u *ChunkUpsertBulk) Ignore() *ChunkUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ChunkUpsertBulk) DoNothing() *ChunkUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ChunkCreateBulk.OnConflict
+// documentation for more info.
+func (u *ChunkUpsertBulk) Update(set func(*ChunkUpsert)) *ChunkUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ChunkUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (u *ChunkUpsertBulk) SetCreatedAt(v time.Time) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetCreatedAt(v)
+	})
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *ChunkUpsertBulk) UpdateCreatedAt() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateCreatedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ChunkUpsertBulk) SetUpdatedAt(v time.Time) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ChunkUpsertBulk) UpdateUpdatedAt() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetStart sets the "start" field.
+func (u *ChunkUpsertBulk) SetStart(v time.Time) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetStart(v)
+	})
+}
+
+// UpdateStart sets the "start" field to the value that was provided on create.
+func (u *ChunkUpsertBulk) UpdateStart() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateStart()
+	})
+}
+
+// SetLeaseExpiresAt sets the "lease_expires_at" field.
+func (u *ChunkUpsertBulk) SetLeaseExpiresAt(v time.Time) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetLeaseExpiresAt(v)
+	})
+}
+
+// UpdateLeaseExpiresAt sets the "lease_expires_at" field to the value that was provided on create.
+func (u *ChunkUpsertBulk) UpdateLeaseExpiresAt() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateLeaseExpiresAt()
+	})
+}
+
+// ClearLeaseExpiresAt clears the value of the "lease_expires_at" field.
+func (u *ChunkUpsertBulk) ClearLeaseExpiresAt() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearLeaseExpiresAt()
+	})
+}
+
+// SetState sets the "state" field.
+func (u *ChunkUpsertBulk) SetState(v chunk.State) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetState(v)
+	})
+}
+
+// UpdateState sets the "state" field to the value that was provided on create.
+func (u *ChunkUpsertBulk) UpdateState() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateState()
+	})
+}
+
+// SetSizeInput sets the "size_input" field.
+func (u *ChunkUpsertBulk) SetSizeInput(v int64) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSizeInput(v)
+	})
+}
+
+// UpdateSizeInput sets the "size_input" field to the value that was provided on create.
+func (u *ChunkUpsertBulk) UpdateSizeInput() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSizeInput()
+	})
+}
+
+// ClearSizeInput clears the value of the "size_input" field.
+func (u *ChunkUpsertBulk) ClearSizeInput() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSizeInput()
+	})
+}
+
+// SetSizeContent sets the "size_content" field.
+func (u *ChunkUpsertBulk) SetSizeContent(v int64) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSizeContent(v)
+	})
+}
+
+// UpdateSizeContent sets the "size_content" field to the value that was provided on create.
+func (u *ChunkUpsertBulk) UpdateSizeContent() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSizeContent()
+	})
+}
+
+// ClearSizeContent clears the value of the "size_content" field.
+func (u *ChunkUpsertBulk) ClearSizeContent() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSizeContent()
+	})
+}
+
+// SetSizeOutput sets the "size_output" field.
+func (u *ChunkUpsertBulk) SetSizeOutput(v int64) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSizeOutput(v)
+	})
+}
+
+// UpdateSizeOutput sets the "size_output" field to the value that was provided on create.
+func (u *ChunkUpsertBulk) UpdateSizeOutput() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSizeOutput()
+	})
+}
+
+// ClearSizeOutput clears the value of the "size_output" field.
+func (u *ChunkUpsertBulk) ClearSizeOutput() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSizeOutput()
+	})
+}
+
+// SetSha256Input sets the "sha256_input" field.
+func (u *ChunkUpsertBulk) SetSha256Input(v string) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSha256Input(v)
+	})
+}
+
+// UpdateSha256Input sets the "sha256_input" field to the value that was provided on create.
+func (u *ChunkUpsertBulk) UpdateSha256Input() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSha256Input()
+	})
+}
+
+// ClearSha256Input clears the value of the "sha256_input" field.
+func (u *ChunkUpsertBulk) ClearSha256Input() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSha256Input()
+	})
+}
+
+// SetSha256Content sets the "sha256_content" field.
+func (u *ChunkUpsertBulk) SetSha256Content(v string) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSha256Content(v)
+	})
+}
+
+// UpdateSha256Content sets the "sha256_content" field to the value that was provided on create.
+func (u *ChunkUpsertBulk) UpdateSha256Content() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSha256Content()
+	})
+}
+
+// ClearSha256Content clears the value of the "sha256_content" field.
+func (u *ChunkUpsertBulk) ClearSha256Content() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSha256Content()
+	})
+}
+
+// SetSha256Output sets the "sha256_output" field.
+func (u *ChunkUpsertBulk) SetSha256Output(v string) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.SetSha256Output(v)
+	})
+}
+
+// UpdateSha256Output sets the "sha256_output" field to the value that was provided on create.
+func (u *ChunkUpsertBulk) UpdateSha256Output() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.UpdateSha256Output()
+	})
+}
+
+// ClearSha256Output clears the value of the "sha256_output" field.
+func (u *ChunkUpsertBulk) ClearSha256Output() *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.ClearSha256Output()
+	})
+}
+
+// Exec executes the query.
+func (u *ChunkUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the ChunkCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ChunkCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ChunkUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
