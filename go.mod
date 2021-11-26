@@ -5,7 +5,7 @@ go 1.17
 require (
 	entgo.io/ent v0.9.1
 	github.com/go-faster/errors v0.5.0
-	github.com/go-faster/jx v0.24.0
+	github.com/go-faster/jx v0.25.0
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/compress v1.13.6
 	github.com/lib/pq v1.10.4
