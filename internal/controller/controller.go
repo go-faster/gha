@@ -141,8 +141,6 @@ func (h Handler) addChunks(ctx context.Context, now time.Time) error {
 	for current := start.UTC(); current.Before(to); current = current.Add(entry.Delta) {
 		id := current.Format(entry.Layout)
 
-		// HACK.
-		// See https://github.com/ernado/ent-upsert-no-rows
 		exist, err := tx.Chunk.Query().Where(
 			chunk.IDEQ(id),
 		).Exist(ctx)
@@ -161,8 +159,8 @@ func (h Handler) addChunks(ctx context.Context, now time.Time) error {
 			SetUpdatedAt(now).
 			OnConflict(
 				sql.ConflictColumns(chunk.FieldID),
-				sql.DoNothing(),
-			).Ignore().Exec(ctx); err != nil {
+				sql.ResolveWithIgnore(),
+			).Exec(ctx); err != nil {
 			return errors.Wrap(err, "save")
 		}
 	}
