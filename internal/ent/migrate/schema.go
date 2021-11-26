@@ -15,7 +15,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "start", Type: field.TypeTime},
 		{Name: "lease_expires_at", Type: field.TypeTime, Nullable: true},
-		{Name: "state", Type: field.TypeEnum, Enums: []string{"New", "Downloading", "Downloaded", "Inventory", "Ready", "Processing", "Done", "NotFound"}, Default: "New"},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"New", "Downloading", "Ready", "Processing", "Done", "NotFound"}, Default: "New"},
 		{Name: "size_input", Type: field.TypeInt64, Nullable: true},
 		{Name: "size_content", Type: field.TypeInt64, Nullable: true},
 		{Name: "size_output", Type: field.TypeInt64, Nullable: true},

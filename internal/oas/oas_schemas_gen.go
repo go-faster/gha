@@ -80,10 +80,9 @@ type ErrorStatusCode struct {
 // Ref: #/components/schemas/Job
 // Job represents sum type.
 type Job struct {
-	Type         JobType // switch on this field
-	JobNothing   JobNothing
-	JobDownload  JobDownload
-	JobInventory JobInventory
+	Type        JobType // switch on this field
+	JobNothing  JobNothing
+	JobDownload JobDownload
 }
 
 // JobType is oneOf type of Job.
@@ -91,9 +90,8 @@ type JobType string
 
 // Possible values for JobType.
 const (
-	JobNothingJob   JobType = "JobNothing"
-	JobDownloadJob  JobType = "JobDownload"
-	JobInventoryJob JobType = "JobInventory"
+	JobNothingJob  JobType = "JobNothing"
+	JobDownloadJob JobType = "JobDownload"
 )
 
 // IsJobNothing reports whether Job is JobNothing.
@@ -101,9 +99,6 @@ func (s Job) IsJobNothing() bool { return s.Type == JobNothingJob }
 
 // IsJobDownload reports whether Job is JobDownload.
 func (s Job) IsJobDownload() bool { return s.Type == JobDownloadJob }
-
-// IsJobInventory reports whether Job is JobInventory.
-func (s Job) IsJobInventory() bool { return s.Type == JobInventoryJob }
 
 // SetJobNothing sets Job to JobNothing.
 func (s *Job) SetJobNothing(v JobNothing) {
@@ -147,37 +142,10 @@ func NewJobDownloadJob(v JobDownload) Job {
 	return s
 }
 
-// SetJobInventory sets Job to JobInventory.
-func (s *Job) SetJobInventory(v JobInventory) {
-	s.Type = JobInventoryJob
-	s.JobInventory = v
-}
-
-// GetJobInventory returns JobInventory and true boolean if Job is JobInventory.
-func (s Job) GetJobInventory() (v JobInventory, ok bool) {
-	if !s.IsJobInventory() {
-		return v, false
-	}
-	return s.JobInventory, true
-}
-
-// NewJobInventoryJob returns new Job from JobInventory.
-func NewJobInventoryJob(v JobInventory) Job {
-	var s Job
-	s.SetJobInventory(v)
-	return s
-}
-
 // Ref: #/components/schemas/JobDownload
 type JobDownload struct {
 	Type string `json:"type"`
 	Date string `json:"date"`
-}
-
-// Ref: #/components/schemas/JobInventory
-type JobInventory struct {
-	Type string   `json:"type"`
-	Date []string `json:"date"`
 }
 
 // Ref: #/components/schemas/JobNothing

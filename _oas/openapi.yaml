@@ -151,20 +151,6 @@ components:
           type: string
           format: datetime
 
-    JobInventory:
-      type: object
-      description: Report local chunk info
-      required:
-        - type
-        - date
-      properties:
-        type:
-          type: string
-        date:
-          type: array
-          items:
-            type: string
-
     Job:
       type: object
       description: job to perform on worker
@@ -173,8 +159,6 @@ components:
         mapping:
           nothing: JobNothing
           download: JobDownload
-          inventory: JobInventory
       oneOf:
         - $ref: "#/components/schemas/JobNothing"
         - $ref: "#/components/schemas/JobDownload"
-        - $ref: "#/components/schemas/JobInventory"

@@ -76,59 +76,11 @@ func main() {
 					time.Sleep(time.Second)
 					continue
 				}
-				if !job.IsJobInventory() {
-					// Simple jobs that does not require split.
-					jobs <- job
-					continue
-				}
-				// Split inventory into sub-jobs.
-				for _, k := range job.JobInventory.Date {
-					jobs <- oas.NewJobInventoryJob(oas.JobInventory{
-						Type: job.JobInventory.Type,
-						Date: []string{k},
-					})
-				}
+
+				jobs <- job
+				continue
 			}
 		})
-
-		handleInventory := func(ctx context.Context, j oas.JobInventory) error {
-			if len(j.Date) == 0 {
-				// Nothing to do.
-				lg.Warn("Got blank inventory")
-				return nil
-			}
-			if len(j.Date) != 1 {
-				lg.Warn("Got inventory with unexpected key count")
-			}
-
-			key := j.Date[0]
-			lg.Info("Inventory",
-				zap.String("key", key),
-			)
-			params := oas.ProgressParams{
-				XToken: arg.Token,
-			}
-
-			res, err := dl.Inventory(ctx, key)
-			if errors.Is(err, archive.ErrNotFound) {
-				return nil
-			}
-			if err != nil {
-				return errors.Wrap(err, "inventory")
-			}
-			if _, err := api.Progress(ctx, oas.Progress{
-				Event: oas.ProgressEventInventory,
-				Key:   key,
-
-				OutputSizeBytes:  oas.NewOptInt64(res.SizeOutput),
-				ContentSizeBytes: oas.NewOptInt64(res.SizeContent),
-				InputSizeBytes:   oas.NewOptInt64(res.SizeInput),
-			}, params); err != nil {
-				return errors.Wrap(err, "report")
-			}
-
-			return nil
-		}
 
 		handleDownload := func(ctx context.Context, j oas.JobDownload) error {
 			key := j.Date
@@ -216,9 +168,6 @@ func main() {
 				lg.Info("Doing nothing")
 				time.Sleep(time.Second * 3)
 				return nil
-			}
-			if j, ok := j.GetJobInventory(); ok {
-				return handleInventory(ctx, j)
 			}
 			if j, ok := j.GetJobDownload(); ok {
 				return handleDownload(ctx, j)

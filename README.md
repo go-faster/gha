@@ -15,16 +15,12 @@ github archive utilities
 ```json
 [
   {
-    "state": "Ready",
-    "count": 68928
-  },
-  {
-    "state": "Downloaded",
-    "count": 24
-  },
-  {
     "state": "NotFound",
     "count": 319
+  },
+  {
+    "state": "Ready",
+    "count": 68952
   }
 ]
 ```

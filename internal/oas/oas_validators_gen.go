@@ -62,41 +62,6 @@ var (
 	_ = sync.Pool{}
 )
 
-func (s Job) Validate() error {
-	switch s.Type {
-	case JobNothingJob:
-		return nil // no validation needed
-	case JobDownloadJob:
-		return nil // no validation needed
-	case JobInventoryJob:
-		if err := s.JobInventory.Validate(); err != nil {
-			return err
-		}
-		return nil
-	default:
-		return errors.Errorf("invalid type %q", s.Type)
-	}
-}
-
-func (s JobInventory) Validate() error {
-	var failures []validate.FieldError
-	if err := func() error {
-		if s.Date == nil {
-			return errors.New("nil is invalid value")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "date",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
 func (s Progress) Validate() error {
 	var failures []validate.FieldError
 	if err := func() error {

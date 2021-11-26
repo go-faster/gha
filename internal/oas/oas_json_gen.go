@@ -118,8 +118,6 @@ func (s Job) Encode(e *jx.Encoder) {
 		s.JobNothing.Encode(e)
 	case JobDownloadJob:
 		s.JobDownload.Encode(e)
-	case JobInventoryJob:
-		s.JobInventory.Encode(e)
 	}
 }
 
@@ -148,9 +146,6 @@ func (s *Job) Decode(d *jx.Decoder) error {
 				case "download":
 					s.Type = JobDownloadJob
 					found = true
-				case "inventory":
-					s.Type = JobInventoryJob
-					found = true
 				case "nothing":
 					s.Type = JobNothingJob
 					found = true
@@ -174,10 +169,6 @@ func (s *Job) Decode(d *jx.Decoder) error {
 		}
 	case JobDownloadJob:
 		if err := s.JobDownload.Decode(d); err != nil {
-			return err
-		}
-	case JobInventoryJob:
-		if err := s.JobInventory.Decode(d); err != nil {
 			return err
 		}
 	default:
@@ -215,56 +206,6 @@ func (s *JobDownload) Decode(d *jx.Decoder) error {
 			v, err := d.Str()
 			s.Date = string(v)
 			if err != nil {
-				return err
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	})
-}
-
-// Encode implements json.Marshaler.
-func (s JobInventory) Encode(e *jx.Encoder) {
-	e.ObjStart()
-
-	e.FieldStart("type")
-	e.Str(s.Type)
-
-	e.FieldStart("date")
-	e.ArrStart()
-	for _, elem := range s.Date {
-		e.Str(elem)
-	}
-	e.ArrEnd()
-	e.ObjEnd()
-}
-
-// Decode decodes JobInventory from json.
-func (s *JobInventory) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New(`invalid: unable to decode JobInventory to nil`)
-	}
-	return d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "type":
-			v, err := d.Str()
-			s.Type = string(v)
-			if err != nil {
-				return err
-			}
-		case "date":
-			s.Date = nil
-			if err := d.Arr(func(d *jx.Decoder) error {
-				var elem string
-				v, err := d.Str()
-				elem = string(v)
-				if err != nil {
-					return err
-				}
-				s.Date = append(s.Date, elem)
-				return nil
-			}); err != nil {
 				return err
 			}
 		default:

@@ -24,7 +24,7 @@ func (Chunk) Fields() []ent.Field {
 			Comment("State expiration like heartbeat").Optional(),
 
 		field.Enum("state").
-			Values("New", "Downloading", "Downloaded", "Inventory", "Ready", "Processing", "Done", "NotFound").
+			Values("New", "Downloading", "Ready", "Processing", "Done", "NotFound").
 			Default("New"),
 
 		field.Int64("size_input").Optional(),

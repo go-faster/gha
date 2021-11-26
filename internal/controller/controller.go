@@ -74,10 +74,13 @@ func (h Handler) Progress(ctx context.Context, req oas.Progress, params oas.Prog
 	case oas.ProgressEventDone:
 		if err := u.
 			SetWorker(w).
+			SetSizeInput(req.InputSizeBytes.Value).
+			SetSizeContent(req.ContentSizeBytes.Value).
+			SetSizeOutput(req.OutputSizeBytes.Value).
 			SetSha256Input(req.SHA256Input.Value).
 			SetSha256Output(req.SHA256Output.Value).
 			SetSha256Content(req.SHA256Content.Value).
-			SetState(chunk.StateDownloaded).
+			SetState(chunk.StateReady).
 			SetNillableLeaseExpiresAt(nil).
 			Exec(ctx); err != nil {
 			return oas.Status{}, errors.Wrap(err, "done")
@@ -91,18 +94,6 @@ func (h Handler) Progress(ctx context.Context, req oas.Progress, params oas.Prog
 			return oas.Status{}, errors.Wrap(err, "lease")
 		}
 		return oas.Status{Message: "ack lease"}, nil
-	case oas.ProgressEventInventory:
-		if err := u.
-			SetWorker(w).
-			SetSizeInput(req.InputSizeBytes.Value).
-			SetSizeContent(req.ContentSizeBytes.Value).
-			SetSizeOutput(req.OutputSizeBytes.Value).
-			SetState(chunk.StateReady).
-			SetNillableLeaseExpiresAt(nil).
-			Exec(ctx); err != nil {
-			return oas.Status{}, errors.Wrap(err, "inventory")
-		}
-		return oas.Status{Message: "ack inventory"}, nil
 	default:
 		return oas.Status{}, errors.Errorf("unknown event %s", req.Event)
 	}
@@ -282,44 +273,9 @@ func (h Handler) Poll(ctx context.Context, params oas.PollParams) (oas.Job, erro
 		ForUpdate().
 		First(ctx)
 	if ent.IsNotFound(err) {
-		q := tx.Chunk.Query().Where(
-			chunk.StateIn(chunk.StateDownloaded),
-			chunk.Not(chunk.HasWorker()),
-		)
-
-		// NB: Can be not consistent.
-		count, err := q.Count(ctx)
-		if err != nil {
-			return oas.Job{}, errors.Wrap(err, "count")
-		}
-
-		if count == 0 {
-			// Good, nothing to do.
-			return oas.NewJobNothingJob(oas.JobNothing{
-				Type: "nothing",
-			}), nil
-		}
-
-		// NB: Will return this result for every worker,
-		// not changing state.
-		chunks, err := q.Limit(1000).All(ctx)
-		if err != nil {
-			return oas.Job{}, errors.Wrap(err, "list")
-		}
-		if err := tx.Commit(); err != nil {
-			return oas.Job{}, errors.Wrap(err, "commit")
-		}
-		var keys []string
-		for _, c := range chunks {
-			keys = append(keys, c.ID)
-		}
-		h.lg.Info("Scheduled inventory job",
-			zap.Int("keys", len(keys)),
-		)
-		return oas.NewJobInventoryJob(oas.JobInventory{
-			Type: "inventory",
-			Date: keys,
-		}), err
+		return oas.NewJobNothingJob(oas.JobNothing{
+			Type: "nothing",
+		}), nil
 	}
 	if err != nil {
 		return oas.Job{}, errors.Wrap(err, "query")
