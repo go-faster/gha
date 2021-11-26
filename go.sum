@@ -61,8 +61,9 @@ github.com/go-bindata/go-bindata v1.0.1-0.20190711162640-ee3c2418e368 h1:WNHfSP1
 github.com/go-bindata/go-bindata v1.0.1-0.20190711162640-ee3c2418e368/go.mod h1:7xCgX1lzlrXPHkfvn3EhumqHkmSlzt8at9q7v0ax19c=
 github.com/go-faster/errors v0.5.0 h1:hS/zHFJ2Vb14jcupq5J9tk05XW+PFTmySOkDRByHBo4=
 github.com/go-faster/errors v0.5.0/go.mod h1:/9SNBcg2ESJTYztBFEiM5Np6ns85BtPNMJd8lFTiFwk=
-github.com/go-faster/jx v0.24.0 h1:b5Xg1wgIDHqp5YNOUQv4Zz7fc+rEppwuFYONvXOCvBQ=
 github.com/go-faster/jx v0.24.0/go.mod h1:I2qnT5kkW6iO0RXe4rOnIW3y3yZYJVeT7fG8JSQkP8I=
+github.com/go-faster/jx v0.25.0 h1:aesx/Znt74CiG1Dp2fHPKM1BuSi9ok+aDKfOoY18els=
+github.com/go-faster/jx v0.25.0/go.mod h1:I2qnT5kkW6iO0RXe4rOnIW3y3yZYJVeT7fG8JSQkP8I=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
 github.com/go-logfmt/logfmt v0.3.0/go.mod h1:Qt1PoO58o5twSAckw1HlFXLmHsOX5/0LbT9GBnD5lWE=
