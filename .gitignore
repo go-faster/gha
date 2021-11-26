@@ -16,5 +16,4 @@ _bin/*
 
 # hosts list
 hosts.*.txt
-/languages.csv
-/languages.json
+/languages.*
