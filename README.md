@@ -27,4 +27,26 @@ github archive utilities
 
 ## Results
 
-359 chunks are missing
+## Missing chunks
+319 of 68952 chunks are missing, not sure about restore, not critical.
+
+## No language data
+This should be retrieved separately.
+
+```sql
+SELECT * FROM `bigquery-public-data.github_repos.languages`;
+```
+
+Can be exported to json, loaded into database and joined with events.
+
+
+### Source
+
+Programming languages by repository as reported by 
+GitHub's https://developer.github.com/v3/repos/#list-languages API
+
+### Properties
+* No repo id, just name
+* Probably no removed or renamed repos
+* ~3 million entries
+* Language data is in array (language name, bytes)
