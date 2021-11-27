@@ -19,6 +19,10 @@ require (
 )
 
 require (
+	github.com/ClickHouse/clickhouse-go v1.5.1 // indirect
+	github.com/VividCortex/ewma v1.1.1 // indirect
+	github.com/cheggaaa/pb/v3 v3.0.8 // indirect
+	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-bindata/go-bindata v1.0.1-0.20190711162640-ee3c2418e368 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
@@ -26,8 +30,9 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
-	github.com/mattn/go-runewidth v0.0.9 // indirect
+	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/spf13/cobra v1.1.3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
