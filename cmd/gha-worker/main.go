@@ -147,7 +147,7 @@ func main() {
 
 			lg.Info("Downloaded", zap.String("path", res.Path))
 			if _, err := api.Progress(ctx, oas.Progress{
-				Event: oas.ProgressEventDone,
+				Event: oas.ProgressEventReady,
 				Key:   key,
 
 				SHA256Content: oas.NewOptString(res.SHA256Content),

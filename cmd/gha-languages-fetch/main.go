@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/csv"
 	"flag"
@@ -84,7 +85,22 @@ func main() {
 						if b == nil {
 							return nil
 						}
-						found = b.Get(key) != nil
+						v := b.Get(key)
+						found = v != nil
+
+						if !found {
+							return nil
+						}
+
+						switch {
+						case bytes.Equal(v, nothing):
+							fmt.Println(repo, "-")
+						case bytes.Equal(v, unavailable):
+							fmt.Println(repo, "N/A")
+						default:
+							fmt.Println(repo, string(v))
+						}
+
 						return nil
 					}); err != nil {
 						return err
