@@ -30,15 +30,16 @@ github archive utilities
 ## Missing chunks
 319 of 68952 chunks are missing, not sure about restore, not critical.
 
-## No language data
-This should be retrieved separately.
+## Incomplete repo language data
 
+Language data is not included in events.
+
+There is incomplete (only 3 million repos) public dataset:
 ```sql
 SELECT * FROM `bigquery-public-data.github_repos.languages`;
 ```
 
-Can be exported to json, loaded into database and joined with events.
-
+However, many popular repositories are missing and manual data retrieval is required.
 
 ### Source
 
