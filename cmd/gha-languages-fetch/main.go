@@ -99,7 +99,7 @@ func main() {
 					rate.Take()
 					languages, res, err := c.Repositories.ListLanguages(ctx, v[0], v[1])
 					if re, ok := err.(*github.RateLimitError); ok {
-						d := re.Rate.Reset.Sub(time.Now()) + time.Second*10
+						d := time.Until(re.Rate.Reset.Time) + time.Second*10
 						fmt.Println("sleeping", d)
 						select {
 						case <-ctx.Done():
