@@ -83,9 +83,9 @@ components:
         event:
           type: string
           enum:
-            - Done
+            - Ready
             - Downloading
-            - Inventory
+            - Processed
         key:
           description: chunk key
           type: string
@@ -151,6 +151,23 @@ components:
           type: string
           format: datetime
 
+    JobProcess:
+      type: object
+      description: Process job
+      required:
+        - type
+        - keys
+        - clickhouse
+      properties:
+        type:
+          type: string
+        keys:
+          type: array
+          items:
+            type: string
+        clickhouse:
+          type: string
+
     Job:
       type: object
       description: job to perform on worker
@@ -159,6 +176,8 @@ components:
         mapping:
           nothing: JobNothing
           download: JobDownload
+          process: JobProcess
       oneOf:
         - $ref: "#/components/schemas/JobNothing"
         - $ref: "#/components/schemas/JobDownload"
+        - $ref: "#/components/schemas/JobProcess"

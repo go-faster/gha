@@ -17,3 +17,6 @@ _bin/*
 # hosts list
 hosts.*.txt
 /languages.*
+/languages
+/repos_without_languages_cnt.csv.zst
+/repos_without_languages_cnt.csv

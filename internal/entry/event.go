@@ -1,6 +1,8 @@
 package entry
 
 import (
+	"path"
+	"strings"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -8,17 +10,19 @@ import (
 )
 
 type Event struct {
-	ID      uint64    `json:"id"`
-	RepoID  uint64    `json:"repo_id"`
-	Repo    string    `json:"repo"`
-	ActorID uint64    `json:"actor_id"`
-	Actor   string    `json:"actor"`
-	Time    time.Time `json:"time"`
-	Type    string    `json:"type"`
+	Actor string
+	Type  string
+	Repo  string
+	Time  time.Time
+
+	ID      uint64 // optional
+	RepoID  uint64 // optional
+	ActorID uint64 // optional
+	URL     string // optional
 }
 
 func (e *Event) Decode(d *jx.Decoder) error {
-	return d.ObjBytes(func(d *jx.Decoder, key []byte) error {
+	if err := d.ObjBytes(func(d *jx.Decoder, key []byte) error {
 		switch string(key) {
 		case "type":
 			v, err := d.Str()
@@ -26,6 +30,13 @@ func (e *Event) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "type")
 			}
 			e.Type = v
+			return nil
+		case "url":
+			v, err := d.Str()
+			if err != nil {
+				return errors.Wrap(err, "url")
+			}
+			e.URL = v
 			return nil
 		case "id":
 			v, err := d.Num()
@@ -58,6 +69,13 @@ func (e *Event) Decode(d *jx.Decoder) error {
 						return errors.Wrap(err, "id")
 					}
 					e.RepoID = v
+					return nil
+				case "url":
+					v, err := d.Str()
+					if err != nil {
+						return errors.Wrap(err, "name")
+					}
+					e.Repo = path.Join(path.Base(path.Dir(v)), path.Base(v))
 					return nil
 				case "full_name":
 					v, err := d.Str()
@@ -133,5 +151,32 @@ func (e *Event) Decode(d *jx.Decoder) error {
 			}
 			return nil
 		}
-	})
+	}); err != nil {
+		return errors.Wrap(err, "object")
+	}
+
+	if !e.Interesting() {
+		return nil
+	}
+
+	if e.Repo == "" {
+		s := strings.TrimPrefix(e.URL, "https://github.com/")
+		elems := strings.Split(s, "/")
+		e.Repo = strings.Join(elems[:2], "/")
+	}
+
+	if e.Repo == "" || e.Time.IsZero() || e.Type == "" || e.Actor == "" {
+		return errors.Errorf("missing data: %+v", e)
+	}
+
+	return nil
+}
+
+func (e Event) Interesting() bool {
+	switch e.Type {
+	case "WatchEvent", "PushEvent", "IssuesEvent", "PullRequestEvent":
+		return true
+	default:
+		return false
+	}
 }

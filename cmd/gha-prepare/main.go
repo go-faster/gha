@@ -55,9 +55,7 @@ func process(ctx context.Context, name string, events chan entry.Event) error {
 			return errors.Wrap(err, "decode")
 		}
 
-		switch event.Type {
-		case "WatchEvent", "PushEvent", "IssuesEvent", "PullRequestEvent": // ok
-		default: // skip
+		if !event.Interesting() {
 			continue
 		}
 
