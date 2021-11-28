@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cheggaaa/pb/v3"
 	"github.com/go-faster/errors"
 	"github.com/google/go-github/v40/github"
 	"go.etcd.io/bbolt"
@@ -56,25 +55,28 @@ func main() {
 			_ = f.Close()
 		}()
 
-		bar := pb.Full.Start64(1482721)
-		defer bar.Finish()
-
 		r := csv.NewReader(bufio.NewReader(f))
-		repos := make(chan string)
+		repos := make(chan []string)
 		bucket := []byte("language")
 
 		var (
 			nothing     = []byte{0}
 			unavailable = []byte{1}
+
+			count int
 		)
 
 		g, ctx := errgroup.WithContext(ctx)
 		for i := 0; i < 10; i++ {
 			g.Go(func() error {
-				for repo := range repos {
+				for s := range repos {
+					repo := s[0]
 					if err := ctx.Err(); err != nil {
 						return err
 					}
+
+					fmt.Println("done", count)
+					fmt.Println("repo", s[0], s[1])
 
 					key := []byte(repo)
 
@@ -107,7 +109,7 @@ func main() {
 					}
 
 					if found {
-						bar.Increment()
+						count++
 						continue
 					}
 
@@ -154,7 +156,7 @@ func main() {
 						if err := set(unavailable); err != nil {
 							return err
 						}
-						bar.Increment()
+						count++
 						continue
 					case http.StatusOK:
 					default:
@@ -177,7 +179,7 @@ func main() {
 						return err
 					}
 
-					bar.Increment()
+					count++
 				}
 
 				return nil
@@ -185,7 +187,6 @@ func main() {
 		}
 
 		g.Go(func() error {
-			defer bar.Finish()
 			defer close(repos)
 
 			for {
@@ -205,7 +206,7 @@ func main() {
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
-				case repos <- rec[0]:
+				case repos <- rec:
 				}
 			}
 		})

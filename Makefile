@@ -13,7 +13,7 @@ tidy:
 	go mod tidy
 
 build:
-	go build -o ./_bin/ ./cmd/gha-controller ./cmd/gha-worker
+	go build -o ./_bin/ ./cmd/*
 
 install:
 	go install ./cmd/...
