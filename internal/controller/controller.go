@@ -71,7 +71,7 @@ func (h Handler) Progress(ctx context.Context, req oas.Progress, params oas.Prog
 	)
 
 	switch req.Event {
-	case oas.ProgressEventDone:
+	case oas.ProgressEventReady:
 		if err := u.
 			SetWorker(w).
 			SetSizeInput(req.InputSizeBytes.Value).
