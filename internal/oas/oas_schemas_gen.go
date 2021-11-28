@@ -83,6 +83,7 @@ type Job struct {
 	Type        JobType // switch on this field
 	JobNothing  JobNothing
 	JobDownload JobDownload
+	JobProcess  JobProcess
 }
 
 // JobType is oneOf type of Job.
@@ -92,6 +93,7 @@ type JobType string
 const (
 	JobNothingJob  JobType = "JobNothing"
 	JobDownloadJob JobType = "JobDownload"
+	JobProcessJob  JobType = "JobProcess"
 )
 
 // IsJobNothing reports whether Job is JobNothing.
@@ -99,6 +101,9 @@ func (s Job) IsJobNothing() bool { return s.Type == JobNothingJob }
 
 // IsJobDownload reports whether Job is JobDownload.
 func (s Job) IsJobDownload() bool { return s.Type == JobDownloadJob }
+
+// IsJobProcess reports whether Job is JobProcess.
+func (s Job) IsJobProcess() bool { return s.Type == JobProcessJob }
 
 // SetJobNothing sets Job to JobNothing.
 func (s *Job) SetJobNothing(v JobNothing) {
@@ -142,6 +147,27 @@ func NewJobDownloadJob(v JobDownload) Job {
 	return s
 }
 
+// SetJobProcess sets Job to JobProcess.
+func (s *Job) SetJobProcess(v JobProcess) {
+	s.Type = JobProcessJob
+	s.JobProcess = v
+}
+
+// GetJobProcess returns JobProcess and true boolean if Job is JobProcess.
+func (s Job) GetJobProcess() (v JobProcess, ok bool) {
+	if !s.IsJobProcess() {
+		return v, false
+	}
+	return s.JobProcess, true
+}
+
+// NewJobProcessJob returns new Job from JobProcess.
+func NewJobProcessJob(v JobProcess) Job {
+	var s Job
+	s.SetJobProcess(v)
+	return s
+}
+
 // Ref: #/components/schemas/JobDownload
 type JobDownload struct {
 	Type string `json:"type"`
@@ -151,6 +177,13 @@ type JobDownload struct {
 // Ref: #/components/schemas/JobNothing
 type JobNothing struct {
 	Type string `json:"type"`
+}
+
+// Ref: #/components/schemas/JobProcess
+type JobProcess struct {
+	Type       string   `json:"type"`
+	Keys       []string `json:"keys"`
+	Clickhouse string   `json:"clickhouse"`
 }
 
 // NewOptInt64 returns new OptInt64 with value set to v.
@@ -245,9 +278,9 @@ type Progress struct {
 type ProgressEvent string
 
 const (
-	ProgressEventDone        ProgressEvent = "Done"
+	ProgressEventReady       ProgressEvent = "Ready"
 	ProgressEventDownloading ProgressEvent = "Downloading"
-	ProgressEventInventory   ProgressEvent = "Inventory"
+	ProgressEventProcessed   ProgressEvent = "Processed"
 )
 
 // Ref: #/components/schemas/Status

@@ -118,6 +118,8 @@ func (s Job) Encode(e *jx.Encoder) {
 		s.JobNothing.Encode(e)
 	case JobDownloadJob:
 		s.JobDownload.Encode(e)
+	case JobProcessJob:
+		s.JobProcess.Encode(e)
 	}
 }
 
@@ -149,6 +151,9 @@ func (s *Job) Decode(d *jx.Decoder) error {
 				case "nothing":
 					s.Type = JobNothingJob
 					found = true
+				case "process":
+					s.Type = JobProcessJob
+					found = true
 				default:
 					return errors.Errorf("unknown type %s", typ)
 				}
@@ -169,6 +174,10 @@ func (s *Job) Decode(d *jx.Decoder) error {
 		}
 	case JobDownloadJob:
 		if err := s.JobDownload.Decode(d); err != nil {
+			return err
+		}
+	case JobProcessJob:
+		if err := s.JobProcess.Decode(d); err != nil {
 			return err
 		}
 	default:
@@ -234,6 +243,65 @@ func (s *JobNothing) Decode(d *jx.Decoder) error {
 		case "type":
 			v, err := d.Str()
 			s.Type = string(v)
+			if err != nil {
+				return err
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	})
+}
+
+// Encode implements json.Marshaler.
+func (s JobProcess) Encode(e *jx.Encoder) {
+	e.ObjStart()
+
+	e.FieldStart("type")
+	e.Str(s.Type)
+
+	e.FieldStart("keys")
+	e.ArrStart()
+	for _, elem := range s.Keys {
+		e.Str(elem)
+	}
+	e.ArrEnd()
+
+	e.FieldStart("clickhouse")
+	e.Str(s.Clickhouse)
+	e.ObjEnd()
+}
+
+// Decode decodes JobProcess from json.
+func (s *JobProcess) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New(`invalid: unable to decode JobProcess to nil`)
+	}
+	return d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "type":
+			v, err := d.Str()
+			s.Type = string(v)
+			if err != nil {
+				return err
+			}
+		case "keys":
+			s.Keys = nil
+			if err := d.Arr(func(d *jx.Decoder) error {
+				var elem string
+				v, err := d.Str()
+				elem = string(v)
+				if err != nil {
+					return err
+				}
+				s.Keys = append(s.Keys, elem)
+				return nil
+			}); err != nil {
+				return err
+			}
+		case "clickhouse":
+			v, err := d.Str()
+			s.Clickhouse = string(v)
 			if err != nil {
 				return err
 			}

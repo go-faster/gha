@@ -62,6 +62,41 @@ var (
 	_ = sync.Pool{}
 )
 
+func (s Job) Validate() error {
+	switch s.Type {
+	case JobNothingJob:
+		return nil // no validation needed
+	case JobDownloadJob:
+		return nil // no validation needed
+	case JobProcessJob:
+		if err := s.JobProcess.Validate(); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.Errorf("invalid type %q", s.Type)
+	}
+}
+
+func (s JobProcess) Validate() error {
+	var failures []validate.FieldError
+	if err := func() error {
+		if s.Keys == nil {
+			return errors.New("nil is invalid value")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "keys",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s Progress) Validate() error {
 	var failures []validate.FieldError
 	if err := func() error {
@@ -182,11 +217,11 @@ func (s Progress) Validate() error {
 }
 func (s ProgressEvent) Validate() error {
 	switch s {
-	case "Done":
+	case "Ready":
 		return nil
 	case "Downloading":
 		return nil
-	case "Inventory":
+	case "Processed":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
