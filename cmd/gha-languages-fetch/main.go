@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/csv"
 	"flag"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/go-faster/errors"
 	"github.com/google/go-github/v40/github"
 	"go.etcd.io/bbolt"
@@ -36,17 +38,33 @@ func main() {
 
 		rate := ratelimit.New(4800, ratelimit.Per(time.Hour))
 
-		db, err := bbolt.Open("languages", 0666, &bbolt.Options{NoSync: true})
+		db, err := sql.Open("clickhouse", os.Getenv("CLICKHOUSE"))
+		if err != nil {
+			return errors.Wrap(err, "clickhouse")
+		}
+
+		cache, err := bbolt.Open("languages", 0666, &bbolt.Options{NoSync: true})
 		if err != nil {
 			return errors.Wrap(err, "db open")
 		}
 		defer func() {
 			lg.Info("Closing")
-			_ = db.Sync()
-			_ = db.Close()
+			_ = cache.Sync()
+			_ = cache.Close()
 		}()
 
+		var (
+			nothing     = []byte{0}
+			unavailable = []byte{1}
+			bucket      = []byte("language")
+		)
+		var arg struct {
+			Init bool
+		}
+
+		flag.BoolVar(&arg.Init, "init", false, "init clickhouse language db")
 		flag.Parse()
+
 		f, err := os.Open(flag.Arg(0))
 		if err != nil {
 			return errors.Wrap(err, "open")
@@ -55,17 +73,45 @@ func main() {
 			_ = f.Close()
 		}()
 
+		if arg.Init {
+			tx, err := db.BeginTx(ctx, &sql.TxOptions{})
+			if err != nil {
+				return errors.Wrap(err, "tx")
+			}
+			stmt, err := tx.Prepare("INSERT INTO github_languages (repo, language) VALUES (?, ?)")
+			if err != nil {
+				return errors.Wrap(err, "prepare")
+			}
+			if err := cache.View(func(t *bbolt.Tx) error {
+				b := t.Bucket(bucket)
+				if b == nil {
+					return nil
+				}
+				return b.ForEach(func(k, v []byte) error {
+					switch {
+					case bytes.Equal(v, nothing):
+						return nil
+					case bytes.Equal(v, unavailable):
+						return nil
+					default:
+					}
+					if _, err := stmt.Exec(string(k), string(v)); err != nil {
+						return errors.Wrap(err, "clickhouse")
+					}
+					return nil
+				})
+			}); err != nil {
+				return errors.Wrap(err, "ingest")
+			}
+			if err := tx.Commit(); err != nil {
+				return errors.Wrap(err, "commit")
+			}
+		}
+
 		r := csv.NewReader(bufio.NewReader(f))
 		repos := make(chan []string)
-		bucket := []byte("language")
 
-		var (
-			nothing     = []byte{0}
-			unavailable = []byte{1}
-
-			count int
-		)
-
+		var count int
 		g, ctx := errgroup.WithContext(ctx)
 		for i := 0; i < 10; i++ {
 			g.Go(func() error {
@@ -82,7 +128,7 @@ func main() {
 
 					var found bool
 
-					if err := db.View(func(tx *bbolt.Tx) error {
+					if err := cache.View(func(tx *bbolt.Tx) error {
 						b := tx.Bucket(bucket)
 						if b == nil {
 							return nil
@@ -100,6 +146,16 @@ func main() {
 						case bytes.Equal(v, unavailable):
 							fmt.Println(repo, "N/A")
 						default:
+							tx, err := db.BeginTx(ctx, &sql.TxOptions{})
+							if err != nil {
+								return errors.Wrap(err, "tx")
+							}
+							if _, err := tx.Exec("INSERT INTO github_languages (repo, language) VALUES (?, ?)", repo, string(v)); err != nil {
+								return errors.Wrap(err, "clickhouse")
+							}
+							if err := tx.Commit(); err != nil {
+								return errors.Wrap(err, "commit")
+							}
 							fmt.Println(repo, string(v))
 						}
 
@@ -134,7 +190,7 @@ func main() {
 					}
 
 					set := func(v []byte) error {
-						if err := db.Update(func(tx *bbolt.Tx) error {
+						if err := cache.Update(func(tx *bbolt.Tx) error {
 							b, err := tx.CreateBucketIfNotExists(bucket)
 							if err != nil {
 								return errors.Wrap(err, "bucket")
@@ -175,6 +231,7 @@ func main() {
 							value = []byte(l)
 						}
 					}
+					fmt.Println("set", repo, string(value))
 					if err := set(value); err != nil {
 						return err
 					}
