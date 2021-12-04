@@ -13,7 +13,7 @@ tidy:
 	go mod tidy
 
 build:
-	go build -o ./_bin/ ./cmd/*
+	GOAMD64=v3 go build -o ./_bin/ ./cmd/*
 
 install:
 	go install ./cmd/...
