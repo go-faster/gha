@@ -6,6 +6,7 @@ require (
 	entgo.io/ent v0.9.1
 	github.com/ClickHouse/clickhouse-go v1.5.1
 	github.com/cheggaaa/pb/v3 v3.0.8
+	github.com/dustin/go-humanize v1.0.0
 	github.com/go-faster/errors v0.5.0
 	github.com/go-faster/jx v0.25.0
 	github.com/google/go-github/v40 v40.0.0
@@ -14,9 +15,9 @@ require (
 	github.com/lib/pq v1.10.4
 	github.com/ogen-go/ogen v0.0.0-20211124125951-180f74ba9985
 	go.etcd.io/bbolt v1.3.6
-	go.opentelemetry.io/otel v1.2.0
+	go.opentelemetry.io/otel v1.3.0
 	go.opentelemetry.io/otel/metric v0.25.0
-	go.opentelemetry.io/otel/trace v1.2.0
+	go.opentelemetry.io/otel/trace v1.3.0
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.19.1
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -26,9 +27,10 @@ require (
 	github.com/VividCortex/ewma v1.1.1 // indirect
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
 	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-bindata/go-bindata v1.0.1-0.20190711162640-ee3c2418e368 // indirect
+	github.com/go-logr/logr v1.2.1 // indirect
+	github.com/go-logr/stdr v1.2.0 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/goccy/go-yaml v1.9.4 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
