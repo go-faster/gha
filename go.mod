@@ -16,7 +16,7 @@ require (
 	github.com/ogen-go/ogen v0.0.0-20211124125951-180f74ba9985
 	go.etcd.io/bbolt v1.3.6
 	go.opentelemetry.io/otel v1.3.0
-	go.opentelemetry.io/otel/metric v0.25.0
+	go.opentelemetry.io/otel/metric v0.26.0
 	go.opentelemetry.io/otel/trace v1.3.0
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.19.1
