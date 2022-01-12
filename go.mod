@@ -11,7 +11,7 @@ require (
 	github.com/go-faster/jx v0.25.1
 	github.com/google/go-github/v40 v40.0.0
 	github.com/google/uuid v1.3.0
-	github.com/klauspost/compress v1.13.6
+	github.com/klauspost/compress v1.14.1
 	github.com/lib/pq v1.10.4
 	github.com/ogen-go/ogen v0.0.0-20211124125951-180f74ba9985
 	go.etcd.io/bbolt v1.3.6
