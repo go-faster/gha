@@ -64,7 +64,7 @@ func (e *Event) Decode(d *jx.Decoder) error {
 			if err := d.ObjBytes(func(d *jx.Decoder, key []byte) error {
 				switch string(key) {
 				case "id":
-					v, err := d.Uint64()
+					v, err := d.UInt64()
 					if err != nil {
 						return errors.Wrap(err, "id")
 					}
@@ -116,7 +116,7 @@ func (e *Event) Decode(d *jx.Decoder) error {
 				if err := d.ObjBytes(func(d *jx.Decoder, key []byte) error {
 					switch string(key) {
 					case "id":
-						v, err := d.Uint64()
+						v, err := d.UInt64()
 						if err != nil {
 							return errors.Wrap(err, "id")
 						}
