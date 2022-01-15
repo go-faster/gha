@@ -2,6 +2,7 @@ package entry
 
 import (
 	"bytes"
+	"fmt"
 	"time"
 	"unsafe"
 
@@ -10,15 +11,24 @@ import (
 )
 
 type Event struct {
-	Type []byte
-	Repo []byte
-	URL  []byte
-	Time time.Time
+	Type    []byte
+	Repo    []byte
+	RepoURL []byte
+	URL     []byte
+	Time    time.Time
+}
+
+func (e Event) String() string {
+	return fmt.Sprintf("%s %30s %s",
+		e.Time.Format(Layout), e.Type, e.Repo,
+	)
 }
 
 func (e *Event) Reset() {
 	e.Type = e.Type[:0]
 	e.Repo = e.Repo[:0]
+	e.RepoURL = e.RepoURL[:0]
+	e.URL = e.URL[:0]
 	e.Time = time.Time{}
 }
 
@@ -54,11 +64,11 @@ func (e *Event) Decode(d *jx.Decoder) error {
 			if err := d.ObjBytes(func(d *jx.Decoder, key []byte) error {
 				switch string(key) {
 				case "url":
-					v, err := d.StrAppend(e.Repo[:0])
+					v, err := d.StrAppend(e.RepoURL[:0])
 					if err != nil {
 						return errors.Wrap(err, "name")
 					}
-					e.Repo = v
+					e.RepoURL = v
 					return nil
 				case "full_name":
 					v, err := d.StrAppend(e.Repo[:0])
@@ -97,12 +107,12 @@ func (e *Event) Decode(d *jx.Decoder) error {
 		return errors.Wrap(err, "object")
 	}
 
+	if len(e.Repo) == 0 {
+		v := bytes.TrimPrefix(e.RepoURL, []byte("https://api.github.com/repos/"))
+		e.Repo = append(e.Repo, v...)
+	}
 	if !e.Interesting() {
 		return nil
-	}
-
-	if len(e.Repo) == 0 {
-		e.Repo = bytes.TrimPrefix(e.URL, []byte("https://github.com/"))
 	}
 	if len(e.Repo) == 0 || e.Time.IsZero() || len(e.Type) == 0 {
 		return errors.Errorf("missing data: %+v", e)

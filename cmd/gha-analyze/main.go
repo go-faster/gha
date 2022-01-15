@@ -21,9 +21,7 @@ func main() {
 		if name == "" {
 			return errors.New("name argument is required")
 		}
-
 		start := time.Now()
-
 		f, err := os.Open(name)
 		if err != nil {
 			return errors.Wrap(err, "open")
