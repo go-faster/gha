@@ -33,6 +33,21 @@ func BenchmarkEvent_Decode(b *testing.B) {
 			}
 		}
 	})
+	b.Run("Concurrent", func(b *testing.B) {
+		b.ReportAllocs()
+		b.SetBytes(int64(len(dataSingle)))
+		b.RunParallel(func(pb *testing.PB) {
+			d := jx.GetDecoder()
+			var e Event
+			for pb.Next() {
+				e.Reset()
+				d.ResetBytes(dataSingle)
+				if err := e.Decode(d); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	})
 	b.Run("Multi", func(b *testing.B) {
 		d := jx.GetDecoder()
 		b.ReportAllocs()
