@@ -219,7 +219,7 @@ func main() {
 					if tx, err = db.Begin(); err != nil {
 						return errors.Wrap(err, "begin")
 					}
-					if s, err = tx.Prepare("INSERT INTO events(event_type, actor_login, repo_name, created_at) VALUES (?, ?, ?, ?)"); err != nil {
+					if s, err = tx.Prepare("INSERT INTO events(event_type, repo_name, created_at) VALUES (?, ?, ?)"); err != nil {
 						return errors.Wrap(err, "prepare")
 					}
 
@@ -239,7 +239,7 @@ func main() {
 					lastInsert time.Time
 				)
 				for ev := range events {
-					if _, err := s.Exec(ev.Type, ev.Actor, ev.Repo, ev.Time); err != nil {
+					if _, err := s.Exec(ev.Type, ev.Repo, ev.Time); err != nil {
 						return errors.Wrap(err, "exec")
 					}
 					if time.Since(lastInsert) < time.Second {
