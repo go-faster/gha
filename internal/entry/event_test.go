@@ -74,4 +74,33 @@ func BenchmarkEvent_Decode(b *testing.B) {
 			}
 		}
 	})
+	b.Run("MultiConcurrent", func(b *testing.B) {
+		b.ReportAllocs()
+		b.SetBytes(int64(len(dataMulti)))
+
+		b.RunParallel(func(pb *testing.PB) {
+			d := jx.GetDecoder()
+			r := bytes.NewReader(dataMulti)
+			buf := make([]byte, 1024*1024)
+
+			for pb.Next() {
+				r.Reset(dataMulti)
+				s := bufio.NewScanner(r)
+				s.Buffer(buf, len(buf))
+
+				var e Event
+
+				for s.Scan() {
+					e.Reset()
+					d.ResetBytes(s.Bytes())
+					if err := e.Decode(d); err != nil {
+						b.Fatal()
+					}
+				}
+				if err := s.Err(); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	})
 }
