@@ -8,12 +8,15 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
 	"github.com/klauspost/compress/zstd"
+
+	"github.com/go-faster/gha/internal/speed"
 )
 
 type Reader struct {
-	e Event
-	j *jx.Decoder
-	z *zstd.Decoder
+	metric *speed.Metric
+	e      Event
+	j      *jx.Decoder
+	z      *zstd.Decoder
 
 	buf []byte
 }
@@ -30,7 +33,7 @@ func (r *Reader) Decode(ctx context.Context, rd io.Reader, f func(ctx context.Co
 		return errors.Wrap(err, "zstd reset")
 	}
 
-	s := bufio.NewScanner(r.z)
+	s := bufio.NewScanner(io.TeeReader(r.z, r.metric))
 	s.Buffer(r.buf, len(r.buf))
 
 	for s.Scan() {
@@ -50,14 +53,15 @@ func (r *Reader) Decode(ctx context.Context, rd io.Reader, f func(ctx context.Co
 	return s.Err()
 }
 
-func NewReader() *Reader {
+func NewReader(m *speed.Metric) *Reader {
 	z, err := zstd.NewReader(nil, zstd.WithDecoderConcurrency(1))
 	if err != nil {
 		panic(err)
 	}
 	return &Reader{
-		buf: make([]byte, 1024*1024*10),
-		z:   z,
-		j:   jx.GetDecoder(),
+		metric: m,
+		buf:    make([]byte, 1024*1024*150),
+		z:      z,
+		j:      jx.GetDecoder(),
 	}
 }
