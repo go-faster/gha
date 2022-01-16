@@ -33,14 +33,16 @@ func (r *Reader) Decode(ctx context.Context, rd io.Reader, f func(ctx context.Co
 		return errors.Wrap(err, "zstd reset")
 	}
 
-	s := bufio.NewScanner(io.TeeReader(r.z, r.metric))
+	s := bufio.NewScanner(r.z)
 	s.Buffer(r.buf, len(r.buf))
 
 	for s.Scan() {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		r.j.ResetBytes(s.Bytes())
+		buf := s.Bytes()
+		r.j.ResetBytes(buf)
+		r.metric.Add(uint64(len(buf)))
 		r.e.Reset()
 		if err := r.e.Decode(r.j); err != nil {
 			continue

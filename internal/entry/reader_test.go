@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/klauspost/compress/zstd"
+
+	"github.com/go-faster/gha/internal/speed"
 )
 
 //go:embed _testdata/2019-11-27T03.first100.json.zst
@@ -27,7 +29,7 @@ func BenchmarkReader_Decode(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		var (
-			r  = NewReader()
+			r  = NewReader(speed.NewMetric())
 			br = bytes.NewReader(dataCompressed)
 		)
 		defer r.Close()
