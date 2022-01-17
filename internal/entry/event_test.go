@@ -55,12 +55,12 @@ func BenchmarkEvent_Decode(b *testing.B) {
 		r := bytes.NewReader(dataMulti)
 		buf := make([]byte, 1024*1024)
 
+		var e Event
+
 		for i := 0; i < b.N; i++ {
 			r.Reset(dataMulti)
 			s := bufio.NewScanner(r)
 			s.Buffer(buf, len(buf))
-
-			var e Event
 
 			for s.Scan() {
 				e.Reset()
