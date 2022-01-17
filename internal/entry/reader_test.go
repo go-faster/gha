@@ -17,10 +17,7 @@ import (
 var dataCompressed []byte
 
 func BenchmarkReader_Decode(b *testing.B) {
-	var (
-		ctx = context.Background()
-		nop = func(ctx context.Context, e *Event) error { return nil }
-	)
+	ctx := context.Background()
 	b.SetBytes(int64(len(dataCompressed)))
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -36,7 +33,7 @@ func BenchmarkReader_Decode(b *testing.B) {
 
 		for pb.Next() {
 			br.Reset(dataCompressed)
-			if err := r.Decode(ctx, br, nop); err != nil {
+			if err := r.Decode(ctx, Decode{Reader: br}); err != nil {
 				b.Fatal(err)
 			}
 		}

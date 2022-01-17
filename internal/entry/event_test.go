@@ -4,9 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	_ "embed"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/go-faster/jx"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -103,4 +107,26 @@ func BenchmarkEvent_Decode(b *testing.B) {
 			}
 		})
 	})
+}
+
+func TestEvent_Decode(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("_testdata", "sample.small.json"))
+	require.NoError(t, err)
+
+	r := bytes.NewReader(data)
+	s := bufio.NewScanner(r)
+	j := jx.GetDecoder()
+	for s.Scan() {
+		j.ResetBytes(s.Bytes())
+		var e Event
+		assert.NoError(t, e.Decode(j))
+		assert.NotEmpty(t, e.Type)
+
+		if e.Interesting() && e.Time.Year() > 2014 {
+			assert.NotEmpty(t, e.Actor)
+			assert.NotEmpty(t, e.Repo)
+		}
+
+	}
+	require.NoError(t, err)
 }

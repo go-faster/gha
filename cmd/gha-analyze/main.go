@@ -20,10 +20,15 @@ import (
 	"github.com/go-faster/gha/internal/speed"
 )
 
-var readCompressed = speed.NewMetric()
+var (
+	readCompressed = speed.NewMetric()
+
+	evTotal atomic.Int64
+	evGood  atomic.Int64
+	evError atomic.Int64
+)
 
 type Analyzer struct {
-	total  atomic.Int64
 	reader *entry.Reader
 }
 
@@ -34,11 +39,23 @@ func (a *Analyzer) Analyze(ctx context.Context, filename string) error {
 	}
 	defer func() { _ = f.Close() }()
 
-	return a.reader.Decode(ctx, io.TeeReader(f, readCompressed), a.analyze)
+	return a.reader.Decode(ctx, entry.Decode{
+		Reader:  io.TeeReader(f, readCompressed),
+		OnEvent: a.analyze,
+		OnError: func(ctx context.Context, data []byte, err error) error {
+			evError.Inc()
+			return nil
+		},
+	})
 }
 
 func (a *Analyzer) analyze(ctx context.Context, e *entry.Event) error {
-	a.total.Inc()
+	evTotal.Inc()
+	if e.Full() {
+		evGood.Inc()
+	} else if e.Interesting() && e.Time.Year() > 2014 {
+		evError.Inc()
+	}
 	return nil
 }
 
@@ -65,9 +82,12 @@ func main() {
 				case <-ctx.Done():
 					return ctx.Err()
 				case <-t.C:
-					fmt.Printf("[raw]: %10s [json]: %s ~ %s\n",
+					fmt.Printf("[raw]: %10s [json]: %s [%10d ok=%-10d err=%-10d] ~ %s\n",
 						readCompressed.ConsumeSpeed(),
 						readJSON.ConsumeSpeed(),
+						evTotal.Load(),
+						evGood.Load(),
+						evError.Load(),
 						filepath.Base(last.Load().(string)),
 					)
 				}

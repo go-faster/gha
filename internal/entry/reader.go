@@ -28,8 +28,14 @@ func (r *Reader) Close() {
 	r.buf = nil
 }
 
-func (r *Reader) Decode(ctx context.Context, rd io.Reader, f func(ctx context.Context, e *Event) error) error {
-	if err := r.z.Reset(rd); err != nil {
+type Decode struct {
+	Reader  io.Reader
+	OnEvent func(ctx context.Context, e *Event) error
+	OnError func(ctx context.Context, data []byte, err error) error
+}
+
+func (r *Reader) Decode(ctx context.Context, d Decode) error {
+	if err := r.z.Reset(d.Reader); err != nil {
 		return errors.Wrap(err, "zstd reset")
 	}
 
@@ -45,10 +51,17 @@ func (r *Reader) Decode(ctx context.Context, rd io.Reader, f func(ctx context.Co
 		r.metric.Add(uint64(len(buf)))
 		r.e.Reset()
 		if err := r.e.Decode(r.j); err != nil {
+			if f := d.OnError; f != nil {
+				if err := f(ctx, buf, err); err != nil {
+					return errors.Wrap(err, "error callback")
+				}
+			}
 			continue
 		}
-		if err := f(ctx, &r.e); err != nil {
-			return errors.Wrap(err, "f")
+		if f := d.OnEvent; f != nil {
+			if err := f(ctx, &r.e); err != nil {
+				return errors.Wrap(err, "event callback")
+			}
 		}
 	}
 

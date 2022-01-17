@@ -15,6 +15,7 @@ type Event struct {
 	Repo    []byte
 	RepoURL []byte
 	URL     []byte
+	Actor   []byte
 	Time    time.Time
 }
 
@@ -30,11 +31,45 @@ func (e *Event) Reset() {
 	e.RepoURL = e.RepoURL[:0]
 	e.URL = e.URL[:0]
 	e.Time = time.Time{}
+	e.Actor = e.Actor[:0]
 }
 
 func (e *Event) Decode(d *jx.Decoder) error {
 	if err := d.ObjBytes(func(d *jx.Decoder, key []byte) error {
 		switch string(key) {
+		case "actor":
+			switch d.Next() {
+			case jx.String:
+				v, err := d.StrAppend(e.Actor[:0])
+				if err != nil {
+					return errors.Wrap(err, "actor")
+				}
+				e.Actor = v
+			case jx.Null:
+				return d.Skip()
+			case jx.Object:
+				if err := d.ObjBytes(func(d *jx.Decoder, key []byte) error {
+					switch string(key) {
+					case "login":
+						v, err := d.StrAppend(e.Actor[:0])
+						if err != nil {
+							return errors.Wrap(err, "name")
+						}
+						e.Actor = v
+						return nil
+					default:
+						if err := d.Skip(); err != nil {
+							return errors.Wrap(err, "skip")
+						}
+						return nil
+					}
+				}); err != nil {
+					return errors.Wrap(err, "actor")
+				}
+			default:
+				return errors.Errorf("unexpected actor type %s", d.Next())
+			}
+			return nil
 		case "type":
 			v, err := d.StrAppend(e.Type[:0])
 			if err != nil {
@@ -106,19 +141,27 @@ func (e *Event) Decode(d *jx.Decoder) error {
 	}); err != nil {
 		return errors.Wrap(err, "object")
 	}
-
 	if len(e.Repo) == 0 {
 		v := bytes.TrimPrefix(e.RepoURL, []byte("https://api.github.com/repos/"))
 		e.Repo = append(e.Repo, v...)
 	}
-	if !e.Interesting() {
-		return nil
-	}
-	if len(e.Repo) == 0 || e.Time.IsZero() || len(e.Type) == 0 {
-		return errors.Errorf("missing data: %+v", e)
-	}
-
 	return nil
+}
+
+func (e Event) Full() bool {
+	if len(e.Repo) == 0 {
+		return false
+	}
+	if len(e.Actor) == 0 {
+		return false
+	}
+	if e.Time.IsZero() {
+		return false
+	}
+	if len(e.Type) == 0 {
+		return false
+	}
+	return true
 }
 
 func (e Event) Interesting() bool {
