@@ -7,6 +7,7 @@ require (
 	github.com/ClickHouse/clickhouse-go v1.5.1
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/dustin/go-humanize v1.0.0
+	github.com/go-faster/ch v0.15.0
 	github.com/go-faster/errors v0.5.0
 	github.com/go-faster/jx v0.30.1-0.20220116145743-9874357ceb21
 	github.com/google/go-github/v40 v40.0.0
@@ -32,7 +33,6 @@ require (
 	github.com/dmarkham/enumer v1.5.3 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-bindata/go-bindata v1.0.1-0.20190711162640-ee3c2418e368 // indirect
-	github.com/go-faster/ch v0.15.0 // indirect
 	github.com/go-faster/city v1.0.0 // indirect
 	github.com/go-logr/logr v1.2.1 // indirect
 	github.com/go-logr/stdr v1.2.0 // indirect

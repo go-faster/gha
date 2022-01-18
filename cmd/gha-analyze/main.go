@@ -25,11 +25,12 @@ import (
 
 var (
 	readCompressed = speed.NewMetric()
-	evSent         = speed.NewMetric()
+	chSent         = speed.NewMetric()
 
 	evTotal atomic.Int64
 	evGood  atomic.Int64
 	evError atomic.Int64
+	evSent  atomic.Int64
 )
 
 type Analyzer struct {
@@ -56,9 +57,6 @@ func (a *Analyzer) Analyze(ctx context.Context, filename string) error {
 }
 
 func (a *Analyzer) Schedule(ctx context.Context, e *entry.Event) error {
-	if !e.Interesting() {
-		return nil
-	}
 	a.buf.Append(e)
 	if a.buf.Date.Rows() < 10_000 {
 		return nil
@@ -75,12 +73,15 @@ func (a *Analyzer) Schedule(ctx context.Context, e *entry.Event) error {
 
 func (a *Analyzer) analyze(ctx context.Context, e *entry.Event) error {
 	evTotal.Inc()
+	if !e.Interesting() {
+		return nil
+	}
 	if e.Full() {
 		evGood.Inc()
 		if err := a.Schedule(ctx, e); err != nil {
 			return errors.Wrap(err, "schedule")
 		}
-	} else if e.Interesting() && e.Time.Year() > 2014 {
+	} else if e.Time.Year() > 2014 {
 		evError.Inc()
 	}
 	return nil
@@ -187,6 +188,13 @@ func main() {
 		lg.Info("Database OK")
 
 		files := make(chan string)
+		done := make(chan struct{})
+		start := time.Now()
+
+		defer func() {
+			fmt.Println("Done", time.Since(start).Round(time.Second))
+		}()
+
 		g, ctx := errgroup.WithContext(ctx)
 		readJSON := speed.NewMetric()
 		var last atomic.Value
@@ -197,13 +205,16 @@ func main() {
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
+				case <-done:
+					return nil
 				case <-t.C:
-					fmt.Printf("[raw]: %10s [json]: %s [ok=%-12d err=%-03d] [ch: %.0f / sec] ~ %s\n",
+					fmt.Printf("[raw %s] [json %s] [read=%-12d err=%-03d] [Δ %7d] [ch %.0f / sec] ~ %s\n",
 						readCompressed.ConsumeSpeed(),
 						readJSON.ConsumeSpeed(),
 						evGood.Load(),
 						evError.Load(),
-						evSent.Rate(),
+						evGood.Load()-evSent.Load(),
+						chSent.Rate(),
 						filepath.Base(last.Load().(string)),
 					)
 				}
@@ -212,10 +223,20 @@ func main() {
 
 		events := make(chan *Events, arg.Jobs)
 		g.Go(func() error {
+			defer close(done)
+
 			var e Events
 			if err := db.Do(ctx, ch.Query{
 				Body:  "INSERT INTO github.events VALUES",
 				Input: e.Input(),
+				OnProgress: func(ctx context.Context, p proto.Progress) error {
+					lg.Info("Progress")
+					return nil
+				},
+				OnProfile: func(ctx context.Context, p proto.Profile) error {
+					lg.Info("Profile")
+					return nil
+				},
 				OnInput: func(ctx context.Context) error {
 					e.Reset()
 					select {
@@ -233,7 +254,8 @@ func main() {
 						e.Type = append(e.Type, got.Type...)
 						putEvents(got)
 
-						evSent.Add(uint64(e.Type.Rows()))
+						chSent.Add(uint64(e.Type.Rows()))
+						evSent.Add(int64(e.Type.Rows()))
 
 						return nil
 					case <-ctx.Done():
