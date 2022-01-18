@@ -47,6 +47,17 @@ func (s *Metric) Consume() uint64 {
 	return n
 }
 
+func (s *Metric) Rate() float64 {
+	now := time.Now()
+	delta := now.Sub(s.last)
+	s.last = now
+	n := s.Consume()
+
+	opsPerSec := float64(n) / delta.Seconds()
+
+	return opsPerSec
+}
+
 func (s *Metric) ConsumeSpeed() string {
 	now := time.Now()
 	delta := now.Sub(s.last)
