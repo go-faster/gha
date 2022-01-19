@@ -122,7 +122,7 @@ func main() {
 				}
 			})
 
-			e.WriteTo(os.Stdout)
+			_, _ = e.WriteTo(os.Stdout)
 			return nil
 		}
 
