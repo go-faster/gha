@@ -88,7 +88,7 @@ func (a *Analyzer) analyze(ctx context.Context, e *entry.Event) error {
 }
 
 type Events struct {
-	Date  proto.ColDate
+	Date  proto.ColDateTime
 	Type  proto.ColEnum8
 	Actor proto.ColStr
 	Repo  proto.ColStr
@@ -128,7 +128,7 @@ func (v *Events) Input() proto.Input {
 }
 
 func (v *Events) Append(e *entry.Event) {
-	v.Date.Append(proto.TimeToDate(e.Time))
+	v.Date.Append(proto.ToDateTime(e.Time))
 	// "WatchEvent", "PushEvent", "IssuesEvent", "PullRequestEvent"
 	// Enum8('WatchEvent'=0, 'PushEvent'=1, 'IssuesEvent'=2, 'PullRequestEvent'=3),
 	switch string(e.Type) {
@@ -148,10 +148,10 @@ func (v *Events) Append(e *entry.Event) {
 }
 
 const ddl = `CREATE TABLE IF NOT EXISTS github.events  (
-    date Date,
+    date DateTime,
     type Enum8('WatchEvent'=0, 'PushEvent'=1, 'IssuesEvent'=2, 'PullRequestEvent'=3),
     actor String,
-    repo String
+    repo LowCardinality(String)
 ) ENGINE MergeTree() ORDER BY (type, date, repo)`
 
 func main() {

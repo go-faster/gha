@@ -11,20 +11,30 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/go-faster/errors"
+	"github.com/go-faster/jx"
 	"github.com/google/go-github/v40/github"
+	"github.com/ogen-go/ogen/json"
 	"go.etcd.io/bbolt"
+	"go.uber.org/atomic"
 	"go.uber.org/ratelimit"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/go-faster/gha/internal/app"
+	"github.com/go-faster/gha/internal/lang"
 )
+
+var ddl = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS github.languages (
+    name %s,
+	repo String
+) ENGINE MergeTree() ORDER BY (name, repo)`, lang.DDL())
 
 func main() {
 	app.Run(func(ctx context.Context, lg *zap.Logger) error {
@@ -60,9 +70,11 @@ func main() {
 		)
 		var arg struct {
 			Init bool
+			Enum bool
 		}
 
 		flag.BoolVar(&arg.Init, "init", false, "init clickhouse language db")
+		flag.BoolVar(&arg.Enum, "enum", false, "generate enum")
 		flag.Parse()
 
 		f, err := os.Open(flag.Arg(0))
@@ -73,15 +85,8 @@ func main() {
 			_ = f.Close()
 		}()
 
-		if arg.Init {
-			tx, err := db.BeginTx(ctx, &sql.TxOptions{})
-			if err != nil {
-				return errors.Wrap(err, "tx")
-			}
-			stmt, err := tx.Prepare("INSERT INTO github_languages (repo, language) VALUES (?, ?)")
-			if err != nil {
-				return errors.Wrap(err, "prepare")
-			}
+		if arg.Enum {
+			languages := map[string]bool{}
 			if err := cache.View(func(t *bbolt.Tx) error {
 				b := t.Bucket(bucket)
 				if b == nil {
@@ -94,10 +99,105 @@ func main() {
 					case bytes.Equal(v, unavailable):
 						return nil
 					default:
+						languages[string(v)] = true
 					}
+					return nil
+				})
+			}); err != nil {
+				return errors.Wrap(err, "read")
+			}
+
+			var keys []string
+			for k := range languages {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+
+			e := jx.GetEncoder()
+			e.SetIdent(2)
+			e.Obj(func(e *jx.Encoder) {
+				for i, k := range keys {
+					e.FieldStart(k)
+					e.Int(i)
+				}
+			})
+
+			e.WriteTo(os.Stdout)
+			return nil
+		}
+
+		if arg.Init {
+			if _, err := db.ExecContext(ctx, "DROP TABLE IF EXISTS github.languages"); err != nil {
+				return errors.Wrap(err, "truncate")
+			}
+			if _, err := db.ExecContext(ctx, ddl); err != nil {
+				return errors.Wrap(err, "create")
+			}
+			tx, err := db.BeginTx(ctx, &sql.TxOptions{})
+			if err != nil {
+				return errors.Wrap(err, "tx")
+			}
+			var count int
+			stmt, err := tx.Prepare("INSERT INTO github.languages (repo, name) VALUES (?, ?)")
+			if err != nil {
+				return errors.Wrap(err, "prepare")
+			}
+			f, err := os.Open("bq-results-20211126-160210-t66zllshmlld.json")
+			if err != nil {
+				return err
+			}
+			defer func() {
+				_ = f.Close()
+			}()
+			s := bufio.NewScanner(f)
+
+			for s.Scan() {
+				var v struct {
+					Name     string `json:"repo_name"`
+					Language []struct {
+						Name  string `json:"name"`
+						Bytes int    `json:"bytes,string"`
+					}
+				}
+				if err := json.Unmarshal(s.Bytes(), &v); err != nil {
+					return errors.Wrap(err, "json")
+				}
+				if len(v.Language) == 0 {
+					continue
+				}
+				if !lang.Ok(v.Language[0].Name) {
+					continue
+				}
+				count++
+				if _, err := stmt.Exec(v.Name, v.Language[0].Name); err != nil {
+					return errors.Wrap(err, "clickhouse")
+				}
+			}
+			if err := s.Err(); err != nil {
+				return err
+			}
+
+			if err := cache.View(func(t *bbolt.Tx) error {
+				b := t.Bucket(bucket)
+				if b == nil {
+					return nil
+				}
+				return b.ForEach(func(k, v []byte) error {
+					switch {
+					case bytes.Equal(v, nothing):
+						return nil
+					case bytes.Equal(v, unavailable):
+						return nil
+					default:
+						if !lang.Ok(string(v)) {
+							return nil
+						}
+					}
+					count++
 					if _, err := stmt.Exec(string(k), string(v)); err != nil {
 						return errors.Wrap(err, "clickhouse")
 					}
+
 					return nil
 				})
 			}); err != nil {
@@ -106,12 +206,14 @@ func main() {
 			if err := tx.Commit(); err != nil {
 				return errors.Wrap(err, "commit")
 			}
+			lg.Info("Initialized", zap.Int("count", count))
+			return nil
 		}
 
 		r := csv.NewReader(bufio.NewReader(f))
 		repos := make(chan []string)
 
-		var count int
+		var count atomic.Int64
 		g, ctx := errgroup.WithContext(ctx)
 		for i := 0; i < 10; i++ {
 			g.Go(func() error {
@@ -121,7 +223,7 @@ func main() {
 						return err
 					}
 
-					fmt.Println("done", count)
+					fmt.Println("done", count.Load())
 					fmt.Println("repo", s[0], s[1])
 
 					key := []byte(repo)
@@ -146,16 +248,6 @@ func main() {
 						case bytes.Equal(v, unavailable):
 							fmt.Println(repo, "N/A")
 						default:
-							tx, err := db.BeginTx(ctx, &sql.TxOptions{})
-							if err != nil {
-								return errors.Wrap(err, "tx")
-							}
-							if _, err := tx.Exec("INSERT INTO github_languages (repo, language) VALUES (?, ?)", repo, string(v)); err != nil {
-								return errors.Wrap(err, "clickhouse")
-							}
-							if err := tx.Commit(); err != nil {
-								return errors.Wrap(err, "commit")
-							}
 							fmt.Println(repo, string(v))
 						}
 
@@ -165,7 +257,7 @@ func main() {
 					}
 
 					if found {
-						count++
+						count.Inc()
 						continue
 					}
 
@@ -212,7 +304,7 @@ func main() {
 						if err := set(unavailable); err != nil {
 							return err
 						}
-						count++
+						count.Inc()
 						continue
 					case http.StatusOK:
 					default:
@@ -236,7 +328,7 @@ func main() {
 						return err
 					}
 
-					count++
+					count.Inc()
 				}
 
 				return nil
