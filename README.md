@@ -1,6 +1,9 @@
 # gha
 
-github archive utilities
+Research project of go-faster.
+
+Utilities to work with [GH Archive](https://www.gharchive.org/), a project to record the public GitHub timeline, 
+archive it, and make it easily accessible for further analysis. Not part of GH Archive.
 
 ```json
 [
