@@ -71,6 +71,14 @@ func (wc *WorkerCreate) SetID(u uuid.UUID) *WorkerCreate {
 	return wc
 }
 
+// SetNillableID sets the "id" field if the given value is not nil.
+func (wc *WorkerCreate) SetNillableID(u *uuid.UUID) *WorkerCreate {
+	if u != nil {
+		wc.SetID(*u)
+	}
+	return wc
+}
+
 // AddChunkIDs adds the "chunks" edge to the Chunk entity by IDs.
 func (wc *WorkerCreate) AddChunkIDs(ids ...string) *WorkerCreate {
 	wc.mutation.AddChunkIDs(ids...)
@@ -174,16 +182,16 @@ func (wc *WorkerCreate) defaults() {
 // check runs all checks and user-defined validators on the builder.
 func (wc *WorkerCreate) check() error {
 	if _, ok := wc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "created_at"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Worker.created_at"`)}
 	}
 	if _, ok := wc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "updated_at"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Worker.updated_at"`)}
 	}
 	if _, ok := wc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "name"`)}
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Worker.name"`)}
 	}
 	if _, ok := wc.mutation.Token(); !ok {
-		return &ValidationError{Name: "token", err: errors.New(`ent: missing required field "token"`)}
+		return &ValidationError{Name: "token", err: errors.New(`ent: missing required field "Worker.token"`)}
 	}
 	return nil
 }
@@ -197,7 +205,11 @@ func (wc *WorkerCreate) sqlSave(ctx context.Context) (*Worker, error) {
 		return nil, err
 	}
 	if _spec.ID.Value != nil {
-		_node.ID = _spec.ID.Value.(uuid.UUID)
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
 	}
 	return _node, nil
 }
@@ -216,7 +228,7 @@ func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 	_spec.OnConflict = wc.conflict
 	if id, ok := wc.mutation.ID(); ok {
 		_node.ID = id
-		_spec.ID.Value = id
+		_spec.ID.Value = &id
 	}
 	if value, ok := wc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -371,7 +383,7 @@ func (u *WorkerUpsert) UpdateToken() *WorkerUpsert {
 	return u
 }
 
-// UpdateNewValues updates the fields using the new values that were set on create except the ID field.
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
 //	client.Worker.Create().
@@ -388,6 +400,9 @@ func (u *WorkerUpsertOne) UpdateNewValues() *WorkerUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.ID(); exists {
 			s.SetIgnore(worker.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(worker.FieldCreatedAt)
 		}
 	}))
 	return u
@@ -640,7 +655,7 @@ type WorkerUpsertBulk struct {
 	create *WorkerCreateBulk
 }
 
-// UpdateNewValues updates the fields using the new values that
+// UpdateNewValues updates the mutable fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
 //	client.Worker.Create().
@@ -659,6 +674,9 @@ func (u *WorkerUpsertBulk) UpdateNewValues() *WorkerUpsertBulk {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(worker.FieldID)
 				return
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(worker.FieldCreatedAt)
 			}
 		}
 	}))

@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -87,7 +88,7 @@ func withChunkID(id string) chunkOption {
 		m.oldValue = func(ctx context.Context) (*Chunk, error) {
 			once.Do(func() {
 				if m.done {
-					err = fmt.Errorf("querying old values post mutation is not allowed")
+					err = errors.New("querying old values post mutation is not allowed")
 				} else {
 					value, err = m.Client().Chunk.Get(ctx, id)
 				}
@@ -120,7 +121,7 @@ func (m ChunkMutation) Client() *Client {
 // it returns an error otherwise.
 func (m ChunkMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
 	tx := &Tx{config: m.config}
 	tx.init()
@@ -142,6 +143,25 @@ func (m *ChunkMutation) ID() (id string, exists bool) {
 	return *m.id, true
 }
 
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ChunkMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Chunk.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *ChunkMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -161,10 +181,10 @@ func (m *ChunkMutation) CreatedAt() (r time.Time, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChunkMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldCreatedAt is only allowed on UpdateOne operations")
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldCreatedAt requires an ID field in the mutation")
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -197,10 +217,10 @@ func (m *ChunkMutation) UpdatedAt() (r time.Time, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChunkMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldUpdatedAt is only allowed on UpdateOne operations")
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldUpdatedAt requires an ID field in the mutation")
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -233,10 +253,10 @@ func (m *ChunkMutation) Start() (r time.Time, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChunkMutation) OldStart(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldStart is only allowed on UpdateOne operations")
+		return v, errors.New("OldStart is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldStart requires an ID field in the mutation")
+		return v, errors.New("OldStart requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -269,10 +289,10 @@ func (m *ChunkMutation) LeaseExpiresAt() (r time.Time, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChunkMutation) OldLeaseExpiresAt(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldLeaseExpiresAt is only allowed on UpdateOne operations")
+		return v, errors.New("OldLeaseExpiresAt is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldLeaseExpiresAt requires an ID field in the mutation")
+		return v, errors.New("OldLeaseExpiresAt requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -318,10 +338,10 @@ func (m *ChunkMutation) State() (r chunk.State, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChunkMutation) OldState(ctx context.Context) (v chunk.State, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldState is only allowed on UpdateOne operations")
+		return v, errors.New("OldState is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldState requires an ID field in the mutation")
+		return v, errors.New("OldState requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -355,10 +375,10 @@ func (m *ChunkMutation) SizeInput() (r int64, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChunkMutation) OldSizeInput(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldSizeInput is only allowed on UpdateOne operations")
+		return v, errors.New("OldSizeInput is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldSizeInput requires an ID field in the mutation")
+		return v, errors.New("OldSizeInput requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -425,10 +445,10 @@ func (m *ChunkMutation) SizeContent() (r int64, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChunkMutation) OldSizeContent(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldSizeContent is only allowed on UpdateOne operations")
+		return v, errors.New("OldSizeContent is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldSizeContent requires an ID field in the mutation")
+		return v, errors.New("OldSizeContent requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -495,10 +515,10 @@ func (m *ChunkMutation) SizeOutput() (r int64, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChunkMutation) OldSizeOutput(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldSizeOutput is only allowed on UpdateOne operations")
+		return v, errors.New("OldSizeOutput is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldSizeOutput requires an ID field in the mutation")
+		return v, errors.New("OldSizeOutput requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -564,10 +584,10 @@ func (m *ChunkMutation) Sha256Input() (r string, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChunkMutation) OldSha256Input(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldSha256Input is only allowed on UpdateOne operations")
+		return v, errors.New("OldSha256Input is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldSha256Input requires an ID field in the mutation")
+		return v, errors.New("OldSha256Input requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -613,10 +633,10 @@ func (m *ChunkMutation) Sha256Content() (r string, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChunkMutation) OldSha256Content(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldSha256Content is only allowed on UpdateOne operations")
+		return v, errors.New("OldSha256Content is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldSha256Content requires an ID field in the mutation")
+		return v, errors.New("OldSha256Content requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -662,10 +682,10 @@ func (m *ChunkMutation) Sha256Output() (r string, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChunkMutation) OldSha256Output(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldSha256Output is only allowed on UpdateOne operations")
+		return v, errors.New("OldSha256Output is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldSha256Output requires an ID field in the mutation")
+		return v, errors.New("OldSha256Output requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -1226,7 +1246,7 @@ func withWorkerID(id uuid.UUID) workerOption {
 		m.oldValue = func(ctx context.Context) (*Worker, error) {
 			once.Do(func() {
 				if m.done {
-					err = fmt.Errorf("querying old values post mutation is not allowed")
+					err = errors.New("querying old values post mutation is not allowed")
 				} else {
 					value, err = m.Client().Worker.Get(ctx, id)
 				}
@@ -1259,7 +1279,7 @@ func (m WorkerMutation) Client() *Client {
 // it returns an error otherwise.
 func (m WorkerMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
 	tx := &Tx{config: m.config}
 	tx.init()
@@ -1281,6 +1301,25 @@ func (m *WorkerMutation) ID() (id uuid.UUID, exists bool) {
 	return *m.id, true
 }
 
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WorkerMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Worker.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *WorkerMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -1300,10 +1339,10 @@ func (m *WorkerMutation) CreatedAt() (r time.Time, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *WorkerMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldCreatedAt is only allowed on UpdateOne operations")
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldCreatedAt requires an ID field in the mutation")
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -1336,10 +1375,10 @@ func (m *WorkerMutation) UpdatedAt() (r time.Time, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *WorkerMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldUpdatedAt is only allowed on UpdateOne operations")
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldUpdatedAt requires an ID field in the mutation")
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -1372,10 +1411,10 @@ func (m *WorkerMutation) Name() (r string, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *WorkerMutation) OldName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldName is only allowed on UpdateOne operations")
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldName requires an ID field in the mutation")
+		return v, errors.New("OldName requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
@@ -1408,10 +1447,10 @@ func (m *WorkerMutation) Token() (r string, exists bool) {
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *WorkerMutation) OldToken(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldToken is only allowed on UpdateOne operations")
+		return v, errors.New("OldToken is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldToken requires an ID field in the mutation")
+		return v, errors.New("OldToken requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {

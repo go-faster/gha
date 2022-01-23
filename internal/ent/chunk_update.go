@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -319,7 +320,7 @@ func (cu *ChunkUpdate) defaults() {
 func (cu *ChunkUpdate) check() error {
 	if v, ok := cu.mutation.State(); ok {
 		if err := chunk.StateValidator(v); err != nil {
-			return &ValidationError{Name: "state", err: fmt.Errorf("ent: validator failed for field \"state\": %w", err)}
+			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "Chunk.state": %w`, err)}
 		}
 	}
 	return nil
@@ -827,7 +828,7 @@ func (cuo *ChunkUpdateOne) defaults() {
 func (cuo *ChunkUpdateOne) check() error {
 	if v, ok := cuo.mutation.State(); ok {
 		if err := chunk.StateValidator(v); err != nil {
-			return &ValidationError{Name: "state", err: fmt.Errorf("ent: validator failed for field \"state\": %w", err)}
+			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "Chunk.state": %w`, err)}
 		}
 	}
 	return nil
@@ -846,7 +847,7 @@ func (cuo *ChunkUpdateOne) sqlSave(ctx context.Context) (_node *Chunk, err error
 	}
 	id, ok := cuo.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "ID", err: fmt.Errorf("missing Chunk.ID for update")}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Chunk.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
 	if fields := cuo.fields; len(fields) > 0 {

@@ -284,20 +284,20 @@ func (cc *ChunkCreate) defaults() {
 // check runs all checks and user-defined validators on the builder.
 func (cc *ChunkCreate) check() error {
 	if _, ok := cc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "created_at"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Chunk.created_at"`)}
 	}
 	if _, ok := cc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "updated_at"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Chunk.updated_at"`)}
 	}
 	if _, ok := cc.mutation.Start(); !ok {
-		return &ValidationError{Name: "start", err: errors.New(`ent: missing required field "start"`)}
+		return &ValidationError{Name: "start", err: errors.New(`ent: missing required field "Chunk.start"`)}
 	}
 	if _, ok := cc.mutation.State(); !ok {
-		return &ValidationError{Name: "state", err: errors.New(`ent: missing required field "state"`)}
+		return &ValidationError{Name: "state", err: errors.New(`ent: missing required field "Chunk.state"`)}
 	}
 	if v, ok := cc.mutation.State(); ok {
 		if err := chunk.StateValidator(v); err != nil {
-			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "state": %w`, err)}
+			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "Chunk.state": %w`, err)}
 		}
 	}
 	return nil
@@ -312,7 +312,11 @@ func (cc *ChunkCreate) sqlSave(ctx context.Context) (*Chunk, error) {
 		return nil, err
 	}
 	if _spec.ID.Value != nil {
-		_node.ID = _spec.ID.Value.(string)
+		if id, ok := _spec.ID.Value.(string); ok {
+			_node.ID = id
+		} else {
+			return nil, fmt.Errorf("unexpected Chunk.ID type: %T", _spec.ID.Value)
+		}
 	}
 	return _node, nil
 }
@@ -573,6 +577,12 @@ func (u *ChunkUpsert) UpdateSizeInput() *ChunkUpsert {
 	return u
 }
 
+// AddSizeInput adds v to the "size_input" field.
+func (u *ChunkUpsert) AddSizeInput(v int64) *ChunkUpsert {
+	u.Add(chunk.FieldSizeInput, v)
+	return u
+}
+
 // ClearSizeInput clears the value of the "size_input" field.
 func (u *ChunkUpsert) ClearSizeInput() *ChunkUpsert {
 	u.SetNull(chunk.FieldSizeInput)
@@ -591,6 +601,12 @@ func (u *ChunkUpsert) UpdateSizeContent() *ChunkUpsert {
 	return u
 }
 
+// AddSizeContent adds v to the "size_content" field.
+func (u *ChunkUpsert) AddSizeContent(v int64) *ChunkUpsert {
+	u.Add(chunk.FieldSizeContent, v)
+	return u
+}
+
 // ClearSizeContent clears the value of the "size_content" field.
 func (u *ChunkUpsert) ClearSizeContent() *ChunkUpsert {
 	u.SetNull(chunk.FieldSizeContent)
@@ -606,6 +622,12 @@ func (u *ChunkUpsert) SetSizeOutput(v int64) *ChunkUpsert {
 // UpdateSizeOutput sets the "size_output" field to the value that was provided on create.
 func (u *ChunkUpsert) UpdateSizeOutput() *ChunkUpsert {
 	u.SetExcluded(chunk.FieldSizeOutput)
+	return u
+}
+
+// AddSizeOutput adds v to the "size_output" field.
+func (u *ChunkUpsert) AddSizeOutput(v int64) *ChunkUpsert {
+	u.Add(chunk.FieldSizeOutput, v)
 	return u
 }
 
@@ -669,7 +691,7 @@ func (u *ChunkUpsert) ClearSha256Output() *ChunkUpsert {
 	return u
 }
 
-// UpdateNewValues updates the fields using the new values that were set on create except the ID field.
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
 //	client.Chunk.Create().
@@ -686,6 +708,9 @@ func (u *ChunkUpsertOne) UpdateNewValues() *ChunkUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.ID(); exists {
 			s.SetIgnore(chunk.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(chunk.FieldCreatedAt)
 		}
 	}))
 	return u
@@ -803,6 +828,13 @@ func (u *ChunkUpsertOne) SetSizeInput(v int64) *ChunkUpsertOne {
 	})
 }
 
+// AddSizeInput adds v to the "size_input" field.
+func (u *ChunkUpsertOne) AddSizeInput(v int64) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.AddSizeInput(v)
+	})
+}
+
 // UpdateSizeInput sets the "size_input" field to the value that was provided on create.
 func (u *ChunkUpsertOne) UpdateSizeInput() *ChunkUpsertOne {
 	return u.Update(func(s *ChunkUpsert) {
@@ -824,6 +856,13 @@ func (u *ChunkUpsertOne) SetSizeContent(v int64) *ChunkUpsertOne {
 	})
 }
 
+// AddSizeContent adds v to the "size_content" field.
+func (u *ChunkUpsertOne) AddSizeContent(v int64) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.AddSizeContent(v)
+	})
+}
+
 // UpdateSizeContent sets the "size_content" field to the value that was provided on create.
 func (u *ChunkUpsertOne) UpdateSizeContent() *ChunkUpsertOne {
 	return u.Update(func(s *ChunkUpsert) {
@@ -842,6 +881,13 @@ func (u *ChunkUpsertOne) ClearSizeContent() *ChunkUpsertOne {
 func (u *ChunkUpsertOne) SetSizeOutput(v int64) *ChunkUpsertOne {
 	return u.Update(func(s *ChunkUpsert) {
 		s.SetSizeOutput(v)
+	})
+}
+
+// AddSizeOutput adds v to the "size_output" field.
+func (u *ChunkUpsertOne) AddSizeOutput(v int64) *ChunkUpsertOne {
+	return u.Update(func(s *ChunkUpsert) {
+		s.AddSizeOutput(v)
 	})
 }
 
@@ -1085,7 +1131,7 @@ type ChunkUpsertBulk struct {
 	create *ChunkCreateBulk
 }
 
-// UpdateNewValues updates the fields using the new values that
+// UpdateNewValues updates the mutable fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
 //	client.Chunk.Create().
@@ -1104,6 +1150,9 @@ func (u *ChunkUpsertBulk) UpdateNewValues() *ChunkUpsertBulk {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(chunk.FieldID)
 				return
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(chunk.FieldCreatedAt)
 			}
 		}
 	}))
@@ -1222,6 +1271,13 @@ func (u *ChunkUpsertBulk) SetSizeInput(v int64) *ChunkUpsertBulk {
 	})
 }
 
+// AddSizeInput adds v to the "size_input" field.
+func (u *ChunkUpsertBulk) AddSizeInput(v int64) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.AddSizeInput(v)
+	})
+}
+
 // UpdateSizeInput sets the "size_input" field to the value that was provided on create.
 func (u *ChunkUpsertBulk) UpdateSizeInput() *ChunkUpsertBulk {
 	return u.Update(func(s *ChunkUpsert) {
@@ -1243,6 +1299,13 @@ func (u *ChunkUpsertBulk) SetSizeContent(v int64) *ChunkUpsertBulk {
 	})
 }
 
+// AddSizeContent adds v to the "size_content" field.
+func (u *ChunkUpsertBulk) AddSizeContent(v int64) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.AddSizeContent(v)
+	})
+}
+
 // UpdateSizeContent sets the "size_content" field to the value that was provided on create.
 func (u *ChunkUpsertBulk) UpdateSizeContent() *ChunkUpsertBulk {
 	return u.Update(func(s *ChunkUpsert) {
@@ -1261,6 +1324,13 @@ func (u *ChunkUpsertBulk) ClearSizeContent() *ChunkUpsertBulk {
 func (u *ChunkUpsertBulk) SetSizeOutput(v int64) *ChunkUpsertBulk {
 	return u.Update(func(s *ChunkUpsert) {
 		s.SetSizeOutput(v)
+	})
+}
+
+// AddSizeOutput adds v to the "size_output" field.
+func (u *ChunkUpsertBulk) AddSizeOutput(v int64) *ChunkUpsertBulk {
+	return u.Update(func(s *ChunkUpsert) {
+		s.AddSizeOutput(v)
 	})
 }
 
