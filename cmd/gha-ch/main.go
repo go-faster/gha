@@ -12,7 +12,7 @@ import (
 
 func main() {
 	app.Run(func(ctx context.Context, lg *zap.Logger) error {
-		conn, err := ch.Dial(context.Background(), ch.Options{
+		conn, err := ch.Dial(ctx, ch.Options{
 			Logger: lg,
 		})
 		if err != nil {
