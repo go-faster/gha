@@ -166,7 +166,7 @@ func main() {
 			return errors.New("name argument is required")
 		}
 
-		db, err := ch.Dial(ctx, "localhost:9000", ch.Options{
+		db, err := ch.Dial(ctx, ch.Options{
 			Logger:      lg.WithOptions(zap.IncreaseLevel(zap.InfoLevel)),
 			Compression: ch.CompressionZSTD,
 		})
