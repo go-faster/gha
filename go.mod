@@ -7,7 +7,7 @@ require (
 	github.com/ClickHouse/clickhouse-go v1.5.2
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/dustin/go-humanize v1.0.0
-	github.com/go-faster/ch v0.15.0
+	github.com/go-faster/ch v0.16.0
 	github.com/go-faster/errors v0.5.0
 	github.com/go-faster/jx v0.30.1-0.20220116145743-9874357ceb21
 	github.com/google/go-github/v40 v40.0.0
@@ -31,6 +31,7 @@ require (
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
+	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dmarkham/enumer v1.5.3 // indirect
@@ -43,6 +44,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/hashicorp/go-version v1.4.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.10.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
