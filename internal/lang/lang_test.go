@@ -7,8 +7,8 @@ import (
 )
 
 func TestEnum(t *testing.T) {
-	assert.Equal(t, 130, Enum("Go"))
-	assert.Equal(t, 140, Enum("HTML"))
+	assert.Equal(t, 131, Enum("Go"))
+	assert.Equal(t, 141, Enum("HTML"))
 }
 
 func TestOk(t *testing.T) {
