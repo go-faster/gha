@@ -21,7 +21,9 @@ require (
 	go.opentelemetry.io/otel/metric v0.26.0
 	go.opentelemetry.io/otel/trace v1.3.0
 	go.uber.org/atomic v1.9.0
+	go.uber.org/ratelimit v0.2.0
 	go.uber.org/zap v1.20.0
+	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
 
@@ -31,7 +33,6 @@ require (
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
-	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dmarkham/enumer v1.5.3 // indirect
@@ -60,6 +61,7 @@ require (
 	github.com/spf13/cobra v1.3.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
+	go.uber.org/multierr v1.7.0 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20211027215541-db492cf91b37 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
@@ -73,10 +75,4 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6 // indirect
-)
-
-require (
-	go.uber.org/multierr v1.7.0 // indirect
-	go.uber.org/ratelimit v0.2.0
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 )
