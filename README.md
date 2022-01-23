@@ -2,8 +2,14 @@
 
 Research project of go-faster.
 
-Utilities to work with [GH Archive](https://www.gharchive.org/), a project to record the public GitHub timeline, 
-archive it, and make it easily accessible for further analysis. Not part of GH Archive.
+> Content based on
+> <a href="https://www.gharchive.org/">www.gharchive.org</a>
+> used under the
+> <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a>
+> license.</a>
+
+Utilities to work with [GH Archive](https://www.gharchive.org/), project to record the public GitHub timeline, 
+archive it, and make it easily accessible for further analysis.
 
 ```json
 [
