@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	entgo.io/ent v0.10.0
-	github.com/ClickHouse/clickhouse-go v1.5.2
+	github.com/ClickHouse/clickhouse-go v1.5.3
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-faster/ch v0.17.0
