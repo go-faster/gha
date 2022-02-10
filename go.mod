@@ -7,7 +7,7 @@ require (
 	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/dustin/go-humanize v1.0.0
-	github.com/go-faster/ch v0.19.0
+	github.com/go-faster/ch v0.20.0
 	github.com/go-faster/errors v0.5.0
 	github.com/go-faster/jx v0.32.1
 	github.com/google/go-github/v40 v40.0.0
@@ -54,7 +54,7 @@ require (
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pascaldekloe/name v1.0.0 // indirect
-	github.com/pierrec/lz4/v4 v4.1.12 // indirect
+	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/segmentio/asm v1.1.3 // indirect
