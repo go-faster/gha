@@ -3,7 +3,7 @@ module github.com/go-faster/gha
 go 1.17
 
 require (
-	entgo.io/ent v0.10.0
+	entgo.io/ent v0.10.1
 	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/dustin/go-humanize v1.0.0
@@ -28,7 +28,7 @@ require (
 )
 
 require (
-	ariga.io/atlas v0.3.2-0.20220120225051-c3fac7d636dd // indirect
+	ariga.io/atlas v0.3.7-0.20220303204946-787354f533c3 // indirect
 	github.com/VividCortex/ewma v1.1.1 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
