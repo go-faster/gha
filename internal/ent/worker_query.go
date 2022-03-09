@@ -135,7 +135,7 @@ func (wq *WorkerQuery) FirstIDX(ctx context.Context) uuid.UUID {
 }
 
 // Only returns a single Worker entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when exactly one Worker entity is not found.
+// Returns a *NotSingularError when more than one Worker entity is found.
 // Returns a *NotFoundError when no Worker entities are found.
 func (wq *WorkerQuery) Only(ctx context.Context) (*Worker, error) {
 	nodes, err := wq.Limit(2).All(ctx)
@@ -162,7 +162,7 @@ func (wq *WorkerQuery) OnlyX(ctx context.Context) *Worker {
 }
 
 // OnlyID is like Only, but returns the only Worker ID in the query.
-// Returns a *NotSingularError when exactly one Worker ID is not found.
+// Returns a *NotSingularError when more than one Worker ID is found.
 // Returns a *NotFoundError when no entities are found.
 func (wq *WorkerQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
@@ -272,8 +272,9 @@ func (wq *WorkerQuery) Clone() *WorkerQuery {
 		predicates: append([]predicate.Worker{}, wq.predicates...),
 		withChunks: wq.withChunks.Clone(),
 		// clone intermediate query.
-		sql:  wq.sql.Clone(),
-		path: wq.path,
+		sql:    wq.sql.Clone(),
+		path:   wq.path,
+		unique: wq.unique,
 	}
 }
 
