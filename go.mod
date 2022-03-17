@@ -17,9 +17,9 @@ require (
 	github.com/ogen-go/ogen v0.0.0-20211124125951-180f74ba9985
 	github.com/stretchr/testify v1.7.1-0.20210427113832-6241f9ab9942
 	go.etcd.io/bbolt v1.3.6
-	go.opentelemetry.io/otel v1.4.1
+	go.opentelemetry.io/otel v1.5.0
 	go.opentelemetry.io/otel/metric v0.27.0
-	go.opentelemetry.io/otel/trace v1.4.1
+	go.opentelemetry.io/otel/trace v1.5.0
 	go.uber.org/atomic v1.9.0
 	go.uber.org/ratelimit v0.2.0
 	go.uber.org/zap v1.21.0
