@@ -7,7 +7,7 @@ require (
 	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/dustin/go-humanize v1.0.0
-	github.com/go-faster/ch v0.23.0
+	github.com/go-faster/ch v0.24.0
 	github.com/go-faster/errors v0.5.0
 	github.com/go-faster/jx v0.32.2
 	github.com/google/go-github/v40 v40.0.0
@@ -15,11 +15,11 @@ require (
 	github.com/klauspost/compress v1.15.1
 	github.com/lib/pq v1.10.4
 	github.com/ogen-go/ogen v0.0.0-20211124125951-180f74ba9985
-	github.com/stretchr/testify v1.7.1-0.20210427113832-6241f9ab9942
+	github.com/stretchr/testify v1.7.1
 	go.etcd.io/bbolt v1.3.6
-	go.opentelemetry.io/otel v1.4.1
-	go.opentelemetry.io/otel/metric v0.27.0
-	go.opentelemetry.io/otel/trace v1.4.1
+	go.opentelemetry.io/otel v1.6.0
+	go.opentelemetry.io/otel/metric v0.28.0
+	go.opentelemetry.io/otel/trace v1.6.0
 	go.uber.org/atomic v1.9.0
 	go.uber.org/ratelimit v0.2.0
 	go.uber.org/zap v1.21.0
@@ -35,10 +35,10 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dmarkham/enumer v1.5.3 // indirect
+	github.com/dmarkham/enumer v1.5.4 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
-	github.com/go-logr/logr v1.2.2 // indirect
+	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/goccy/go-yaml v1.9.4 // indirect
@@ -69,7 +69,7 @@ require (
 	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
 	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.9-0.20211216111533-8d383106f7e7 // indirect
+	golang.org/x/tools v0.1.9 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
