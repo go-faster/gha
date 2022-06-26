@@ -138,9 +138,13 @@ func main() {
 		}
 
 		h := controller.New(client, lg)
+		oasServer, err := oas.NewServer(h)
+		if err != nil {
+			return errors.Wrap(err, "oas server")
+		}
 		s := &http.Server{
 			Addr:    arg.Addr,
-			Handler: oas.NewServer(h),
+			Handler: oasServer,
 		}
 		g, ctx := errgroup.WithContext(ctx)
 		g.Go(func() error {

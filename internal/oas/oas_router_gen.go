@@ -3,140 +3,186 @@
 package oas
 
 import (
-	"bytes"
-	"context"
-	"fmt"
-	"io"
-	"math"
-	"net"
 	"net/http"
-	"net/url"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
-
-	"github.com/go-faster/errors"
-	"github.com/go-faster/jx"
-	"github.com/google/uuid"
-	"github.com/ogen-go/ogen/conv"
-	ht "github.com/ogen-go/ogen/http"
-	"github.com/ogen-go/ogen/json"
-	"github.com/ogen-go/ogen/otelogen"
-	"github.com/ogen-go/ogen/uri"
-	"github.com/ogen-go/ogen/validate"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/trace"
-)
-
-// No-op definition for keeping imports.
-var (
-	_ = context.Background()
-	_ = fmt.Stringer(nil)
-	_ = strings.Builder{}
-	_ = errors.Is
-	_ = sort.Ints
-	_ = http.MethodGet
-	_ = io.Copy
-	_ = json.Marshal
-	_ = bytes.NewReader
-	_ = strconv.ParseInt
-	_ = time.Time{}
-	_ = conv.ToInt32
-	_ = uuid.UUID{}
-	_ = uri.PathEncoder{}
-	_ = url.URL{}
-	_ = math.Mod
-	_ = validate.Int{}
-	_ = ht.NewRequest
-	_ = net.IP{}
-	_ = otelogen.Version
-	_ = trace.TraceIDFromHex
-	_ = otel.GetTracerProvider
-	_ = metric.NewNoopMeterProvider
-	_ = regexp.MustCompile
-	_ = jx.Null
-	_ = sync.Pool{}
 )
 
 func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
-	http.NotFound(w, r)
-}
-
-func skipSlash(p []byte) []byte {
-	if len(p) > 0 && p[0] == '/' {
-		return p[1:]
-	}
-	return p
-}
-
-// nextElem return next path element from p and forwarded p.
-func nextElem(p []byte) (elem, next []byte) {
-	p = skipSlash(p)
-	idx := bytes.IndexByte(p, '/')
-	if idx < 0 {
-		idx = len(p)
-	}
-	return p[:idx], p[idx:]
+	s.cfg.NotFound(w, r)
 }
 
 // ServeHTTP serves http request as defined by OpenAPI v3 specification,
 // calling handler that matches the path or returning not found error.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	p := []byte(r.URL.Path)
-	if len(p) == 0 {
+	elem := r.URL.Path
+	if len(elem) == 0 {
 		s.notFound(w, r)
 		return
 	}
-
-	var (
-		elem []byte            // current element, without slashes
-		args map[string]string // lazily initialized
-	)
-
 	// Static code generated router with unwrapped path search.
 	switch r.Method {
 	case "GET":
-		// Root edge.
-		elem, p = nextElem(p)
-		switch string(elem) {
-		case "status": // -> 1
-			// GET /status
-			s.handleStatusRequest(args, w, r)
-			return
-		default:
-			s.notFound(w, r)
-			return
+		if len(elem) == 0 {
+			break
 		}
-	case "POST":
-		// Root edge.
-		elem, p = nextElem(p)
-		switch string(elem) {
-		case "job": // -> 1
-			// Edge: 1, path: "job".
-			elem, p = nextElem(p)
-			switch string(elem) {
-			case "poll": // -> 2
-				// POST /job/poll
-				s.handlePollRequest(args, w, r)
-				return
-			default:
-				s.notFound(w, r)
+		switch elem[0] {
+		case '/': // Prefix: "/status"
+			if l := len("/status"); len(elem) >= l && elem[0:l] == "/status" {
+				elem = elem[l:]
+			} else {
+				break
+			}
+
+			if len(elem) == 0 {
+				// Leaf: Status
+				s.handleStatusRequest([0]string{}, w, r)
+
 				return
 			}
-		case "progress": // -> 3
-			// POST /progress
-			s.handleProgressRequest(args, w, r)
-			return
-		default:
-			s.notFound(w, r)
-			return
 		}
-	default:
-		s.notFound(w, r)
-		return
+	case "POST":
+		if len(elem) == 0 {
+			break
+		}
+		switch elem[0] {
+		case '/': // Prefix: "/"
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+				elem = elem[l:]
+			} else {
+				break
+			}
+
+			if len(elem) == 0 {
+				break
+			}
+			switch elem[0] {
+			case 'j': // Prefix: "job/poll"
+				if l := len("job/poll"); len(elem) >= l && elem[0:l] == "job/poll" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf: Poll
+					s.handlePollRequest([0]string{}, w, r)
+
+					return
+				}
+			case 'p': // Prefix: "progress"
+				if l := len("progress"); len(elem) >= l && elem[0:l] == "progress" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf: Progress
+					s.handleProgressRequest([0]string{}, w, r)
+
+					return
+				}
+			}
+		}
 	}
+	s.notFound(w, r)
+}
+
+// Route is route object.
+type Route struct {
+	name  string
+	count int
+	args  [0]string
+}
+
+// OperationID returns OpenAPI operationId.
+func (r Route) OperationID() string {
+	return r.name
+}
+
+// Args returns parsed arguments.
+func (r Route) Args() []string {
+	return r.args[:r.count]
+}
+
+// FindRoute finds Route for given method and path.
+func (s *Server) FindRoute(method, path string) (r Route, _ bool) {
+	var (
+		args = [0]string{}
+		elem = path
+	)
+	r.args = args
+	if elem == "" {
+		return r, false
+	}
+
+	// Static code generated router with unwrapped path search.
+	switch method {
+	case "GET":
+		if len(elem) == 0 {
+			break
+		}
+		switch elem[0] {
+		case '/': // Prefix: "/status"
+			if l := len("/status"); len(elem) >= l && elem[0:l] == "/status" {
+				elem = elem[l:]
+			} else {
+				break
+			}
+
+			if len(elem) == 0 {
+				// Leaf: Status
+				r.name = "Status"
+				r.args = args
+				r.count = 0
+				return r, true
+			}
+		}
+	case "POST":
+		if len(elem) == 0 {
+			break
+		}
+		switch elem[0] {
+		case '/': // Prefix: "/"
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+				elem = elem[l:]
+			} else {
+				break
+			}
+
+			if len(elem) == 0 {
+				break
+			}
+			switch elem[0] {
+			case 'j': // Prefix: "job/poll"
+				if l := len("job/poll"); len(elem) >= l && elem[0:l] == "job/poll" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf: Poll
+					r.name = "Poll"
+					r.args = args
+					r.count = 0
+					return r, true
+				}
+			case 'p': // Prefix: "progress"
+				if l := len("progress"); len(elem) >= l && elem[0:l] == "progress" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf: Progress
+					r.name = "Progress"
+					r.args = args
+					r.count = 0
+					return r, true
+				}
+			}
+		}
+	}
+	return r, false
 }

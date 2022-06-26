@@ -3,87 +3,58 @@
 package oas
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	"io"
-	"math"
-	"net"
 	"net/http"
-	"net/url"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-faster/errors"
-	"github.com/go-faster/jx"
-	"github.com/google/uuid"
-	"github.com/ogen-go/ogen/conv"
-	ht "github.com/ogen-go/ogen/http"
-	"github.com/ogen-go/ogen/json"
-	"github.com/ogen-go/ogen/otelogen"
-	"github.com/ogen-go/ogen/uri"
-	"github.com/ogen-go/ogen/validate"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-)
 
-// No-op definition for keeping imports.
-var (
-	_ = context.Background()
-	_ = fmt.Stringer(nil)
-	_ = strings.Builder{}
-	_ = errors.Is
-	_ = sort.Ints
-	_ = http.MethodGet
-	_ = io.Copy
-	_ = json.Marshal
-	_ = bytes.NewReader
-	_ = strconv.ParseInt
-	_ = time.Time{}
-	_ = conv.ToInt32
-	_ = uuid.UUID{}
-	_ = uri.PathEncoder{}
-	_ = url.URL{}
-	_ = math.Mod
-	_ = validate.Int{}
-	_ = ht.NewRequest
-	_ = net.IP{}
-	_ = otelogen.Version
-	_ = trace.TraceIDFromHex
-	_ = otel.GetTracerProvider
-	_ = metric.NewNoopMeterProvider
-	_ = regexp.MustCompile
-	_ = jx.Null
-	_ = sync.Pool{}
+	ht "github.com/ogen-go/ogen/http"
+	"github.com/ogen-go/ogen/ogenerrors"
+	"github.com/ogen-go/ogen/otelogen"
 )
 
 // HandlePollRequest handles poll operation.
 //
 // POST /job/poll
-func (s *Server) handlePollRequest(args map[string]string, w http.ResponseWriter, r *http.Request) {
-	ctx, span := s.cfg.Tracer.Start(r.Context(), `Poll`,
-		trace.WithAttributes(otelogen.OperationID(`poll`)),
+func (s *Server) handlePollRequest(args [0]string, w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("poll"),
+	}
+	ctx, span := s.cfg.Tracer.Start(r.Context(), "Poll",
+		trace.WithAttributes(otelAttrs...),
 		trace.WithSpanKind(trace.SpanKindServer),
 	)
+	s.requests.Add(ctx, 1, otelAttrs...)
 	defer span.End()
+
+	var err error
 	params, err := decodePollParams(args, r)
 	if err != nil {
-		span.RecordError(err)
-		respondError(w, http.StatusBadRequest, err)
+		err = &ogenerrors.DecodeParamsError{
+			Operation: "Poll",
+			Err:       err,
+		}
+		s.badRequest(ctx, w, r, span, otelAttrs, err)
 		return
 	}
 
 	response, err := s.h.Poll(ctx, params)
 	if err != nil {
 		span.RecordError(err)
+		span.SetStatus(codes.Error, "Internal")
+		s.errors.Add(ctx, 1, otelAttrs...)
 		var errRes *ErrorStatusCode
 		if errors.As(err, &errRes) {
 			encodeErrorResponse(*errRes, w, span)
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
 		encodeErrorResponse(s.h.NewError(ctx, err), w, span)
@@ -92,38 +63,62 @@ func (s *Server) handlePollRequest(args map[string]string, w http.ResponseWriter
 
 	if err := encodePollResponse(response, w, span); err != nil {
 		span.RecordError(err)
+		span.SetStatus(codes.Error, "Response")
+		s.errors.Add(ctx, 1, otelAttrs...)
 		return
 	}
+	elapsedDuration := time.Since(startTime)
+	s.duration.Record(ctx, elapsedDuration.Microseconds(), otelAttrs...)
 }
 
 // HandleProgressRequest handles progress operation.
 //
 // POST /progress
-func (s *Server) handleProgressRequest(args map[string]string, w http.ResponseWriter, r *http.Request) {
-	ctx, span := s.cfg.Tracer.Start(r.Context(), `Progress`,
-		trace.WithAttributes(otelogen.OperationID(`progress`)),
+func (s *Server) handleProgressRequest(args [0]string, w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("progress"),
+	}
+	ctx, span := s.cfg.Tracer.Start(r.Context(), "Progress",
+		trace.WithAttributes(otelAttrs...),
 		trace.WithSpanKind(trace.SpanKindServer),
 	)
+	s.requests.Add(ctx, 1, otelAttrs...)
 	defer span.End()
+
+	var err error
 	params, err := decodeProgressParams(args, r)
 	if err != nil {
-		span.RecordError(err)
-		respondError(w, http.StatusBadRequest, err)
+		err = &ogenerrors.DecodeParamsError{
+			Operation: "Progress",
+			Err:       err,
+		}
+		s.badRequest(ctx, w, r, span, otelAttrs, err)
 		return
 	}
-	request, err := decodeProgressRequest(r, span)
+	request, close, err := s.decodeProgressRequest(r, span)
 	if err != nil {
-		span.RecordError(err)
-		respondError(w, http.StatusBadRequest, err)
+		err = &ogenerrors.DecodeRequestError{
+			Operation: "Progress",
+			Err:       err,
+		}
+		s.badRequest(ctx, w, r, span, otelAttrs, err)
 		return
 	}
+	defer close()
 
 	response, err := s.h.Progress(ctx, request, params)
 	if err != nil {
 		span.RecordError(err)
+		span.SetStatus(codes.Error, "Internal")
+		s.errors.Add(ctx, 1, otelAttrs...)
 		var errRes *ErrorStatusCode
 		if errors.As(err, &errRes) {
 			encodeErrorResponse(*errRes, w, span)
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
 		encodeErrorResponse(s.h.NewError(ctx, err), w, span)
@@ -132,26 +127,43 @@ func (s *Server) handleProgressRequest(args map[string]string, w http.ResponseWr
 
 	if err := encodeProgressResponse(response, w, span); err != nil {
 		span.RecordError(err)
+		span.SetStatus(codes.Error, "Response")
+		s.errors.Add(ctx, 1, otelAttrs...)
 		return
 	}
+	elapsedDuration := time.Since(startTime)
+	s.duration.Record(ctx, elapsedDuration.Microseconds(), otelAttrs...)
 }
 
 // HandleStatusRequest handles status operation.
 //
 // GET /status
-func (s *Server) handleStatusRequest(args map[string]string, w http.ResponseWriter, r *http.Request) {
-	ctx, span := s.cfg.Tracer.Start(r.Context(), `Status`,
-		trace.WithAttributes(otelogen.OperationID(`status`)),
+func (s *Server) handleStatusRequest(args [0]string, w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("status"),
+	}
+	ctx, span := s.cfg.Tracer.Start(r.Context(), "Status",
+		trace.WithAttributes(otelAttrs...),
 		trace.WithSpanKind(trace.SpanKindServer),
 	)
+	s.requests.Add(ctx, 1, otelAttrs...)
 	defer span.End()
+
+	var err error
 
 	response, err := s.h.Status(ctx)
 	if err != nil {
 		span.RecordError(err)
+		span.SetStatus(codes.Error, "Internal")
+		s.errors.Add(ctx, 1, otelAttrs...)
 		var errRes *ErrorStatusCode
 		if errors.As(err, &errRes) {
 			encodeErrorResponse(*errRes, w, span)
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
 		encodeErrorResponse(s.h.NewError(ctx, err), w, span)
@@ -160,19 +172,24 @@ func (s *Server) handleStatusRequest(args map[string]string, w http.ResponseWrit
 
 	if err := encodeStatusResponse(response, w, span); err != nil {
 		span.RecordError(err)
+		span.SetStatus(codes.Error, "Response")
+		s.errors.Add(ctx, 1, otelAttrs...)
 		return
 	}
+	elapsedDuration := time.Since(startTime)
+	s.duration.Record(ctx, elapsedDuration.Microseconds(), otelAttrs...)
 }
 
-func respondError(w http.ResponseWriter, code int, err error) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	data, writeErr := json.Marshal(struct {
-		ErrorMessage string `json:"error_message"`
-	}{
-		ErrorMessage: err.Error(),
-	})
-	if writeErr == nil {
-		w.Write(data)
-	}
+func (s *Server) badRequest(
+	ctx context.Context,
+	w http.ResponseWriter,
+	r *http.Request,
+	span trace.Span,
+	otelAttrs []attribute.KeyValue,
+	err error,
+) {
+	span.RecordError(err)
+	span.SetStatus(codes.Error, "BadRequest")
+	s.errors.Add(ctx, 1, otelAttrs...)
+	s.cfg.ErrorHandler(ctx, w, r, err)
 }

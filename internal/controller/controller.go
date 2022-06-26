@@ -271,9 +271,7 @@ func (h Handler) Poll(ctx context.Context, params oas.PollParams) (oas.Job, erro
 		ForUpdate().
 		First(ctx)
 	if ent.IsNotFound(err) {
-		return oas.NewJobNothingJob(oas.JobNothing{
-			Type: "nothing",
-		}), nil
+		return oas.NewJobNothingJob(oas.JobNothing{}), nil
 	}
 	if err != nil {
 		return oas.Job{}, errors.Wrap(err, "query")
@@ -297,7 +295,6 @@ func (h Handler) Poll(ctx context.Context, params oas.PollParams) (oas.Job, erro
 	)
 
 	return oas.NewJobDownloadJob(oas.JobDownload{
-		Type: "download",
 		Date: ch.ID,
 	}), err
 }

@@ -3,63 +3,9 @@
 package oas
 
 import (
-	"bytes"
-	"context"
-	"fmt"
-	"io"
-	"math"
-	"net"
-	"net/http"
-	"net/url"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
-
 	"github.com/go-faster/errors"
-	"github.com/go-faster/jx"
-	"github.com/google/uuid"
-	"github.com/ogen-go/ogen/conv"
-	ht "github.com/ogen-go/ogen/http"
-	"github.com/ogen-go/ogen/json"
-	"github.com/ogen-go/ogen/otelogen"
-	"github.com/ogen-go/ogen/uri"
-	"github.com/ogen-go/ogen/validate"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/trace"
-)
 
-// No-op definition for keeping imports.
-var (
-	_ = context.Background()
-	_ = fmt.Stringer(nil)
-	_ = strings.Builder{}
-	_ = errors.Is
-	_ = sort.Ints
-	_ = http.MethodGet
-	_ = io.Copy
-	_ = json.Marshal
-	_ = bytes.NewReader
-	_ = strconv.ParseInt
-	_ = time.Time{}
-	_ = conv.ToInt32
-	_ = uuid.UUID{}
-	_ = uri.PathEncoder{}
-	_ = url.URL{}
-	_ = math.Mod
-	_ = validate.Int{}
-	_ = ht.NewRequest
-	_ = net.IP{}
-	_ = otelogen.Version
-	_ = trace.TraceIDFromHex
-	_ = otel.GetTracerProvider
-	_ = metric.NewNoopMeterProvider
-	_ = regexp.MustCompile
-	_ = jx.Null
-	_ = sync.Pool{}
+	"github.com/ogen-go/ogen/validate"
 )
 
 func (s Job) Validate() error {
@@ -130,33 +76,6 @@ func (s Progress) Validate() error {
 		})
 	}
 	if err := func() error {
-		if s.SHA256Input.Set {
-			if err := func() error {
-				if err := (validate.String{
-					MinLength:    64,
-					MinLengthSet: true,
-					MaxLength:    64,
-					MaxLengthSet: true,
-					Email:        false,
-					Hostname:     false,
-					Regex:        nil,
-				}).Validate(string(s.SHA256Input.Value)); err != nil {
-					return errors.Wrap(err, "string")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "sha256_input",
-			Error: err,
-		})
-	}
-	if err := func() error {
 		if s.SHA256Content.Set {
 			if err := func() error {
 				if err := (validate.String{
@@ -176,10 +95,35 @@ func (s Progress) Validate() error {
 			}
 		}
 		return nil
-		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "sha256_content",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.SHA256Input.Set {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:    64,
+					MinLengthSet: true,
+					MaxLength:    64,
+					MaxLengthSet: true,
+					Email:        false,
+					Hostname:     false,
+					Regex:        nil,
+				}).Validate(string(s.SHA256Input.Value)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "sha256_input",
 			Error: err,
 		})
 	}
@@ -202,7 +146,6 @@ func (s Progress) Validate() error {
 				return err
 			}
 		}
-		return nil
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{

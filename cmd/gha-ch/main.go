@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/go-faster/ch"
+	"github.com/ClickHouse/ch-go"
 	"github.com/go-faster/errors"
 	"go.uber.org/zap"
 

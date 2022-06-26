@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-faster/ch"
-	"github.com/go-faster/ch/proto"
+	"github.com/ClickHouse/ch-go"
+	"github.com/ClickHouse/ch-go/proto"
 	"github.com/go-faster/errors"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
@@ -128,7 +128,7 @@ func (v *Events) Input() proto.Input {
 }
 
 func (v *Events) Append(e *entry.Event) {
-	v.Date.Append(proto.ToDateTime(e.Time))
+	v.Date.Append(e.Time)
 	// "WatchEvent", "PushEvent", "IssuesEvent", "PullRequestEvent"
 	// Enum8('WatchEvent'=0, 'PushEvent'=1, 'IssuesEvent'=2, 'PullRequestEvent'=3),
 	switch string(e.Type) {
@@ -250,7 +250,7 @@ func main() {
 						e.Actor.Buf = append(e.Actor.Buf, got.Actor.Buf...)
 						e.Repo.Pos = append(e.Repo.Pos, got.Repo.Pos...)
 						e.Repo.Buf = append(e.Repo.Buf, got.Repo.Buf...)
-						e.Date = append(e.Date, got.Date...)
+						e.Date.Data = append(e.Date.Data, got.Date.Data...)
 						e.Type = append(e.Type, got.Type...)
 						putEvents(got)
 

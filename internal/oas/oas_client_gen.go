@@ -3,72 +3,29 @@
 package oas
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"io"
-	"math"
-	"net"
-	"net/http"
 	"net/url"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-faster/errors"
-	"github.com/go-faster/jx"
-	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric/instrument/syncint64"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/ogen-go/ogen/conv"
 	ht "github.com/ogen-go/ogen/http"
-	"github.com/ogen-go/ogen/json"
 	"github.com/ogen-go/ogen/otelogen"
 	"github.com/ogen-go/ogen/uri"
-	"github.com/ogen-go/ogen/validate"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/trace"
-)
-
-// No-op definition for keeping imports.
-var (
-	_ = context.Background()
-	_ = fmt.Stringer(nil)
-	_ = strings.Builder{}
-	_ = errors.Is
-	_ = sort.Ints
-	_ = http.MethodGet
-	_ = io.Copy
-	_ = json.Marshal
-	_ = bytes.NewReader
-	_ = strconv.ParseInt
-	_ = time.Time{}
-	_ = conv.ToInt32
-	_ = uuid.UUID{}
-	_ = uri.PathEncoder{}
-	_ = url.URL{}
-	_ = math.Mod
-	_ = validate.Int{}
-	_ = ht.NewRequest
-	_ = net.IP{}
-	_ = otelogen.Version
-	_ = trace.TraceIDFromHex
-	_ = otel.GetTracerProvider
-	_ = metric.NewNoopMeterProvider
-	_ = regexp.MustCompile
-	_ = jx.Null
-	_ = sync.Pool{}
 )
 
 // Client implements OAS client.
 type Client struct {
 	serverURL *url.URL
 	cfg       config
-	requests  metric.Int64Counter
-	errors    metric.Int64Counter
-	duration  metric.Int64Histogram
+	requests  syncint64.Counter
+	errors    syncint64.Counter
+	duration  syncint64.Histogram
 }
 
 // NewClient initializes new Client defined by OAS.
@@ -81,13 +38,13 @@ func NewClient(serverURL string, opts ...Option) (*Client, error) {
 		cfg:       newConfig(opts...),
 		serverURL: u,
 	}
-	if c.requests, err = c.cfg.Meter.NewInt64Counter(otelogen.ClientRequestCount); err != nil {
+	if c.requests, err = c.cfg.Meter.SyncInt64().Counter(otelogen.ClientRequestCount); err != nil {
 		return nil, err
 	}
-	if c.errors, err = c.cfg.Meter.NewInt64Counter(otelogen.ClientErrorsCount); err != nil {
+	if c.errors, err = c.cfg.Meter.SyncInt64().Counter(otelogen.ClientErrorsCount); err != nil {
 		return nil, err
 	}
-	if c.duration, err = c.cfg.Meter.NewInt64Histogram(otelogen.ClientDuration); err != nil {
+	if c.duration, err = c.cfg.Meter.SyncInt64().Histogram(otelogen.ClientDuration); err != nil {
 		return nil, err
 	}
 	return c, nil
@@ -95,41 +52,44 @@ func NewClient(serverURL string, opts ...Option) (*Client, error) {
 
 // Poll invokes poll operation.
 //
+// Request job from coordinator.
+//
 // POST /job/poll
 func (c *Client) Poll(ctx context.Context, params PollParams) (res Job, err error) {
 	startTime := time.Now()
-	ctx, span := c.cfg.Tracer.Start(ctx, `Poll`,
-		trace.WithAttributes(otelogen.OperationID(`poll`)),
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("poll"),
+	}
+	ctx, span := c.cfg.Tracer.Start(ctx, "Poll",
+		trace.WithAttributes(otelAttrs...),
 		trace.WithSpanKind(trace.SpanKindClient),
 	)
 	defer func() {
 		if err != nil {
 			span.RecordError(err)
-			c.errors.Add(ctx, 1)
+			c.errors.Add(ctx, 1, otelAttrs...)
 		} else {
 			elapsedDuration := time.Since(startTime)
-			c.duration.Record(ctx, elapsedDuration.Microseconds())
+			c.duration.Record(ctx, elapsedDuration.Microseconds(), otelAttrs...)
 		}
 		span.End()
 	}()
-	c.requests.Add(ctx, 1)
+	c.requests.Add(ctx, 1, otelAttrs...)
 	u := uri.Clone(c.serverURL)
 	u.Path += "/job/poll"
 
 	r := ht.NewRequest(ctx, "POST", u, nil)
-	defer ht.PutRequest(r)
 
+	h := uri.NewHeaderEncoder(r.Header)
 	{
-		e := uri.NewHeaderEncoder(uri.HeaderEncoderConfig{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Token",
 			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.XToken))
-		}(); err != nil {
-			return res, errors.Wrap(err, `encode header param X-Token`)
 		}
-		if v, ok := e.Result(); ok {
-			r.Header.Set("X-Token", v)
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.XToken))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header param X-Token")
 		}
 	}
 
@@ -149,6 +109,8 @@ func (c *Client) Poll(ctx context.Context, params PollParams) (res Job, err erro
 
 // Progress invokes progress operation.
 //
+// Report progress.
+//
 // POST /progress
 func (c *Client) Progress(ctx context.Context, request Progress, params ProgressParams) (res Status, err error) {
 	if err := func() error {
@@ -160,51 +122,58 @@ func (c *Client) Progress(ctx context.Context, request Progress, params Progress
 		return res, errors.Wrap(err, "validate")
 	}
 	startTime := time.Now()
-	ctx, span := c.cfg.Tracer.Start(ctx, `Progress`,
-		trace.WithAttributes(otelogen.OperationID(`progress`)),
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("progress"),
+	}
+	ctx, span := c.cfg.Tracer.Start(ctx, "Progress",
+		trace.WithAttributes(otelAttrs...),
 		trace.WithSpanKind(trace.SpanKindClient),
 	)
 	defer func() {
 		if err != nil {
 			span.RecordError(err)
-			c.errors.Add(ctx, 1)
+			c.errors.Add(ctx, 1, otelAttrs...)
 		} else {
 			elapsedDuration := time.Since(startTime)
-			c.duration.Record(ctx, elapsedDuration.Microseconds())
+			c.duration.Record(ctx, elapsedDuration.Microseconds(), otelAttrs...)
 		}
 		span.End()
 	}()
-	c.requests.Add(ctx, 1)
+	c.requests.Add(ctx, 1, otelAttrs...)
 	var (
 		contentType string
-		reqBody     io.Reader
+		reqBody     func() (io.ReadCloser, error)
 	)
 	contentType = "application/json"
-	buf, err := encodeProgressRequestJSON(request, span)
+	fn, err := encodeProgressRequestJSON(request, span)
 	if err != nil {
 		return res, err
 	}
-	defer putBuf(buf)
-	reqBody = buf
+	reqBody = fn
 
 	u := uri.Clone(c.serverURL)
 	u.Path += "/progress"
 
-	r := ht.NewRequest(ctx, "POST", u, reqBody)
-	defer ht.PutRequest(r)
+	body, err := reqBody()
+	if err != nil {
+		return res, errors.Wrap(err, "request body")
+	}
+	defer body.Close()
+
+	r := ht.NewRequest(ctx, "POST", u, body)
+	r.GetBody = reqBody
 
 	r.Header.Set("Content-Type", contentType)
+	h := uri.NewHeaderEncoder(r.Header)
 	{
-		e := uri.NewHeaderEncoder(uri.HeaderEncoderConfig{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "X-Token",
 			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.XToken))
-		}(); err != nil {
-			return res, errors.Wrap(err, `encode header param X-Token`)
 		}
-		if v, ok := e.Result(); ok {
-			r.Header.Set("X-Token", v)
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(params.XToken))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header param X-Token")
 		}
 	}
 
@@ -224,29 +193,33 @@ func (c *Client) Progress(ctx context.Context, request Progress, params Progress
 
 // Status invokes status operation.
 //
+// Get status.
+//
 // GET /status
 func (c *Client) Status(ctx context.Context) (res Status, err error) {
 	startTime := time.Now()
-	ctx, span := c.cfg.Tracer.Start(ctx, `Status`,
-		trace.WithAttributes(otelogen.OperationID(`status`)),
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("status"),
+	}
+	ctx, span := c.cfg.Tracer.Start(ctx, "Status",
+		trace.WithAttributes(otelAttrs...),
 		trace.WithSpanKind(trace.SpanKindClient),
 	)
 	defer func() {
 		if err != nil {
 			span.RecordError(err)
-			c.errors.Add(ctx, 1)
+			c.errors.Add(ctx, 1, otelAttrs...)
 		} else {
 			elapsedDuration := time.Since(startTime)
-			c.duration.Record(ctx, elapsedDuration.Microseconds())
+			c.duration.Record(ctx, elapsedDuration.Microseconds(), otelAttrs...)
 		}
 		span.End()
 	}()
-	c.requests.Add(ctx, 1)
+	c.requests.Add(ctx, 1, otelAttrs...)
 	u := uri.Clone(c.serverURL)
 	u.Path += "/status"
 
 	r := ht.NewRequest(ctx, "GET", u, nil)
-	defer ht.PutRequest(r)
 
 	resp, err := c.cfg.Client.Do(r)
 	if err != nil {

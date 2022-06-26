@@ -3,98 +3,66 @@
 package oas
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	"io"
-	"math"
-	"net"
 	"net/http"
-	"net/url"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 
 	"github.com/go-faster/errors"
-	"github.com/go-faster/jx"
-	"github.com/google/uuid"
-	"github.com/ogen-go/ogen/conv"
-	ht "github.com/ogen-go/ogen/http"
-	"github.com/ogen-go/ogen/json"
-	"github.com/ogen-go/ogen/otelogen"
-	"github.com/ogen-go/ogen/uri"
-	"github.com/ogen-go/ogen/validate"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric/nonrecording"
 	"go.opentelemetry.io/otel/trace"
+
+	ht "github.com/ogen-go/ogen/http"
+	"github.com/ogen-go/ogen/json"
+	"github.com/ogen-go/ogen/ogenerrors"
+	"github.com/ogen-go/ogen/otelogen"
 )
 
-// No-op definition for keeping imports.
-var (
-	_ = context.Background()
-	_ = fmt.Stringer(nil)
-	_ = strings.Builder{}
-	_ = errors.Is
-	_ = sort.Ints
-	_ = http.MethodGet
-	_ = io.Copy
-	_ = json.Marshal
-	_ = bytes.NewReader
-	_ = strconv.ParseInt
-	_ = time.Time{}
-	_ = conv.ToInt32
-	_ = uuid.UUID{}
-	_ = uri.PathEncoder{}
-	_ = url.URL{}
-	_ = math.Mod
-	_ = validate.Int{}
-	_ = ht.NewRequest
-	_ = net.IP{}
-	_ = otelogen.Version
-	_ = trace.TraceIDFromHex
-	_ = otel.GetTracerProvider
-	_ = metric.NewNoopMeterProvider
-	_ = regexp.MustCompile
-	_ = jx.Null
-	_ = sync.Pool{}
-)
+// ErrorHandler is error handler.
+type ErrorHandler func(ctx context.Context, w http.ResponseWriter, r *http.Request, err error)
 
-// bufPool is pool of bytes.Buffer for encoding and decoding.
-var bufPool = &sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
-}
-
-// getBuf returns buffer from pool.
-func getBuf() *bytes.Buffer {
-	return bufPool.Get().(*bytes.Buffer)
-}
-
-// putBuf puts buffer to pool.
-func putBuf(b *bytes.Buffer) {
-	b.Reset()
-	bufPool.Put(b)
+func respondError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	var (
+		code    = http.StatusInternalServerError
+		ogenErr ogenerrors.Error
+	)
+	switch {
+	case errors.Is(err, ht.ErrNotImplemented):
+		code = http.StatusNotImplemented
+	case errors.As(err, &ogenErr):
+		code = ogenErr.Code()
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	data, writeErr := json.Marshal(struct {
+		ErrorMessage string `json:"error_message"`
+	}{
+		ErrorMessage: err.Error(),
+	})
+	if writeErr == nil {
+		w.Write(data)
+	}
 }
 
 type config struct {
-	TracerProvider trace.TracerProvider
-	Tracer         trace.Tracer
-	MeterProvider  metric.MeterProvider
-	Meter          metric.Meter
-	Client         ht.Client
+	TracerProvider     trace.TracerProvider
+	Tracer             trace.Tracer
+	MeterProvider      metric.MeterProvider
+	Meter              metric.Meter
+	Client             ht.Client
+	NotFound           http.HandlerFunc
+	ErrorHandler       ErrorHandler
+	MaxMultipartMemory int64
 }
 
 func newConfig(opts ...Option) config {
 	cfg := config{
-		TracerProvider: otel.GetTracerProvider(),
-		MeterProvider:  metric.NewNoopMeterProvider(),
-		Client: &http.Client{
-			Timeout: time.Second * 15,
-		},
+		TracerProvider:     otel.GetTracerProvider(),
+		MeterProvider:      nonrecording.NewNoopMeterProvider(),
+		Client:             http.DefaultClient,
+		NotFound:           http.NotFound,
+		ErrorHandler:       respondError,
+		MaxMultipartMemory: 32 << 20, // 32 MB
 	}
 	for _, opt := range opts {
 		opt.apply(&cfg)
@@ -117,6 +85,7 @@ func (o optionFunc) apply(c *config) {
 }
 
 // WithTracerProvider specifies a tracer provider to use for creating a tracer.
+//
 // If none is specified, the global provider is used.
 func WithTracerProvider(provider trace.TracerProvider) Option {
 	return optionFunc(func(cfg *config) {
@@ -126,11 +95,50 @@ func WithTracerProvider(provider trace.TracerProvider) Option {
 	})
 }
 
+// WithMeterProvider specifies a meter provider to use for creating a meter.
+//
+// If none is specified, the metric.NewNoopMeterProvider is used.
+func WithMeterProvider(provider metric.MeterProvider) Option {
+	return optionFunc(func(cfg *config) {
+		if provider != nil {
+			cfg.MeterProvider = provider
+		}
+	})
+}
+
 // WithClient specifies http client to use.
 func WithClient(client ht.Client) Option {
 	return optionFunc(func(cfg *config) {
 		if client != nil {
 			cfg.Client = client
+		}
+	})
+}
+
+// WithNotFound specifies Not Found handler to use.
+func WithNotFound(notFound http.HandlerFunc) Option {
+	return optionFunc(func(cfg *config) {
+		if notFound != nil {
+			cfg.NotFound = notFound
+		}
+	})
+}
+
+// WithErrorHandler specifies error handler to use.
+func WithErrorHandler(h ErrorHandler) Option {
+	return optionFunc(func(cfg *config) {
+		if h != nil {
+			cfg.ErrorHandler = h
+		}
+	})
+}
+
+// WithMaxMultipartMemory specifies limit of memory for storing file parts.
+// File parts which can't be stored in memory will be stored on disk in temporary files.
+func WithMaxMultipartMemory(max int64) Option {
+	return optionFunc(func(cfg *config) {
+		if max > 0 {
+			cfg.MaxMultipartMemory = max
 		}
 	})
 }

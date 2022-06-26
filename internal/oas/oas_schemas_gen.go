@@ -3,72 +3,17 @@
 package oas
 
 import (
-	"bytes"
-	"context"
 	"fmt"
-	"io"
-	"math"
-	"net"
-	"net/http"
-	"net/url"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
-
-	"github.com/go-faster/errors"
-	"github.com/go-faster/jx"
-	"github.com/google/uuid"
-	"github.com/ogen-go/ogen/conv"
-	ht "github.com/ogen-go/ogen/http"
-	"github.com/ogen-go/ogen/json"
-	"github.com/ogen-go/ogen/otelogen"
-	"github.com/ogen-go/ogen/uri"
-	"github.com/ogen-go/ogen/validate"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/trace"
-)
-
-// No-op definition for keeping imports.
-var (
-	_ = context.Background()
-	_ = fmt.Stringer(nil)
-	_ = strings.Builder{}
-	_ = errors.Is
-	_ = sort.Ints
-	_ = http.MethodGet
-	_ = io.Copy
-	_ = json.Marshal
-	_ = bytes.NewReader
-	_ = strconv.ParseInt
-	_ = time.Time{}
-	_ = conv.ToInt32
-	_ = uuid.UUID{}
-	_ = uri.PathEncoder{}
-	_ = url.URL{}
-	_ = math.Mod
-	_ = validate.Int{}
-	_ = ht.NewRequest
-	_ = net.IP{}
-	_ = otelogen.Version
-	_ = trace.TraceIDFromHex
-	_ = otel.GetTracerProvider
-	_ = metric.NewNoopMeterProvider
-	_ = regexp.MustCompile
-	_ = jx.Null
-	_ = sync.Pool{}
 )
 
 func (s *ErrorStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
 }
 
+// Error description.
 // Ref: #/components/schemas/Error
 type Error struct {
-	Message string `json:"message"`
+	Message string "json:\"message\""
 }
 
 // ErrorStatusCode wraps Error with StatusCode.
@@ -77,6 +22,7 @@ type ErrorStatusCode struct {
 	Response   Error
 }
 
+// Job to perform on worker.
 // Ref: #/components/schemas/Job
 // Job represents sum type.
 type Job struct {
@@ -168,22 +114,21 @@ func NewJobProcessJob(v JobProcess) Job {
 	return s
 }
 
+// Download chunk.
 // Ref: #/components/schemas/JobDownload
 type JobDownload struct {
-	Type string `json:"type"`
-	Date string `json:"date"`
+	Date string "json:\"date\""
 }
 
+// Do nothing.
 // Ref: #/components/schemas/JobNothing
-type JobNothing struct {
-	Type string `json:"type"`
-}
+type JobNothing struct{}
 
+// Process job.
 // Ref: #/components/schemas/JobProcess
 type JobProcess struct {
-	Type       string   `json:"type"`
-	Keys       []string `json:"keys"`
-	Clickhouse string   `json:"clickhouse"`
+	Clickhouse string   "json:\"clickhouse\""
+	Keys       []string "json:\"keys\""
 }
 
 // NewOptInt64 returns new OptInt64 with value set to v.
@@ -224,6 +169,14 @@ func (o OptInt64) Get() (v int64, ok bool) {
 	return o.Value, true
 }
 
+// Or returns value if set, or given parameter if does not.
+func (o OptInt64) Or(d int64) int64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptString returns new OptString with value set to v.
 func NewOptString(v string) OptString {
 	return OptString{
@@ -262,17 +215,26 @@ func (o OptString) Get() (v string, ok bool) {
 	return o.Value, true
 }
 
+// Or returns value if set, or given parameter if does not.
+func (o OptString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // Ref: #/components/schemas/Progress
 type Progress struct {
-	Event            ProgressEvent `json:"event"`
-	Key              string        `json:"key"`
-	InputSizeBytes   OptInt64      `json:"input_size_bytes"`
-	ContentSizeBytes OptInt64      `json:"content_size_bytes"`
-	OutputSizeBytes  OptInt64      `json:"output_size_bytes"`
-	InputReadyBytes  OptInt64      `json:"input_ready_bytes"`
-	SHA256Input      OptString     `json:"sha256_input"`
-	SHA256Content    OptString     `json:"sha256_content"`
-	SHA256Output     OptString     `json:"sha256_output"`
+	ContentSizeBytes OptInt64      "json:\"content_size_bytes\""
+	Event            ProgressEvent "json:\"event\""
+	InputReadyBytes  OptInt64      "json:\"input_ready_bytes\""
+	InputSizeBytes   OptInt64      "json:\"input_size_bytes\""
+	// Chunk key.
+	Key             string    "json:\"key\""
+	OutputSizeBytes OptInt64  "json:\"output_size_bytes\""
+	SHA256Content   OptString "json:\"sha256_content\""
+	SHA256Input     OptString "json:\"sha256_input\""
+	SHA256Output    OptString "json:\"sha256_output\""
 }
 
 type ProgressEvent string
@@ -285,5 +247,5 @@ const (
 
 // Ref: #/components/schemas/Status
 type Status struct {
-	Message string `json:"message"`
+	Message string "json:\"message\""
 }
