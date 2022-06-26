@@ -27,12 +27,8 @@ func main() {
 
 		client := gh.NewClient(http.DefaultClient, os.Getenv("GITHUB_TOKEN"))
 		latestMet := make(map[string]struct{})
-		var (
-			sleep time.Duration
-			etag  string
-		)
+		var etag string
 		for {
-
 			start := time.Now()
 			res, err := client.Events(ctx, gh.Params{
 				PerPage: perPage,
@@ -41,12 +37,11 @@ func main() {
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch events")
 			}
-
 			if res.NotModified {
-				lg.Info("Not modified")
-				time.Sleep(time.Millisecond * 200)
+				lg.Info("Not modified", zap.Duration("duration", time.Since(start)))
 				continue
 			}
+
 			var current []Event
 			for _, v := range res.Data {
 				ev := Event{
@@ -82,6 +77,7 @@ func main() {
 				current = append(current, ev)
 			}
 
+			// De-duplicating events.
 			currentMet := make(map[string]struct{})
 			for _, ev := range current {
 				currentMet[ev.ID] = struct{}{}
@@ -93,19 +89,19 @@ func main() {
 				}
 			}
 
+			// Calculating next sleep time to avoid rate limit.
+			var sleep time.Duration
 			if res.RateLimit.Remaining < 10 {
 				lg.Warn("Rate limit", zap.Int("remaining", res.RateLimit.Remaining))
 				sleep = res.RateLimit.Reset.Sub(time.Now()) + time.Second
 			} else {
 				sleep = time.Until(res.RateLimit.Reset) / time.Duration(res.RateLimit.Remaining)
 			}
-
 			duration := time.Since(start)
-			sleep -= duration
+			sleep -= duration // don't sleep for more than the rate limit
 			if sleep <= 0 {
-				sleep = time.Millisecond * 100
+				sleep = 0
 			}
-
 			lg.Info("Events",
 				zap.Duration("duration", duration),
 				zap.Int("new_count", len(newEvents)),
@@ -118,12 +114,10 @@ func main() {
 			if len(newEvents) >= perPage && etag != "" {
 				lg.Warn("Missed events")
 			}
-
-			latestMet = currentMet
-			etag = res.Etag
 			select {
 			case <-time.After(sleep):
-				continue
+				latestMet = currentMet
+				etag = res.Etag
 			case <-ctx.Done():
 				return ctx.Err()
 			}
