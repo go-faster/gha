@@ -15,11 +15,11 @@ require (
 	github.com/klauspost/compress v1.15.1
 	github.com/lib/pq v1.10.4
 	github.com/ogen-go/ogen v0.0.0-20211124125951-180f74ba9985
-	github.com/stretchr/testify v1.7.1-0.20210427113832-6241f9ab9942
+	github.com/stretchr/testify v1.7.1
 	go.etcd.io/bbolt v1.3.6
-	go.opentelemetry.io/otel v1.4.1
-	go.opentelemetry.io/otel/metric v0.27.0
-	go.opentelemetry.io/otel/trace v1.4.1
+	go.opentelemetry.io/otel v1.7.0
+	go.opentelemetry.io/otel/metric v0.30.0
+	go.opentelemetry.io/otel/trace v1.7.0
 	go.uber.org/atomic v1.9.0
 	go.uber.org/ratelimit v0.2.0
 	go.uber.org/zap v1.21.0
@@ -38,7 +38,7 @@ require (
 	github.com/dmarkham/enumer v1.5.3 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
-	github.com/go-logr/logr v1.2.2 // indirect
+	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/goccy/go-yaml v1.9.4 // indirect
