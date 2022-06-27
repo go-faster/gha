@@ -38,23 +38,16 @@ func (c *Service) Send(ctx context.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "dial")
 		}
+
+		// Restart stream every softTimeout to force merges.
 		softTimeout := time.Now().Add(time.Minute)
-		/*
-			CREATE TABLE github_events_raw
-			(
-			    id  Int64,
-			    ts  DateTime32,
-			    raw String CODEC (ZSTD(16))
-			) ENGINE = ReplacingMergeTree
-			      PARTITION BY toYYYYMMDD(ts)
-			      ORDER BY (ts, id);
-		*/
+
+		// See table.go for the schema.
 		var (
 			colID  proto.ColInt64    // id Int64
 			colTs  proto.ColDateTime // ts DateTime
 			colRaw proto.ColBytes    // raw String
 		)
-		// Stream events to ClickHouse.
 		q := ch.Query{
 			Body: "INSERT INTO github_events_raw VALUES",
 			Input: proto.Input{
@@ -63,16 +56,19 @@ func (c *Service) Send(ctx context.Context) error {
 				{Name: "raw", Data: &colRaw},
 			},
 			OnInput: func(ctx context.Context) error {
+				// Stream events to ClickHouse.
 				colID.Reset()
 				colTs.Reset()
 				colRaw.Reset()
 				if time.Now().After(softTimeout) {
+					// Restarting stream to force merges.
 					return io.EOF
 				}
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
 				case <-time.After(time.Second * 5):
+					// No events for 5 seconds, restarting stream.
 					return io.EOF
 				case batch := <-c.batches:
 					for _, e := range batch {
