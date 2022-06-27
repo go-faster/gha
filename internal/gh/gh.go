@@ -70,7 +70,48 @@ func (r *RateLimit) Parse(v http.Header) error {
 	return nil
 }
 
-func (c *Client) Events(ctx context.Context, p Params) (*Result[[]jx.Raw], error) {
+type Event struct {
+	Raw       jx.Raw
+	CreatedAt time.Time
+	ID        int64
+}
+
+func (e *Event) Parse() error {
+	if err := jx.DecodeBytes(e.Raw).ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "created_at":
+			v, err := d.Str()
+			if err != nil {
+				return errors.Wrap(err, "str")
+			}
+			if e.CreatedAt, err = time.Parse(time.RFC3339, v); err != nil {
+				return err
+			}
+			return nil
+		case "id":
+			v, err := d.Num()
+			if err != nil {
+				return errors.Wrap(err, "id")
+			}
+			id, err := v.Int64()
+			if err != nil {
+				return err
+			}
+			e.ID = id
+			return nil
+		default:
+			if err := d.Skip(); err != nil {
+				return errors.Wrap(err, "skip")
+			}
+			return nil
+		}
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) Events(ctx context.Context, p Params) (*Result[[]Event], error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/events", nil)
 	if err != nil {
 		return nil, err
@@ -104,7 +145,7 @@ func (c *Client) Events(ctx context.Context, p Params) (*Result[[]jx.Raw], error
 	case http.StatusOK:
 		// ok
 	case http.StatusNotModified:
-		return &Result[[]jx.Raw]{
+		return &Result[[]Event]{
 			NotModified: true,
 		}, nil
 	default:
@@ -141,13 +182,17 @@ func (c *Client) Events(ctx context.Context, p Params) (*Result[[]jx.Raw], error
 		X-Xss-Protection: 0
 	*/
 
-	var events []jx.Raw
+	var events []Event
 	if err := jx.Decode(resp.Body, 1024).Arr(func(d *jx.Decoder) error {
 		raw, err := d.RawAppend(nil)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "extract raw event")
 		}
-		events = append(events, raw)
+		ev := Event{Raw: raw}
+		if err := ev.Parse(); err != nil {
+			return errors.Wrap(err, "parse event")
+		}
+		events = append(events, ev)
 		return nil
 	}); err != nil {
 		return nil, err
@@ -158,7 +203,7 @@ func (c *Client) Events(ctx context.Context, p Params) (*Result[[]jx.Raw], error
 		return nil, err
 	}
 
-	return &Result[[]jx.Raw]{
+	return &Result[[]Event]{
 		Data:      events,
 		Etag:      resp.Header.Get("etag"),
 		RateLimit: rateLimit,
