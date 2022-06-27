@@ -147,10 +147,6 @@ Fetch:
 			if etag == "" || len(newEvents) < (p.PerPage*p.Page) {
 				if i == 0 {
 					etag = res.Etag
-				} else {
-					lg.Info("Fetched additional pages",
-						zap.Int("pages", p.Page),
-					)
 				}
 				break
 			}
