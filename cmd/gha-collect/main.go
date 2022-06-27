@@ -31,9 +31,8 @@ func (c *Service) Send(ctx context.Context) error {
 			return err
 		}
 		db, err := ch.Dial(ctx, ch.Options{
-			Database:    "faster",
-			Address:     os.Getenv("CLICKHOUSE_ADDR"),
-			Compression: ch.CompressionZSTD,
+			Database: "faster",
+			Address:  os.Getenv("CLICKHOUSE_ADDR"),
 		})
 		if err != nil {
 			return errors.Wrap(err, "dial")
