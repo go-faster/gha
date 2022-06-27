@@ -152,34 +152,30 @@ func (c *Client) Events(ctx context.Context, p Params) (*Result[[]Event], error)
 		return nil, errors.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	//fmt.Println(resp.Header.Get("Etag"))
-	//fmt.Println(resp.Header.Get("Link"))
-	//fmt.Println(resp.Header.Get("X-Ratelimit-Remaining"))
-	//fmt.Println(resp.Header.Get("X-Ratelimit-Used"))
-
 	/*
-		Cache-Control: public, max-age=60, s-maxage=60
-		Content-Security-Policy: default-src 'none'
-		Content-Type: application/json; charset=utf-8
-		Date: Sun, 26 Jun 2022 19:48:08 GMT
-		Etag: W/"9d7d7dda865701d9fb4ecd7f6d767ecb1b813b086440bc62bb626de5b877dc49"
-		Last-Modified: Sun, 26 Jun 2022 19:43:08 GMT
-		Link: <https://api.github.com/events?page=2>; rel="next", <https://api.github.com/events?page=10>; rel="last"
-		Referrer-Policy: origin-when-cross-origin, strict-origin-when-cross-origin
-		Server: GitHub.com
-		Strict-Transport-Security: max-age=31536000; includeSubdomains; preload
-		Vary: Accept, Accept-Encoding, Accept, X-Requested-With
-		X-Content-Type-Options: nosniff
-		X-Frame-Options: deny
-		X-Github-Media-Type: github.v3; format=json
-		X-Github-Request-Id: 8AD2:5A65:2D401F:2EFBE6:62B8B7F7
-		X-Poll-Interval: 60
-		X-Ratelimit-Limit: 60
-		X-Ratelimit-Remaining: 48
-		X-Ratelimit-Reset: 1656274556
-		X-Ratelimit-Resource: core
-		X-Ratelimit-Used: 12
-		X-Xss-Protection: 0
+		Headers example:
+			Cache-Control: public, max-age=60, s-maxage=60
+			Content-Security-Policy: default-src 'none'
+			Content-Type: application/json; charset=utf-8
+			Date: Sun, 26 Jun 2022 19:48:08 GMT
+			Etag: W/"9d7d7dda865701d9fb4ecd7f6d767ecb1b813b086440bc62bb626de5b877dc49"
+			Last-Modified: Sun, 26 Jun 2022 19:43:08 GMT
+			Link: <https://api.github.com/events?page=2>; rel="next", <https://api.github.com/events?page=10>; rel="last"
+			Referrer-Policy: origin-when-cross-origin, strict-origin-when-cross-origin
+			Server: GitHub.com
+			Strict-Transport-Security: max-age=31536000; includeSubdomains; preload
+			Vary: Accept, Accept-Encoding, Accept, X-Requested-With
+			X-Content-Type-Options: nosniff
+			X-Frame-Options: deny
+			X-Github-Media-Type: github.v3; format=json
+			X-Github-Request-Id: 8AD2:5A65:2D401F:2EFBE6:62B8B7F7
+			X-Poll-Interval: 60
+			X-Ratelimit-Limit: 60
+			X-Ratelimit-Remaining: 48
+			X-Ratelimit-Reset: 1656274556
+			X-Ratelimit-Resource: core
+			X-Ratelimit-Used: 12
+			X-Xss-Protection: 0
 	*/
 
 	var events []Event
