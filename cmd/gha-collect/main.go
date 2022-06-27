@@ -105,6 +105,9 @@ func (c *Service) Poll(ctx context.Context) error {
 
 	var etag string
 	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		start := time.Now()
 		res, err := client.Events(ctx, gh.Params{
 			PerPage: perPage,
@@ -231,8 +234,16 @@ func main() {
 		g.Go(func() error {
 			return s.Send(ctx)
 		})
+		srv := &http.Server{
+			Handler: http.DefaultServeMux,
+			Addr:    ":8090",
+		}
 		g.Go(func() error {
-			if err := http.ListenAndServe(":8090", nil); err != nil {
+			<-ctx.Done()
+			return srv.Shutdown(ctx)
+		})
+		g.Go(func() error {
+			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				return errors.Wrap(err, "http")
 			}
 			return nil
