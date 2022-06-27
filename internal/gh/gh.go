@@ -37,9 +37,10 @@ type Params struct {
 type Result[T any] struct {
 	Data T
 
-	Etag        string
-	NotModified bool
-	RateLimit   RateLimit
+	Etag          string
+	NotModified   bool
+	Unprocessable bool
+	RateLimit     RateLimit
 }
 
 type RateLimit struct {
@@ -147,6 +148,10 @@ func (c *Client) Events(ctx context.Context, p Params) (*Result[[]Event], error)
 	case http.StatusNotModified:
 		return &Result[[]Event]{
 			NotModified: true,
+		}, nil
+	case http.StatusUnprocessableEntity:
+		return &Result[[]Event]{
+			Unprocessable: true,
 		}, nil
 	default:
 		return nil, errors.Errorf("unexpected status code: %d", resp.StatusCode)

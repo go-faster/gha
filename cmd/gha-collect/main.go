@@ -38,7 +38,7 @@ func (c *Service) Send(ctx context.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "dial")
 		}
-		softTimeout := time.Now().Add(time.Second * 30)
+		softTimeout := time.Now().Add(time.Minute)
 		/*
 			CREATE TABLE github_events_raw
 			(
@@ -50,10 +50,11 @@ func (c *Service) Send(ctx context.Context) error {
 			      ORDER BY (ts, id);
 		*/
 		var (
-			colID  proto.ColInt64
-			colTs  proto.ColDateTime
-			colRaw proto.ColBytes
+			colID  proto.ColInt64    // id Int64
+			colTs  proto.ColDateTime // ts DateTime
+			colRaw proto.ColBytes    // raw String
 		)
+		// Stream events to ClickHouse.
 		q := ch.Query{
 			Body: "INSERT INTO github_events_raw VALUES",
 			Input: proto.Input{
@@ -90,53 +91,56 @@ func (c *Service) Send(ctx context.Context) error {
 }
 
 func (c *Service) Poll(ctx context.Context) error {
-	const perPage = 100
+	const (
+		perPage  = 100
+		maxPages = 10
+	)
 
 	client := gh.NewClient(http.DefaultClient, os.Getenv("GITHUB_TOKEN"))
 	latestMet := make(map[int64]struct{})
 	lg := c.lg.Named("poll")
 
 	var etag string
+Fetch:
 	for {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		lg.Info("Fetching events")
-		start := time.Now()
-		res, err := client.Events(ctx, gh.Params{
-			PerPage: perPage,
-			Etag:    etag,
-		})
-		if err != nil {
-			return errors.Wrap(err, "failed to fetch events")
-		}
-		if res.NotModified {
-			lg.Info("Not modified", zap.Duration("duration", time.Since(start)))
-			continue
-		}
 
-		rt := res.RateLimit
-
-		// De-duplicating events.
+		var rt gh.RateLimit
 		var newEvents []gh.Event
+		var start time.Time
+
 		currentMet := make(map[int64]struct{})
-		for _, ev := range res.Data {
-			currentMet[ev.ID] = struct{}{}
-			if _, ok := latestMet[ev.ID]; !ok {
-				newEvents = append(newEvents, ev)
-			}
-		}
-		if len(newEvents) >= perPage && etag != "" {
-			lg.Info("Fetching more events")
-			resNext, err := client.Events(ctx, gh.Params{
+		for i := 0; i <= maxPages; i++ {
+			lg.Info("Fetching events")
+			start = time.Now()
+			p := gh.Params{
+				Page:    i + 1, // first page is 1
 				PerPage: perPage,
-				Page:    2,
-			})
+			}
+			if i == 0 {
+				p.Etag = etag
+			}
+			res, err := client.Events(ctx, p)
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch events")
 			}
-			rt = resNext.RateLimit
-			for _, ev := range resNext.Data {
+			if res.NotModified {
+				lg.Info("Not modified", zap.Duration("duration", time.Since(start)))
+				continue Fetch
+			}
+			if res.Unprocessable {
+				lg.Warn("Unable to resolve missing events")
+				break
+			}
+
+			// Updating rate-limit to sleep later.
+			rt = res.RateLimit
+
+			// Searching for new events.
+			// The currentMet contains events from previous Fetch loop.
+			for _, ev := range res.Data {
 				if _, ok := currentMet[ev.ID]; ok {
 					continue
 				}
@@ -145,15 +149,17 @@ func (c *Service) Poll(ctx context.Context) error {
 					newEvents = append(newEvents, ev)
 				}
 			}
-			lg.Info("Additional events loaded",
-				zap.Int("new_events_count", len(newEvents)),
-			)
-			if len(newEvents) >= (perPage * 2) {
-				// No sense to continue if we have more than 2 pages of events,
-				// request duration will be too long, and we can miss even more.
-				lg.Warn("Unable to resolve missing events")
-			} else {
-				lg.Info("Missing events resolved")
+			// If first fetch or if there are no new missing events,
+			// update etag and finish pagination loop.
+			if etag == "" || len(newEvents) < (p.PerPage*p.Page) {
+				if i == 0 {
+					etag = res.Etag
+				} else {
+					lg.Info("Missing events resolved",
+						zap.Int("pages", p.Page),
+					)
+				}
+				break
 			}
 		}
 		sort.SliceStable(newEvents, func(i, j int) bool {
@@ -169,6 +175,7 @@ func (c *Service) Poll(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case c.batches <- newEvents:
+			// Insert events in background.
 		}
 
 		// Calculating next sleep time to avoid rate limit.
@@ -180,7 +187,7 @@ func (c *Service) Poll(ctx context.Context) error {
 			sleep = time.Until(rt.Reset) / time.Duration(rt.Remaining)
 		}
 		duration := time.Since(start)
-		sleep -= duration // don't sleep for more than the rate limit
+		sleep -= duration // exclude request duration from sleep
 		if sleep <= 0 {
 			sleep = 0
 		}
@@ -196,7 +203,6 @@ func (c *Service) Poll(ctx context.Context) error {
 		select {
 		case <-time.After(sleep):
 			latestMet = currentMet
-			etag = res.Etag
 		case <-ctx.Done():
 			return ctx.Err()
 		}
