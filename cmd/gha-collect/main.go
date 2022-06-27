@@ -33,7 +33,7 @@ func (c *Service) Send(ctx context.Context) error {
 		db, err := ch.Dial(ctx, ch.Options{
 			Database:    "faster",
 			Address:     os.Getenv("CLICKHOUSE_ADDR"),
-			Compression: ch.CompressionLZ4,
+			Compression: ch.CompressionZSTD,
 		})
 		if err != nil {
 			return errors.Wrap(err, "dial")
@@ -179,15 +179,15 @@ Fetch:
 		}
 
 		// Calculating next sleep time to avoid rate limit.
-		var sleep time.Duration
+		var targetRate time.Duration
 		if rt.Remaining < 10 {
 			lg.Warn("Rate limit", zap.Int("remaining", rt.Remaining))
-			sleep = rt.Reset.Sub(time.Now()) + time.Second
+			targetRate = rt.Reset.Sub(time.Now()) + time.Second
 		} else {
-			sleep = time.Until(rt.Reset) / time.Duration(rt.Remaining)
+			targetRate = time.Until(rt.Reset) / time.Duration(rt.Remaining)
 		}
 		duration := time.Since(start)
-		sleep -= duration // exclude request duration from sleep
+		sleep := targetRate - duration
 		if sleep <= 0 {
 			sleep = 0
 		}
@@ -198,7 +198,8 @@ Fetch:
 			zap.Int("used", rt.Used),
 			zap.Duration("reset", rt.Reset.Sub(time.Now())),
 			zap.String("reset_human", timediff.TimeDiff(rt.Reset)),
-			zap.String("sleep", sleep.String()),
+			zap.Duration("sleep", sleep),
+			zap.Duration("target_rate", targetRate),
 		)
 		select {
 		case <-time.After(sleep):
