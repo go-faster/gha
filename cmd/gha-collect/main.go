@@ -149,18 +149,17 @@ Fetch:
 					newEvents = append(newEvents, ev)
 				}
 			}
-			// If first fetch or if there are no new missing events,
-			// update etag and finish pagination loop.
 			if etag == "" || len(newEvents) < (p.PerPage*p.Page) {
 				if i == 0 {
 					etag = res.Etag
 				} else {
-					lg.Info("Missing events resolved",
+					lg.Info("Fetched additional pages",
 						zap.Int("pages", p.Page),
 					)
 				}
 				break
 			}
+			// All events are new, fetching next page.
 		}
 		sort.SliceStable(newEvents, func(i, j int) bool {
 			a, b := newEvents[i], newEvents[j]
