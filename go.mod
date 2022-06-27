@@ -14,7 +14,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/compress v1.15.6
 	github.com/lib/pq v1.10.6
-	github.com/mergestat/timediff v0.0.3
 	github.com/ogen-go/ogen v0.40.0
 	github.com/stretchr/testify v1.7.5
 	go.etcd.io/bbolt v1.3.6
