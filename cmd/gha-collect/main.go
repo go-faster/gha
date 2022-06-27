@@ -109,7 +109,6 @@ Fetch:
 
 		currentMet := make(map[int64]struct{})
 		for i := 0; i <= maxPages; i++ {
-			lg.Info("Fetching events")
 			start = time.Now()
 			p := gh.Params{
 				Page:    i + 1, // first page is 1
@@ -118,6 +117,7 @@ Fetch:
 			if i == 0 {
 				p.Etag = etag
 			}
+			lg.Info("Fetching events", zap.Int("page", p.Page))
 			res, err := client.Events(ctx, p)
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch events")
