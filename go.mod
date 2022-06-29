@@ -15,7 +15,7 @@ require (
 	github.com/klauspost/compress v1.15.7
 	github.com/lib/pq v1.10.6
 	github.com/ogen-go/ogen v0.40.0
-	github.com/stretchr/testify v1.7.5
+	github.com/stretchr/testify v1.8.0
 	go.etcd.io/bbolt v1.3.6
 	go.opentelemetry.io/otel v1.7.0
 	go.opentelemetry.io/otel/metric v0.30.0
