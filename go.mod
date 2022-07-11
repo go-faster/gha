@@ -6,7 +6,7 @@ require (
 	entgo.io/ent v0.10.1
 	github.com/ClickHouse/ch-go v0.46.2
 	github.com/ClickHouse/clickhouse-go v1.5.4
-	github.com/cheggaaa/pb/v3 v3.0.8
+	github.com/cheggaaa/pb/v3 v3.1.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-faster/errors v0.6.1
 	github.com/go-faster/jx v0.38.0
