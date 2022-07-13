@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	entgo.io/ent v0.10.1
-	github.com/ClickHouse/ch-go v0.46.2
+	github.com/ClickHouse/ch-go v0.47.0
 	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/dustin/go-humanize v1.0.0
@@ -17,9 +17,9 @@ require (
 	github.com/ogen-go/ogen v0.43.1
 	github.com/stretchr/testify v1.8.0
 	go.etcd.io/bbolt v1.3.6
-	go.opentelemetry.io/otel v1.7.0
-	go.opentelemetry.io/otel/metric v0.30.0
-	go.opentelemetry.io/otel/trace v1.7.0
+	go.opentelemetry.io/otel v1.8.0
+	go.opentelemetry.io/otel/metric v0.31.0
+	go.opentelemetry.io/otel/trace v1.8.0
 	go.uber.org/atomic v1.9.0
 	go.uber.org/multierr v1.8.0
 	go.uber.org/ratelimit v0.2.0
