@@ -363,11 +363,6 @@ func (s JobProcess) Encode(e *jx.Encoder) {
 func (s JobProcess) encodeFields(e *jx.Encoder) {
 	{
 
-		e.FieldStart("clickhouse")
-		e.Str(s.Clickhouse)
-	}
-	{
-
 		e.FieldStart("keys")
 		e.ArrStart()
 		for _, elem := range s.Keys {
@@ -375,11 +370,16 @@ func (s JobProcess) encodeFields(e *jx.Encoder) {
 		}
 		e.ArrEnd()
 	}
+	{
+
+		e.FieldStart("clickhouse")
+		e.Str(s.Clickhouse)
+	}
 }
 
 var jsonFieldsNameOfJobProcess = [2]string{
-	0: "clickhouse",
-	1: "keys",
+	0: "keys",
+	1: "clickhouse",
 }
 
 // Decode decodes JobProcess from json.
@@ -391,20 +391,8 @@ func (s *JobProcess) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "clickhouse":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Str()
-				s.Clickhouse = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"clickhouse\"")
-			}
 		case "keys":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				s.Keys = make([]string, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -422,6 +410,18 @@ func (s *JobProcess) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"keys\"")
+			}
+		case "clickhouse":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Clickhouse = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"clickhouse\"")
 			}
 		default:
 			return d.Skip()
@@ -559,21 +559,14 @@ func (s Progress) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s Progress) encodeFields(e *jx.Encoder) {
 	{
-		if s.ContentSizeBytes.Set {
-			e.FieldStart("content_size_bytes")
-			s.ContentSizeBytes.Encode(e)
-		}
-	}
-	{
 
 		e.FieldStart("event")
 		s.Event.Encode(e)
 	}
 	{
-		if s.InputReadyBytes.Set {
-			e.FieldStart("input_ready_bytes")
-			s.InputReadyBytes.Encode(e)
-		}
+
+		e.FieldStart("key")
+		e.Str(s.Key)
 	}
 	{
 		if s.InputSizeBytes.Set {
@@ -582,9 +575,10 @@ func (s Progress) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-
-		e.FieldStart("key")
-		e.Str(s.Key)
+		if s.ContentSizeBytes.Set {
+			e.FieldStart("content_size_bytes")
+			s.ContentSizeBytes.Encode(e)
+		}
 	}
 	{
 		if s.OutputSizeBytes.Set {
@@ -593,15 +587,21 @@ func (s Progress) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.SHA256Content.Set {
-			e.FieldStart("sha256_content")
-			s.SHA256Content.Encode(e)
+		if s.InputReadyBytes.Set {
+			e.FieldStart("input_ready_bytes")
+			s.InputReadyBytes.Encode(e)
 		}
 	}
 	{
 		if s.SHA256Input.Set {
 			e.FieldStart("sha256_input")
 			s.SHA256Input.Encode(e)
+		}
+	}
+	{
+		if s.SHA256Content.Set {
+			e.FieldStart("sha256_content")
+			s.SHA256Content.Encode(e)
 		}
 	}
 	{
@@ -613,14 +613,14 @@ func (s Progress) encodeFields(e *jx.Encoder) {
 }
 
 var jsonFieldsNameOfProgress = [9]string{
-	0: "content_size_bytes",
-	1: "event",
-	2: "input_ready_bytes",
-	3: "input_size_bytes",
-	4: "key",
-	5: "output_size_bytes",
-	6: "sha256_content",
-	7: "sha256_input",
+	0: "event",
+	1: "key",
+	2: "input_size_bytes",
+	3: "content_size_bytes",
+	4: "output_size_bytes",
+	5: "input_ready_bytes",
+	6: "sha256_input",
+	7: "sha256_content",
 	8: "sha256_output",
 }
 
@@ -633,18 +633,8 @@ func (s *Progress) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "content_size_bytes":
-			if err := func() error {
-				s.ContentSizeBytes.Reset()
-				if err := s.ContentSizeBytes.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"content_size_bytes\"")
-			}
 		case "event":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				if err := s.Event.Decode(d); err != nil {
 					return err
@@ -653,15 +643,17 @@ func (s *Progress) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"event\"")
 			}
-		case "input_ready_bytes":
+		case "key":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				s.InputReadyBytes.Reset()
-				if err := s.InputReadyBytes.Decode(d); err != nil {
+				v, err := d.Str()
+				s.Key = string(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"input_ready_bytes\"")
+				return errors.Wrap(err, "decode field \"key\"")
 			}
 		case "input_size_bytes":
 			if err := func() error {
@@ -673,17 +665,15 @@ func (s *Progress) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"input_size_bytes\"")
 			}
-		case "key":
-			requiredBitSet[0] |= 1 << 4
+		case "content_size_bytes":
 			if err := func() error {
-				v, err := d.Str()
-				s.Key = string(v)
-				if err != nil {
+				s.ContentSizeBytes.Reset()
+				if err := s.ContentSizeBytes.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"key\"")
+				return errors.Wrap(err, "decode field \"content_size_bytes\"")
 			}
 		case "output_size_bytes":
 			if err := func() error {
@@ -695,15 +685,15 @@ func (s *Progress) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"output_size_bytes\"")
 			}
-		case "sha256_content":
+		case "input_ready_bytes":
 			if err := func() error {
-				s.SHA256Content.Reset()
-				if err := s.SHA256Content.Decode(d); err != nil {
+				s.InputReadyBytes.Reset()
+				if err := s.InputReadyBytes.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"sha256_content\"")
+				return errors.Wrap(err, "decode field \"input_ready_bytes\"")
 			}
 		case "sha256_input":
 			if err := func() error {
@@ -714,6 +704,16 @@ func (s *Progress) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"sha256_input\"")
+			}
+		case "sha256_content":
+			if err := func() error {
+				s.SHA256Content.Reset()
+				if err := s.SHA256Content.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"sha256_content\"")
 			}
 		case "sha256_output":
 			if err := func() error {
@@ -735,7 +735,7 @@ func (s *Progress) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b00010010,
+		0b00000011,
 		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {

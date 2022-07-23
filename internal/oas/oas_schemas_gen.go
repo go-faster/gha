@@ -127,8 +127,8 @@ type JobNothing struct{}
 // Process job.
 // Ref: #/components/schemas/JobProcess
 type JobProcess struct {
-	Clickhouse string   "json:\"clickhouse\""
 	Keys       []string "json:\"keys\""
+	Clickhouse string   "json:\"clickhouse\""
 }
 
 // NewOptInt64 returns new OptInt64 with value set to v.
@@ -225,16 +225,16 @@ func (o OptString) Or(d string) string {
 
 // Ref: #/components/schemas/Progress
 type Progress struct {
-	ContentSizeBytes OptInt64      "json:\"content_size_bytes\""
-	Event            ProgressEvent "json:\"event\""
-	InputReadyBytes  OptInt64      "json:\"input_ready_bytes\""
-	InputSizeBytes   OptInt64      "json:\"input_size_bytes\""
+	Event ProgressEvent "json:\"event\""
 	// Chunk key.
-	Key             string    "json:\"key\""
-	OutputSizeBytes OptInt64  "json:\"output_size_bytes\""
-	SHA256Content   OptString "json:\"sha256_content\""
-	SHA256Input     OptString "json:\"sha256_input\""
-	SHA256Output    OptString "json:\"sha256_output\""
+	Key              string    "json:\"key\""
+	InputSizeBytes   OptInt64  "json:\"input_size_bytes\""
+	ContentSizeBytes OptInt64  "json:\"content_size_bytes\""
+	OutputSizeBytes  OptInt64  "json:\"output_size_bytes\""
+	InputReadyBytes  OptInt64  "json:\"input_ready_bytes\""
+	SHA256Input      OptString "json:\"sha256_input\""
+	SHA256Content    OptString "json:\"sha256_content\""
+	SHA256Output     OptString "json:\"sha256_output\""
 }
 
 type ProgressEvent string

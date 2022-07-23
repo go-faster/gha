@@ -71,7 +71,6 @@ func (s *Server) decodeProgressRequest(r *http.Request, span trace.Span) (
 		}(); err != nil {
 			return req, close, errors.Wrap(err, "validate")
 		}
-
 		return request, close, nil
 	default:
 		return req, close, validate.InvalidContentType(ct)

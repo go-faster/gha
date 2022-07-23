@@ -76,32 +76,6 @@ func (s Progress) Validate() error {
 		})
 	}
 	if err := func() error {
-		if s.SHA256Content.Set {
-			if err := func() error {
-				if err := (validate.String{
-					MinLength:    64,
-					MinLengthSet: true,
-					MaxLength:    64,
-					MaxLengthSet: true,
-					Email:        false,
-					Hostname:     false,
-					Regex:        nil,
-				}).Validate(string(s.SHA256Content.Value)); err != nil {
-					return errors.Wrap(err, "string")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "sha256_content",
-			Error: err,
-		})
-	}
-	if err := func() error {
 		if s.SHA256Input.Set {
 			if err := func() error {
 				if err := (validate.String{
@@ -124,6 +98,32 @@ func (s Progress) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "sha256_input",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.SHA256Content.Set {
+			if err := func() error {
+				if err := (validate.String{
+					MinLength:    64,
+					MinLengthSet: true,
+					MaxLength:    64,
+					MaxLengthSet: true,
+					Email:        false,
+					Hostname:     false,
+					Regex:        nil,
+				}).Validate(string(s.SHA256Content.Value)); err != nil {
+					return errors.Wrap(err, "string")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "sha256_content",
 			Error: err,
 		})
 	}

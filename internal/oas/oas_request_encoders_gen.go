@@ -4,24 +4,23 @@ package oas
 
 import (
 	"bytes"
-	"io"
+	"net/http"
 
 	"github.com/go-faster/jx"
-	"go.opentelemetry.io/otel/trace"
+
+	ht "github.com/ogen-go/ogen/http"
 )
 
-func encodeProgressRequestJSON(
+func encodeProgressRequest(
 	req Progress,
-	span trace.Span,
-) (
-	data func() (io.ReadCloser, error),
-	rerr error,
-) {
+	r *http.Request,
+) error {
+	const contentType = "application/json"
 	e := jx.GetEncoder()
-
-	req.Encode(e)
+	{
+		req.Encode(e)
+	}
 	encoded := e.Bytes()
-	return func() (io.ReadCloser, error) {
-		return io.NopCloser(bytes.NewReader(encoded)), nil
-	}, nil
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
 }

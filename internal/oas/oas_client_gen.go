@@ -4,7 +4,6 @@ package oas
 
 import (
 	"context"
-	"io"
 	"net/url"
 	"time"
 
@@ -79,7 +78,6 @@ func (c *Client) Poll(ctx context.Context, params PollParams) (res Job, err erro
 	u.Path += "/job/poll"
 
 	r := ht.NewRequest(ctx, "POST", u, nil)
-
 	h := uri.NewHeaderEncoder(r.Header)
 	{
 		cfg := uri.HeaderParameterEncodingConfig{
@@ -140,30 +138,13 @@ func (c *Client) Progress(ctx context.Context, request Progress, params Progress
 		span.End()
 	}()
 	c.requests.Add(ctx, 1, otelAttrs...)
-	var (
-		contentType string
-		reqBody     func() (io.ReadCloser, error)
-	)
-	contentType = "application/json"
-	fn, err := encodeProgressRequestJSON(request, span)
-	if err != nil {
-		return res, err
-	}
-	reqBody = fn
-
 	u := uri.Clone(c.serverURL)
 	u.Path += "/progress"
 
-	body, err := reqBody()
-	if err != nil {
-		return res, errors.Wrap(err, "request body")
+	r := ht.NewRequest(ctx, "POST", u, nil)
+	if err := encodeProgressRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
 	}
-	defer body.Close()
-
-	r := ht.NewRequest(ctx, "POST", u, body)
-	r.GetBody = reqBody
-
-	r.Header.Set("Content-Type", contentType)
 	h := uri.NewHeaderEncoder(r.Header)
 	{
 		cfg := uri.HeaderParameterEncodingConfig{
