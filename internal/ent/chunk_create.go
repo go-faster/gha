@@ -470,7 +470,6 @@ func (cc *ChunkCreate) createSpec() (*Chunk, *sqlgraph.CreateSpec) {
 //			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
-//
 func (cc *ChunkCreate) OnConflict(opts ...sql.ConflictOption) *ChunkUpsertOne {
 	cc.conflict = opts
 	return &ChunkUpsertOne{
@@ -484,7 +483,6 @@ func (cc *ChunkCreate) OnConflict(opts ...sql.ConflictOption) *ChunkUpsertOne {
 //	client.Chunk.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-//
 func (cc *ChunkCreate) OnConflictColumns(columns ...string) *ChunkUpsertOne {
 	cc.conflict = append(cc.conflict, sql.ConflictColumns(columns...))
 	return &ChunkUpsertOne{
@@ -708,7 +706,6 @@ func (u *ChunkUpsert) ClearSha256Output() *ChunkUpsert {
 //			}),
 //		).
 //		Exec(ctx)
-//
 func (u *ChunkUpsertOne) UpdateNewValues() *ChunkUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
@@ -725,10 +722,9 @@ func (u *ChunkUpsertOne) UpdateNewValues() *ChunkUpsertOne {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.Chunk.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
-//
+//	client.Chunk.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
 func (u *ChunkUpsertOne) Ignore() *ChunkUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
@@ -1109,7 +1105,6 @@ func (ccb *ChunkCreateBulk) ExecX(ctx context.Context) {
 //			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
-//
 func (ccb *ChunkCreateBulk) OnConflict(opts ...sql.ConflictOption) *ChunkUpsertBulk {
 	ccb.conflict = opts
 	return &ChunkUpsertBulk{
@@ -1123,7 +1118,6 @@ func (ccb *ChunkCreateBulk) OnConflict(opts ...sql.ConflictOption) *ChunkUpsertB
 //	client.Chunk.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-//
 func (ccb *ChunkCreateBulk) OnConflictColumns(columns ...string) *ChunkUpsertBulk {
 	ccb.conflict = append(ccb.conflict, sql.ConflictColumns(columns...))
 	return &ChunkUpsertBulk{
@@ -1148,7 +1142,6 @@ type ChunkUpsertBulk struct {
 //			}),
 //		).
 //		Exec(ctx)
-//
 func (u *ChunkUpsertBulk) UpdateNewValues() *ChunkUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
@@ -1171,7 +1164,6 @@ func (u *ChunkUpsertBulk) UpdateNewValues() *ChunkUpsertBulk {
 //	client.Chunk.Create().
 //		OnConflict(sql.ResolveWithIgnore()).
 //		Exec(ctx)
-//
 func (u *ChunkUpsertBulk) Ignore() *ChunkUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u

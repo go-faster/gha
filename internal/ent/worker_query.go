@@ -302,7 +302,6 @@ func (wq *WorkerQuery) WithChunks(opts ...func(*ChunkQuery)) *WorkerQuery {
 //		GroupBy(worker.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (wq *WorkerQuery) GroupBy(field string, fields ...string) *WorkerGroupBy {
 	grbuild := &WorkerGroupBy{config: wq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -329,7 +328,6 @@ func (wq *WorkerQuery) GroupBy(field string, fields ...string) *WorkerGroupBy {
 //	client.Worker.Query().
 //		Select(worker.FieldCreatedAt).
 //		Scan(ctx, &v)
-//
 func (wq *WorkerQuery) Select(fields ...string) *WorkerSelect {
 	wq.fields = append(wq.fields, fields...)
 	selbuild := &WorkerSelect{WorkerQuery: wq}
