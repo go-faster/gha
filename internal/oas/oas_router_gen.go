@@ -10,6 +10,10 @@ func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
 	s.cfg.NotFound(w, r)
 }
 
+func (s *Server) notAllowed(w http.ResponseWriter, r *http.Request, allowed string) {
+	s.cfg.MethodNotAllowed(w, r, allowed)
+}
+
 // ServeHTTP serves http request as defined by OpenAPI v3 specification,
 // calling handler that matches the path or returning not found error.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -18,28 +22,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
+
 	// Static code generated router with unwrapped path search.
-	switch r.Method {
-	case "GET":
-		if len(elem) == 0 {
-			break
-		}
-		switch elem[0] {
-		case '/': // Prefix: "/status"
-			if l := len("/status"); len(elem) >= l && elem[0:l] == "/status" {
-				elem = elem[l:]
-			} else {
-				break
-			}
-
-			if len(elem) == 0 {
-				// Leaf: Status
-				s.handleStatusRequest([0]string{}, w, r)
-
-				return
-			}
-		}
-	case "POST":
+	switch {
+	default:
 		if len(elem) == 0 {
 			break
 		}
@@ -63,8 +49,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				if len(elem) == 0 {
-					// Leaf: Poll
-					s.handlePollRequest([0]string{}, w, r)
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handlePollRequest([0]string{}, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
 
 					return
 				}
@@ -76,8 +67,31 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				if len(elem) == 0 {
-					// Leaf: Progress
-					s.handleProgressRequest([0]string{}, w, r)
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handleProgressRequest([0]string{}, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
+			case 's': // Prefix: "status"
+				if l := len("status"); len(elem) >= l && elem[0:l] == "status" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleStatusRequest([0]string{}, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
 
 					return
 				}
@@ -89,14 +103,22 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Route is route object.
 type Route struct {
-	name  string
-	count int
-	args  [0]string
+	name        string
+	operationID string
+	count       int
+	args        [0]string
+}
+
+// Name returns ogen operation name.
+//
+// It is guaranteed to be unique and not empty.
+func (r Route) Name() string {
+	return r.name
 }
 
 // OperationID returns OpenAPI operationId.
 func (r Route) OperationID() string {
-	return r.name
+	return r.operationID
 }
 
 // Args returns parsed arguments.
@@ -116,28 +138,8 @@ func (s *Server) FindRoute(method, path string) (r Route, _ bool) {
 	}
 
 	// Static code generated router with unwrapped path search.
-	switch method {
-	case "GET":
-		if len(elem) == 0 {
-			break
-		}
-		switch elem[0] {
-		case '/': // Prefix: "/status"
-			if l := len("/status"); len(elem) >= l && elem[0:l] == "/status" {
-				elem = elem[l:]
-			} else {
-				break
-			}
-
-			if len(elem) == 0 {
-				// Leaf: Status
-				r.name = "Status"
-				r.args = args
-				r.count = 0
-				return r, true
-			}
-		}
-	case "POST":
+	switch {
+	default:
 		if len(elem) == 0 {
 			break
 		}
@@ -161,11 +163,17 @@ func (s *Server) FindRoute(method, path string) (r Route, _ bool) {
 				}
 
 				if len(elem) == 0 {
-					// Leaf: Poll
-					r.name = "Poll"
-					r.args = args
-					r.count = 0
-					return r, true
+					switch method {
+					case "POST":
+						// Leaf: Poll
+						r.name = "Poll"
+						r.operationID = "poll"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
 				}
 			case 'p': // Prefix: "progress"
 				if l := len("progress"); len(elem) >= l && elem[0:l] == "progress" {
@@ -175,11 +183,37 @@ func (s *Server) FindRoute(method, path string) (r Route, _ bool) {
 				}
 
 				if len(elem) == 0 {
-					// Leaf: Progress
-					r.name = "Progress"
-					r.args = args
-					r.count = 0
-					return r, true
+					switch method {
+					case "POST":
+						// Leaf: Progress
+						r.name = "Progress"
+						r.operationID = "progress"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+			case 's': // Prefix: "status"
+				if l := len("status"); len(elem) >= l && elem[0:l] == "status" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "GET":
+						// Leaf: Status
+						r.name = "Status"
+						r.operationID = "status"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
 				}
 			}
 		}

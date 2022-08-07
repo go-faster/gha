@@ -302,7 +302,6 @@ func (cq *ChunkQuery) WithWorker(opts ...func(*WorkerQuery)) *ChunkQuery {
 //		GroupBy(chunk.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (cq *ChunkQuery) GroupBy(field string, fields ...string) *ChunkGroupBy {
 	grbuild := &ChunkGroupBy{config: cq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -329,7 +328,6 @@ func (cq *ChunkQuery) GroupBy(field string, fields ...string) *ChunkGroupBy {
 //	client.Chunk.Query().
 //		Select(chunk.FieldCreatedAt).
 //		Scan(ctx, &v)
-//
 func (cq *ChunkQuery) Select(fields ...string) *ChunkSelect {
 	cq.fields = append(cq.fields, fields...)
 	selbuild := &ChunkSelect{ChunkQuery: cq}

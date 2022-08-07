@@ -306,7 +306,6 @@ func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 //			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
-//
 func (wc *WorkerCreate) OnConflict(opts ...sql.ConflictOption) *WorkerUpsertOne {
 	wc.conflict = opts
 	return &WorkerUpsertOne{
@@ -320,7 +319,6 @@ func (wc *WorkerCreate) OnConflict(opts ...sql.ConflictOption) *WorkerUpsertOne 
 //	client.Worker.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-//
 func (wc *WorkerCreate) OnConflictColumns(columns ...string) *WorkerUpsertOne {
 	wc.conflict = append(wc.conflict, sql.ConflictColumns(columns...))
 	return &WorkerUpsertOne{
@@ -400,7 +398,6 @@ func (u *WorkerUpsert) UpdateToken() *WorkerUpsert {
 //			}),
 //		).
 //		Exec(ctx)
-//
 func (u *WorkerUpsertOne) UpdateNewValues() *WorkerUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
@@ -417,10 +414,9 @@ func (u *WorkerUpsertOne) UpdateNewValues() *WorkerUpsertOne {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.Worker.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
-//
+//	client.Worker.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
 func (u *WorkerUpsertOne) Ignore() *WorkerUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
@@ -633,7 +629,6 @@ func (wcb *WorkerCreateBulk) ExecX(ctx context.Context) {
 //			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
-//
 func (wcb *WorkerCreateBulk) OnConflict(opts ...sql.ConflictOption) *WorkerUpsertBulk {
 	wcb.conflict = opts
 	return &WorkerUpsertBulk{
@@ -647,7 +642,6 @@ func (wcb *WorkerCreateBulk) OnConflict(opts ...sql.ConflictOption) *WorkerUpser
 //	client.Worker.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-//
 func (wcb *WorkerCreateBulk) OnConflictColumns(columns ...string) *WorkerUpsertBulk {
 	wcb.conflict = append(wcb.conflict, sql.ConflictColumns(columns...))
 	return &WorkerUpsertBulk{
@@ -672,7 +666,6 @@ type WorkerUpsertBulk struct {
 //			}),
 //		).
 //		Exec(ctx)
-//
 func (u *WorkerUpsertBulk) UpdateNewValues() *WorkerUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
@@ -695,7 +688,6 @@ func (u *WorkerUpsertBulk) UpdateNewValues() *WorkerUpsertBulk {
 //	client.Worker.Create().
 //		OnConflict(sql.ResolveWithIgnore()).
 //		Exec(ctx)
-//
 func (u *WorkerUpsertBulk) Ignore() *WorkerUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
