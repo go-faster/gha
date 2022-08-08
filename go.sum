@@ -87,8 +87,8 @@ github.com/go-faster/errors v0.6.1 h1:nNIPOBkprlKzkThvS/0YaX8Zs9KewLCOSFQS5BU06F
 github.com/go-faster/errors v0.6.1/go.mod h1:5MGV2/2T9yvlrbhe9pD9LO5Z/2zCSq2T8j+Jpi2LAyY=
 github.com/go-faster/jx v0.39.0 h1:5FmkTOHKKCsnAbSLzQclORDNndC9BY77UqB+HLsHDd0=
 github.com/go-faster/jx v0.39.0/go.mod h1:o7XQ3K95HwNxkBlrpUQIqjcXp4SmDIb9SyohdSVOeQs=
-github.com/go-faster/yamlx v0.2.1 h1:siwZJO/r3gajIoJbrjoDMjEuVye8xMc8bwmnfNDaZb4=
-github.com/go-faster/yamlx v0.2.1/go.mod h1:AbOy9l8mnD+zAzBYndLxj9IKLEFpUvSi/At3Ygh0kUU=
+github.com/go-faster/yamlx v0.3.1 h1:9wXbBjnsH8Z6U0/X2VUoXVGleyA70X5Q9IxcINoJH4k=
+github.com/go-faster/yamlx v0.3.1/go.mod h1:ksRHh1k6n2UW733NmjVvrG9H3+e3bGd9Wc5h1q/HYtk=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200222043503-6f7a984d4dc4/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
@@ -199,8 +199,8 @@ github.com/mattn/go-sqlite3 v1.9.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOq
 github.com/mattn/go-sqlite3 v1.14.13 h1:1tj15ngiFfcZzii7yd82foL+ks+ouQcj8j/TPq3fk1I=
 github.com/mitchellh/go-wordwrap v1.0.1 h1:TLuKupo69TCn6TQSyGxwI1EblZZEsQ0vMlAFQflz0v0=
 github.com/mitchellh/go-wordwrap v1.0.1/go.mod h1:R62XHJLzvMFRBbcrT7m7WgmE1eOyTSsCt+hzestvNj0=
-github.com/ogen-go/ogen v0.46.0 h1:vx+CBc0C1fzMAS9P9dCUt/TR/wlGW7HWCVGmPERn29g=
-github.com/ogen-go/ogen v0.46.0/go.mod h1:xijwogwsQkeMwgvKq4yMRDDyOiBfo0vZmOVSB6Vcp+s=
+github.com/ogen-go/ogen v0.46.1 h1:bezeuBubivoU3u2v3zb9TMDYO6TmIbRa32i06/Gg6pA=
+github.com/ogen-go/ogen v0.46.1/go.mod h1:ZqkzaaTRBtPZA/uFZAopzfU4onWpRTu6g9e2CoGuH2Y=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/pascaldekloe/name v1.0.1 h1:9lnXOHeqeHHnWLbKfH6X98+4+ETVqFqxN09UXSjcMb0=
