@@ -14,7 +14,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/compress v1.15.9
 	github.com/lib/pq v1.10.6
-	github.com/ogen-go/ogen v0.46.0
+	github.com/ogen-go/ogen v0.46.2
 	github.com/stretchr/testify v1.8.0
 	go.etcd.io/bbolt v1.3.6
 	go.opentelemetry.io/otel v1.9.0
@@ -39,7 +39,7 @@ require (
 	github.com/dmarkham/enumer v1.5.5 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
-	github.com/go-faster/yamlx v0.2.1 // indirect
+	github.com/go-faster/yamlx v0.3.2 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
