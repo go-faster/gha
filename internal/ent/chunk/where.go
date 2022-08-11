@@ -172,12 +172,6 @@ func CreatedAtIn(vs ...time.Time) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.In(s.C(FieldCreatedAt), v...))
 	})
 }
@@ -189,12 +183,6 @@ func CreatedAtNotIn(vs ...time.Time) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.NotIn(s.C(FieldCreatedAt), v...))
 	})
 }
@@ -248,12 +236,6 @@ func UpdatedAtIn(vs ...time.Time) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.In(s.C(FieldUpdatedAt), v...))
 	})
 }
@@ -265,12 +247,6 @@ func UpdatedAtNotIn(vs ...time.Time) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.NotIn(s.C(FieldUpdatedAt), v...))
 	})
 }
@@ -324,12 +300,6 @@ func StartIn(vs ...time.Time) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.In(s.C(FieldStart), v...))
 	})
 }
@@ -341,12 +311,6 @@ func StartNotIn(vs ...time.Time) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.NotIn(s.C(FieldStart), v...))
 	})
 }
@@ -400,12 +364,6 @@ func LeaseExpiresAtIn(vs ...time.Time) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.In(s.C(FieldLeaseExpiresAt), v...))
 	})
 }
@@ -417,12 +375,6 @@ func LeaseExpiresAtNotIn(vs ...time.Time) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.NotIn(s.C(FieldLeaseExpiresAt), v...))
 	})
 }
@@ -490,12 +442,6 @@ func StateIn(vs ...State) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.In(s.C(FieldState), v...))
 	})
 }
@@ -507,12 +453,6 @@ func StateNotIn(vs ...State) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.NotIn(s.C(FieldState), v...))
 	})
 }
@@ -538,12 +478,6 @@ func SizeInputIn(vs ...int64) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.In(s.C(FieldSizeInput), v...))
 	})
 }
@@ -555,12 +489,6 @@ func SizeInputNotIn(vs ...int64) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.NotIn(s.C(FieldSizeInput), v...))
 	})
 }
@@ -628,12 +556,6 @@ func SizeContentIn(vs ...int64) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.In(s.C(FieldSizeContent), v...))
 	})
 }
@@ -645,12 +567,6 @@ func SizeContentNotIn(vs ...int64) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.NotIn(s.C(FieldSizeContent), v...))
 	})
 }
@@ -718,12 +634,6 @@ func SizeOutputIn(vs ...int64) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.In(s.C(FieldSizeOutput), v...))
 	})
 }
@@ -735,12 +645,6 @@ func SizeOutputNotIn(vs ...int64) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.NotIn(s.C(FieldSizeOutput), v...))
 	})
 }
@@ -808,12 +712,6 @@ func Sha256InputIn(vs ...string) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.In(s.C(FieldSha256Input), v...))
 	})
 }
@@ -825,12 +723,6 @@ func Sha256InputNotIn(vs ...string) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.NotIn(s.C(FieldSha256Input), v...))
 	})
 }
@@ -933,12 +825,6 @@ func Sha256ContentIn(vs ...string) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.In(s.C(FieldSha256Content), v...))
 	})
 }
@@ -950,12 +836,6 @@ func Sha256ContentNotIn(vs ...string) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.NotIn(s.C(FieldSha256Content), v...))
 	})
 }
@@ -1058,12 +938,6 @@ func Sha256OutputIn(vs ...string) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.In(s.C(FieldSha256Output), v...))
 	})
 }
@@ -1075,12 +949,6 @@ func Sha256OutputNotIn(vs ...string) predicate.Chunk {
 		v[i] = vs[i]
 	}
 	return predicate.Chunk(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
 		s.Where(sql.NotIn(s.C(FieldSha256Output), v...))
 	})
 }

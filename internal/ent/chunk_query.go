@@ -26,7 +26,6 @@ type ChunkQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Chunk
-	// eager-loading edges.
 	withWorker *WorkerQuery
 	withFKs    bool
 	modifiers  []func(*sql.Selector)
@@ -388,37 +387,43 @@ func (cq *ChunkQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Chunk,
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-
 	if query := cq.withWorker; query != nil {
-		ids := make([]uuid.UUID, 0, len(nodes))
-		nodeids := make(map[uuid.UUID][]*Chunk)
-		for i := range nodes {
-			if nodes[i].worker_chunks == nil {
-				continue
-			}
-			fk := *nodes[i].worker_chunks
-			if _, ok := nodeids[fk]; !ok {
-				ids = append(ids, fk)
-			}
-			nodeids[fk] = append(nodeids[fk], nodes[i])
-		}
-		query.Where(worker.IDIn(ids...))
-		neighbors, err := query.All(ctx)
-		if err != nil {
+		if err := cq.loadWorker(ctx, query, nodes, nil,
+			func(n *Chunk, e *Worker) { n.Edges.Worker = e }); err != nil {
 			return nil, err
 		}
-		for _, n := range neighbors {
-			nodes, ok := nodeids[n.ID]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "worker_chunks" returned %v`, n.ID)
-			}
-			for i := range nodes {
-				nodes[i].Edges.Worker = n
-			}
+	}
+	return nodes, nil
+}
+
+func (cq *ChunkQuery) loadWorker(ctx context.Context, query *WorkerQuery, nodes []*Chunk, init func(*Chunk), assign func(*Chunk, *Worker)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Chunk)
+	for i := range nodes {
+		if nodes[i].worker_chunks == nil {
+			continue
+		}
+		fk := *nodes[i].worker_chunks
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	query.Where(worker.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "worker_chunks" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
 		}
 	}
-
-	return nodes, nil
+	return nil
 }
 
 func (cq *ChunkQuery) sqlCount(ctx context.Context) (int, error) {

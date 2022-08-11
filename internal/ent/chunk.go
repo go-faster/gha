@@ -61,8 +61,7 @@ type ChunkEdges struct {
 func (e ChunkEdges) WorkerOrErr() (*Worker, error) {
 	if e.loadedTypes[0] {
 		if e.Worker == nil {
-			// The edge worker was loaded in eager-loading,
-			// but was not found.
+			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: worker.Label}
 		}
 		return e.Worker, nil

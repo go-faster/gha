@@ -27,7 +27,6 @@ type WorkerQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Worker
-	// eager-loading edges.
 	withChunks *ChunkQuery
 	modifiers  []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
@@ -381,37 +380,46 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Worke
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-
 	if query := wq.withChunks; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[uuid.UUID]*Worker)
-		for i := range nodes {
-			fks = append(fks, nodes[i].ID)
-			nodeids[nodes[i].ID] = nodes[i]
-			nodes[i].Edges.Chunks = []*Chunk{}
-		}
-		query.withFKs = true
-		query.Where(predicate.Chunk(func(s *sql.Selector) {
-			s.Where(sql.InValues(worker.ChunksColumn, fks...))
-		}))
-		neighbors, err := query.All(ctx)
-		if err != nil {
+		if err := wq.loadChunks(ctx, query, nodes,
+			func(n *Worker) { n.Edges.Chunks = []*Chunk{} },
+			func(n *Worker, e *Chunk) { n.Edges.Chunks = append(n.Edges.Chunks, e) }); err != nil {
 			return nil, err
 		}
-		for _, n := range neighbors {
-			fk := n.worker_chunks
-			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "worker_chunks" is nil for node %v`, n.ID)
-			}
-			node, ok := nodeids[*fk]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "worker_chunks" returned %v for node %v`, *fk, n.ID)
-			}
-			node.Edges.Chunks = append(node.Edges.Chunks, n)
+	}
+	return nodes, nil
+}
+
+func (wq *WorkerQuery) loadChunks(ctx context.Context, query *ChunkQuery, nodes []*Worker, init func(*Worker), assign func(*Worker, *Chunk)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Worker)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
 		}
 	}
-
-	return nodes, nil
+	query.withFKs = true
+	query.Where(predicate.Chunk(func(s *sql.Selector) {
+		s.Where(sql.InValues(worker.ChunksColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.worker_chunks
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "worker_chunks" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "worker_chunks" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (wq *WorkerQuery) sqlCount(ctx context.Context) (int, error) {
