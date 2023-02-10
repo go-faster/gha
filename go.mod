@@ -7,7 +7,7 @@ require (
 	github.com/ClickHouse/ch-go v0.48.0
 	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/cheggaaa/pb/v3 v3.1.0
-	github.com/dustin/go-humanize v1.0.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/go-faster/errors v0.6.1
 	github.com/go-faster/jx v0.41.0
 	github.com/google/go-github/v40 v40.0.0
