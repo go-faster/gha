@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	entgo.io/ent v0.11.2
-	github.com/ClickHouse/ch-go v0.48.0
+	github.com/ClickHouse/ch-go v0.52.1
 	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/cheggaaa/pb/v3 v3.1.0
 	github.com/dustin/go-humanize v1.0.1
@@ -12,20 +12,20 @@ require (
 	github.com/go-faster/jx v0.41.0
 	github.com/google/go-github/v40 v40.0.0
 	github.com/google/uuid v1.3.0
-	github.com/klauspost/compress v1.15.14
+	github.com/klauspost/compress v1.15.15
 	github.com/lib/pq v1.10.7
 	github.com/ogen-go/ogen v0.46.2
 	github.com/stretchr/testify v1.8.1
 	go.etcd.io/bbolt v1.3.6
-	go.opentelemetry.io/otel v1.11.2
-	go.opentelemetry.io/otel/metric v0.34.0
-	go.opentelemetry.io/otel/trace v1.11.2
+	go.opentelemetry.io/otel v1.13.0
+	go.opentelemetry.io/otel/metric v0.36.0
+	go.opentelemetry.io/otel/trace v1.13.0
 	go.uber.org/atomic v1.10.0
 	go.uber.org/multierr v1.9.0
 	go.uber.org/ratelimit v0.2.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
+	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7
 )
 
 require (
@@ -36,7 +36,7 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dmarkham/enumer v1.5.6 // indirect
+	github.com/dmarkham/enumer v1.5.7 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/yamlx v0.3.2 // indirect
@@ -55,7 +55,7 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pascaldekloe/name v1.0.1 // indirect
-	github.com/pierrec/lz4/v4 v4.1.16 // indirect
+	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
