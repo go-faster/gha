@@ -15,11 +15,11 @@ require (
 	github.com/klauspost/compress v1.16.3
 	github.com/lib/pq v1.10.7
 	github.com/ogen-go/ogen v0.46.2
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	go.etcd.io/bbolt v1.3.6
-	go.opentelemetry.io/otel v1.11.2
+	go.opentelemetry.io/otel v1.14.0
 	go.opentelemetry.io/otel/metric v0.34.0
-	go.opentelemetry.io/otel/trace v1.11.2
+	go.opentelemetry.io/otel/trace v1.14.0
 	go.uber.org/atomic v1.10.0
 	go.uber.org/multierr v1.9.0
 	go.uber.org/ratelimit v0.2.0
