@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	entgo.io/ent v0.11.2
-	github.com/ClickHouse/ch-go v0.48.0
+	github.com/ClickHouse/ch-go v0.53.0
 	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/cheggaaa/pb/v3 v3.1.0
 	github.com/dustin/go-humanize v1.0.1
@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	go.etcd.io/bbolt v1.3.6
 	go.opentelemetry.io/otel v1.14.0
-	go.opentelemetry.io/otel/metric v0.34.0
+	go.opentelemetry.io/otel/metric v0.36.0
 	go.opentelemetry.io/otel/trace v1.14.0
 	go.uber.org/atomic v1.10.0
 	go.uber.org/multierr v1.9.0
@@ -36,7 +36,7 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dmarkham/enumer v1.5.6 // indirect
+	github.com/dmarkham/enumer v1.5.7 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/yamlx v0.3.2 // indirect
@@ -55,7 +55,7 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pascaldekloe/name v1.0.1 // indirect
-	github.com/pierrec/lz4/v4 v4.1.16 // indirect
+	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
