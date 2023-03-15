@@ -4,20 +4,31 @@ package oas
 
 import (
 	"net/http"
+	"net/url"
+	"strings"
+
+	"github.com/ogen-go/ogen/uri"
 )
-
-func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
-	s.cfg.NotFound(w, r)
-}
-
-func (s *Server) notAllowed(w http.ResponseWriter, r *http.Request, allowed string) {
-	s.cfg.MethodNotAllowed(w, r, allowed)
-}
 
 // ServeHTTP serves http request as defined by OpenAPI v3 specification,
 // calling handler that matches the path or returning not found error.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	elem := r.URL.Path
+	if rawPath := r.URL.RawPath; rawPath != "" {
+		if normalized, ok := uri.NormalizeEscapedPath(rawPath); ok {
+			elem = normalized
+		}
+	}
+	if prefix := s.cfg.Prefix; len(prefix) > 0 {
+		if strings.HasPrefix(elem, prefix) {
+			// Cut prefix from the path.
+			elem = strings.TrimPrefix(elem, prefix)
+		} else {
+			// Prefix doesn't match.
+			s.notFound(w, r)
+			return
+		}
+	}
 	if len(elem) == 0 {
 		s.notFound(w, r)
 		return
@@ -105,6 +116,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type Route struct {
 	name        string
 	operationID string
+	pathPattern string
 	count       int
 	args        [0]string
 }
@@ -121,20 +133,40 @@ func (r Route) OperationID() string {
 	return r.operationID
 }
 
+// PathPattern returns OpenAPI path.
+func (r Route) PathPattern() string {
+	return r.pathPattern
+}
+
 // Args returns parsed arguments.
 func (r Route) Args() []string {
 	return r.args[:r.count]
 }
 
 // FindRoute finds Route for given method and path.
-func (s *Server) FindRoute(method, path string) (r Route, _ bool) {
+//
+// Note: this method does not unescape path or handle reserved characters in path properly. Use FindPath instead.
+func (s *Server) FindRoute(method, path string) (Route, bool) {
+	return s.FindPath(method, &url.URL{Path: path})
+}
+
+// FindPath finds Route for given method and URL.
+func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 	var (
-		args = [0]string{}
-		elem = path
+		elem = u.Path
+		args = r.args
 	)
-	r.args = args
-	if elem == "" {
-		return r, false
+	if rawPath := u.RawPath; rawPath != "" {
+		if normalized, ok := uri.NormalizeEscapedPath(rawPath); ok {
+			elem = normalized
+		}
+		defer func() {
+			for i, arg := range r.args[:r.count] {
+				if unescaped, err := url.PathUnescape(arg); err == nil {
+					r.args[i] = unescaped
+				}
+			}
+		}()
 	}
 
 	// Static code generated router with unwrapped path search.
@@ -168,6 +200,7 @@ func (s *Server) FindRoute(method, path string) (r Route, _ bool) {
 						// Leaf: Poll
 						r.name = "Poll"
 						r.operationID = "poll"
+						r.pathPattern = "/job/poll"
 						r.args = args
 						r.count = 0
 						return r, true
@@ -188,6 +221,7 @@ func (s *Server) FindRoute(method, path string) (r Route, _ bool) {
 						// Leaf: Progress
 						r.name = "Progress"
 						r.operationID = "progress"
+						r.pathPattern = "/progress"
 						r.args = args
 						r.count = 0
 						return r, true
@@ -208,6 +242,7 @@ func (s *Server) FindRoute(method, path string) (r Route, _ bool) {
 						// Leaf: Status
 						r.name = "Status"
 						r.operationID = "status"
+						r.pathPattern = "/status"
 						r.args = args
 						r.count = 0
 						return r, true

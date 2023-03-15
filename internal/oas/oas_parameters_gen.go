@@ -5,21 +5,34 @@ package oas
 import (
 	"net/http"
 
-	"github.com/go-faster/errors"
-
 	"github.com/ogen-go/ogen/conv"
+	"github.com/ogen-go/ogen/middleware"
+	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/uri"
+	"github.com/ogen-go/ogen/validate"
 )
 
+// PollParams is parameters of poll operation.
 type PollParams struct {
 	// Worker token.
 	XToken string
 }
 
+func unpackPollParams(packed middleware.Parameters) (params PollParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Token",
+			In:   "header",
+		}
+		params.XToken = packed[key].(string)
+	}
+	return params
+}
+
 func decodePollParams(args [0]string, r *http.Request) (params PollParams, _ error) {
 	h := uri.NewHeaderDecoder(r.Header)
 	// Decode header: X-Token.
-	{
+	if err := func() error {
 		cfg := uri.HeaderParameterDecodingConfig{
 			Name:    "X-Token",
 			Explode: false,
@@ -39,24 +52,43 @@ func decodePollParams(args [0]string, r *http.Request) (params PollParams, _ err
 				params.XToken = c
 				return nil
 			}); err != nil {
-				return params, errors.Wrap(err, "header: X-Token: parse")
+				return err
 			}
 		} else {
-			return params, errors.New("header: X-Token: not specified")
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Token",
+			In:   "header",
+			Err:  err,
 		}
 	}
 	return params, nil
 }
 
+// ProgressParams is parameters of progress operation.
 type ProgressParams struct {
 	// Worker token.
 	XToken string
 }
 
+func unpackProgressParams(packed middleware.Parameters) (params ProgressParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "X-Token",
+			In:   "header",
+		}
+		params.XToken = packed[key].(string)
+	}
+	return params
+}
+
 func decodeProgressParams(args [0]string, r *http.Request) (params ProgressParams, _ error) {
 	h := uri.NewHeaderDecoder(r.Header)
 	// Decode header: X-Token.
-	{
+	if err := func() error {
 		cfg := uri.HeaderParameterDecodingConfig{
 			Name:    "X-Token",
 			Explode: false,
@@ -76,10 +108,17 @@ func decodeProgressParams(args [0]string, r *http.Request) (params ProgressParam
 				params.XToken = c
 				return nil
 			}); err != nil {
-				return params, errors.Wrap(err, "header: X-Token: parse")
+				return err
 			}
 		} else {
-			return params, errors.New("header: X-Token: not specified")
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "X-Token",
+			In:   "header",
+			Err:  err,
 		}
 	}
 	return params, nil

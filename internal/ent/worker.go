@@ -49,8 +49,8 @@ func (e WorkerEdges) ChunksOrErr() ([]*Chunk, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Worker) scanValues(columns []string) ([]interface{}, error) {
-	values := make([]interface{}, len(columns))
+func (*Worker) scanValues(columns []string) ([]any, error) {
+	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
 		case worker.FieldName, worker.FieldToken:
@@ -68,7 +68,7 @@ func (*Worker) scanValues(columns []string) ([]interface{}, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Worker fields.
-func (w *Worker) assignValues(columns []string, values []interface{}) error {
+func (w *Worker) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -111,14 +111,14 @@ func (w *Worker) assignValues(columns []string, values []interface{}) error {
 
 // QueryChunks queries the "chunks" edge of the Worker entity.
 func (w *Worker) QueryChunks() *ChunkQuery {
-	return (&WorkerClient{config: w.config}).QueryChunks(w)
+	return NewWorkerClient(w.config).QueryChunks(w)
 }
 
 // Update returns a builder for updating this Worker.
 // Note that you need to call Worker.Unwrap() before calling this method if this Worker
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (w *Worker) Update() *WorkerUpdateOne {
-	return (&WorkerClient{config: w.config}).UpdateOne(w)
+	return NewWorkerClient(w.config).UpdateOne(w)
 }
 
 // Unwrap unwraps the Worker entity that was returned from a transaction after it was closed,
@@ -154,9 +154,3 @@ func (w *Worker) String() string {
 
 // Workers is a parsable slice of Worker.
 type Workers []*Worker
-
-func (w Workers) config(cfg config) {
-	for _i := range w {
-		w[_i].config = cfg
-	}
-}

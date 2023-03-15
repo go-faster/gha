@@ -3,31 +3,38 @@
 package oas
 
 import (
+	"context"
 	"net/http"
 	"time"
 
 	"github.com/go-faster/errors"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
 
 	ht "github.com/ogen-go/ogen/http"
+	"github.com/ogen-go/ogen/middleware"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/otelogen"
 )
 
-// HandlePollRequest handles poll operation.
+// handlePollRequest handles poll operation.
+//
+// Request job from coordinator.
 //
 // POST /job/poll
 func (s *Server) handlePollRequest(args [0]string, w http.ResponseWriter, r *http.Request) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("poll"),
+		semconv.HTTPMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/job/poll"),
 	}
 
 	// Start a span for this request.
 	ctx, span := s.cfg.Tracer.Start(r.Context(), "Poll",
 		trace.WithAttributes(otelAttrs...),
-		trace.WithSpanKind(trace.SpanKindServer),
+		serverSpanKind,
 	)
 	defer span.End()
 
@@ -64,12 +71,47 @@ func (s *Server) handlePollRequest(args [0]string, w http.ResponseWriter, r *htt
 		return
 	}
 
-	response, err := s.h.Poll(ctx, params)
+	var response Job
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:       ctx,
+			OperationName: "Poll",
+			OperationID:   "poll",
+			Body:          nil,
+			Params: middleware.Parameters{
+				{
+					Name: "X-Token",
+					In:   "header",
+				}: params.XToken,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = PollParams
+			Response = Job
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackPollParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.Poll(ctx, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.Poll(ctx, params)
+	}
 	if err != nil {
 		recordError("Internal", err)
-		var errRes *ErrorStatusCode
-		if errors.As(err, &errRes) {
-			encodeErrorResponse(*errRes, w, span)
+		if errRes, ok := errors.Into[*ErrorStatusCode](err); ok {
+			encodeErrorResponse(errRes, w, span)
 			return
 		}
 		if errors.Is(err, ht.ErrNotImplemented) {
@@ -87,18 +129,22 @@ func (s *Server) handlePollRequest(args [0]string, w http.ResponseWriter, r *htt
 	}
 }
 
-// HandleProgressRequest handles progress operation.
+// handleProgressRequest handles progress operation.
+//
+// Report progress.
 //
 // POST /progress
 func (s *Server) handleProgressRequest(args [0]string, w http.ResponseWriter, r *http.Request) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("progress"),
+		semconv.HTTPMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/progress"),
 	}
 
 	// Start a span for this request.
 	ctx, span := s.cfg.Tracer.Start(r.Context(), "Progress",
 		trace.WithAttributes(otelAttrs...),
-		trace.WithSpanKind(trace.SpanKindServer),
+		serverSpanKind,
 	)
 	defer span.End()
 
@@ -134,7 +180,7 @@ func (s *Server) handleProgressRequest(args [0]string, w http.ResponseWriter, r 
 		s.cfg.ErrorHandler(ctx, w, r, err)
 		return
 	}
-	request, close, err := s.decodeProgressRequest(r, span)
+	request, close, err := s.decodeProgressRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -144,14 +190,53 @@ func (s *Server) handleProgressRequest(args [0]string, w http.ResponseWriter, r 
 		s.cfg.ErrorHandler(ctx, w, r, err)
 		return
 	}
-	defer close()
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
 
-	response, err := s.h.Progress(ctx, request, params)
+	var response *Status
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:       ctx,
+			OperationName: "Progress",
+			OperationID:   "progress",
+			Body:          request,
+			Params: middleware.Parameters{
+				{
+					Name: "X-Token",
+					In:   "header",
+				}: params.XToken,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = *Progress
+			Params   = ProgressParams
+			Response = *Status
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackProgressParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.Progress(ctx, request, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.Progress(ctx, request, params)
+	}
 	if err != nil {
 		recordError("Internal", err)
-		var errRes *ErrorStatusCode
-		if errors.As(err, &errRes) {
-			encodeErrorResponse(*errRes, w, span)
+		if errRes, ok := errors.Into[*ErrorStatusCode](err); ok {
+			encodeErrorResponse(errRes, w, span)
 			return
 		}
 		if errors.Is(err, ht.ErrNotImplemented) {
@@ -169,18 +254,22 @@ func (s *Server) handleProgressRequest(args [0]string, w http.ResponseWriter, r 
 	}
 }
 
-// HandleStatusRequest handles status operation.
+// handleStatusRequest handles status operation.
+//
+// Get status.
 //
 // GET /status
 func (s *Server) handleStatusRequest(args [0]string, w http.ResponseWriter, r *http.Request) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("status"),
+		semconv.HTTPMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/status"),
 	}
 
 	// Start a span for this request.
 	ctx, span := s.cfg.Tracer.Start(r.Context(), "Status",
 		trace.WithAttributes(otelAttrs...),
-		trace.WithSpanKind(trace.SpanKindServer),
+		serverSpanKind,
 	)
 	defer span.End()
 
@@ -203,12 +292,42 @@ func (s *Server) handleStatusRequest(args [0]string, w http.ResponseWriter, r *h
 		err error
 	)
 
-	response, err := s.h.Status(ctx)
+	var response *Status
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:       ctx,
+			OperationName: "Status",
+			OperationID:   "status",
+			Body:          nil,
+			Params:        middleware.Parameters{},
+			Raw:           r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = struct{}
+			Response = *Status
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			nil,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.Status(ctx)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.Status(ctx)
+	}
 	if err != nil {
 		recordError("Internal", err)
-		var errRes *ErrorStatusCode
-		if errors.As(err, &errRes) {
-			encodeErrorResponse(*errRes, w, span)
+		if errRes, ok := errors.Into[*ErrorStatusCode](err); ok {
+			encodeErrorResponse(errRes, w, span)
 			return
 		}
 		if errors.Is(err, ht.ErrNotImplemented) {

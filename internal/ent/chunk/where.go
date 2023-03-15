@@ -12,1022 +12,672 @@ import (
 
 // ID filters vertices based on their ID field.
 func ID(id string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
 func IDEQ(id string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
 func IDNEQ(id string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldID), id))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
 func IDIn(ids ...string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		v := make([]interface{}, len(ids))
-		for i := range v {
-			v[i] = ids[i]
-		}
-		s.Where(sql.In(s.C(FieldID), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
 func IDNotIn(ids ...string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		v := make([]interface{}, len(ids))
-		for i := range v {
-			v[i] = ids[i]
-		}
-		s.Where(sql.NotIn(s.C(FieldID), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
 func IDGT(id string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldID), id))
-	})
+	return predicate.Chunk(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
 func IDGTE(id string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldID), id))
-	})
+	return predicate.Chunk(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
 func IDLT(id string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldID), id))
-	})
+	return predicate.Chunk(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
 func IDLTE(id string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldID), id))
-	})
+	return predicate.Chunk(sql.FieldLTE(FieldID, id))
+}
+
+// IDEqualFold applies the EqualFold predicate on the ID field.
+func IDEqualFold(id string) predicate.Chunk {
+	return predicate.Chunk(sql.FieldEqualFold(FieldID, id))
+}
+
+// IDContainsFold applies the ContainsFold predicate on the ID field.
+func IDContainsFold(id string) predicate.Chunk {
+	return predicate.Chunk(sql.FieldContainsFold(FieldID, id))
 }
 
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldCreatedAt, v))
 }
 
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
 // Start applies equality check predicate on the "start" field. It's identical to StartEQ.
 func Start(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldStart), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldStart, v))
 }
 
 // LeaseExpiresAt applies equality check predicate on the "lease_expires_at" field. It's identical to LeaseExpiresAtEQ.
 func LeaseExpiresAt(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldLeaseExpiresAt), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldLeaseExpiresAt, v))
 }
 
 // SizeInput applies equality check predicate on the "size_input" field. It's identical to SizeInputEQ.
 func SizeInput(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSizeInput), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSizeInput, v))
 }
 
 // SizeContent applies equality check predicate on the "size_content" field. It's identical to SizeContentEQ.
 func SizeContent(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSizeContent), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSizeContent, v))
 }
 
 // SizeOutput applies equality check predicate on the "size_output" field. It's identical to SizeOutputEQ.
 func SizeOutput(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSizeOutput), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSizeOutput, v))
 }
 
 // Sha256Input applies equality check predicate on the "sha256_input" field. It's identical to Sha256InputEQ.
 func Sha256Input(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSha256Input, v))
 }
 
 // Sha256Content applies equality check predicate on the "sha256_content" field. It's identical to Sha256ContentEQ.
 func Sha256Content(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSha256Content, v))
 }
 
 // Sha256Output applies equality check predicate on the "sha256_output" field. It's identical to Sha256OutputEQ.
 func Sha256Output(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSha256Output, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldCreatedAt, v))
 }
 
 // CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
 func CreatedAtNEQ(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldCreatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldCreatedAt, v))
 }
 
 // CreatedAtIn applies the In predicate on the "created_at" field.
 func CreatedAtIn(vs ...time.Time) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldCreatedAt), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldCreatedAt, vs...))
 }
 
 // CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
 func CreatedAtNotIn(vs ...time.Time) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldCreatedAt), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldCreatedAt, vs...))
 }
 
 // CreatedAtGT applies the GT predicate on the "created_at" field.
 func CreatedAtGT(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldCreatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldGT(FieldCreatedAt, v))
 }
 
 // CreatedAtGTE applies the GTE predicate on the "created_at" field.
 func CreatedAtGTE(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldCreatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldGTE(FieldCreatedAt, v))
 }
 
 // CreatedAtLT applies the LT predicate on the "created_at" field.
 func CreatedAtLT(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldCreatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldLT(FieldCreatedAt, v))
 }
 
 // CreatedAtLTE applies the LTE predicate on the "created_at" field.
 func CreatedAtLTE(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldCreatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldLTE(FieldCreatedAt, v))
 }
 
 // UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
 func UpdatedAtEQ(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
 // UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
 func UpdatedAtNEQ(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldUpdatedAt, v))
 }
 
 // UpdatedAtIn applies the In predicate on the "updated_at" field.
 func UpdatedAtIn(vs ...time.Time) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldUpdatedAt), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldUpdatedAt, vs...))
 }
 
 // UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
 func UpdatedAtNotIn(vs ...time.Time) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldUpdatedAt), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldUpdatedAt, vs...))
 }
 
 // UpdatedAtGT applies the GT predicate on the "updated_at" field.
 func UpdatedAtGT(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldGT(FieldUpdatedAt, v))
 }
 
 // UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
 func UpdatedAtGTE(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldGTE(FieldUpdatedAt, v))
 }
 
 // UpdatedAtLT applies the LT predicate on the "updated_at" field.
 func UpdatedAtLT(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldLT(FieldUpdatedAt, v))
 }
 
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.Chunk(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
 // StartEQ applies the EQ predicate on the "start" field.
 func StartEQ(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldStart), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldStart, v))
 }
 
 // StartNEQ applies the NEQ predicate on the "start" field.
 func StartNEQ(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldStart), v))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldStart, v))
 }
 
 // StartIn applies the In predicate on the "start" field.
 func StartIn(vs ...time.Time) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldStart), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldStart, vs...))
 }
 
 // StartNotIn applies the NotIn predicate on the "start" field.
 func StartNotIn(vs ...time.Time) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldStart), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldStart, vs...))
 }
 
 // StartGT applies the GT predicate on the "start" field.
 func StartGT(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldStart), v))
-	})
+	return predicate.Chunk(sql.FieldGT(FieldStart, v))
 }
 
 // StartGTE applies the GTE predicate on the "start" field.
 func StartGTE(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldStart), v))
-	})
+	return predicate.Chunk(sql.FieldGTE(FieldStart, v))
 }
 
 // StartLT applies the LT predicate on the "start" field.
 func StartLT(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldStart), v))
-	})
+	return predicate.Chunk(sql.FieldLT(FieldStart, v))
 }
 
 // StartLTE applies the LTE predicate on the "start" field.
 func StartLTE(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldStart), v))
-	})
+	return predicate.Chunk(sql.FieldLTE(FieldStart, v))
 }
 
 // LeaseExpiresAtEQ applies the EQ predicate on the "lease_expires_at" field.
 func LeaseExpiresAtEQ(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldLeaseExpiresAt), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldLeaseExpiresAt, v))
 }
 
 // LeaseExpiresAtNEQ applies the NEQ predicate on the "lease_expires_at" field.
 func LeaseExpiresAtNEQ(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldLeaseExpiresAt), v))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldLeaseExpiresAt, v))
 }
 
 // LeaseExpiresAtIn applies the In predicate on the "lease_expires_at" field.
 func LeaseExpiresAtIn(vs ...time.Time) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldLeaseExpiresAt), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldLeaseExpiresAt, vs...))
 }
 
 // LeaseExpiresAtNotIn applies the NotIn predicate on the "lease_expires_at" field.
 func LeaseExpiresAtNotIn(vs ...time.Time) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldLeaseExpiresAt), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldLeaseExpiresAt, vs...))
 }
 
 // LeaseExpiresAtGT applies the GT predicate on the "lease_expires_at" field.
 func LeaseExpiresAtGT(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldLeaseExpiresAt), v))
-	})
+	return predicate.Chunk(sql.FieldGT(FieldLeaseExpiresAt, v))
 }
 
 // LeaseExpiresAtGTE applies the GTE predicate on the "lease_expires_at" field.
 func LeaseExpiresAtGTE(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldLeaseExpiresAt), v))
-	})
+	return predicate.Chunk(sql.FieldGTE(FieldLeaseExpiresAt, v))
 }
 
 // LeaseExpiresAtLT applies the LT predicate on the "lease_expires_at" field.
 func LeaseExpiresAtLT(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldLeaseExpiresAt), v))
-	})
+	return predicate.Chunk(sql.FieldLT(FieldLeaseExpiresAt, v))
 }
 
 // LeaseExpiresAtLTE applies the LTE predicate on the "lease_expires_at" field.
 func LeaseExpiresAtLTE(v time.Time) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldLeaseExpiresAt), v))
-	})
+	return predicate.Chunk(sql.FieldLTE(FieldLeaseExpiresAt, v))
 }
 
 // LeaseExpiresAtIsNil applies the IsNil predicate on the "lease_expires_at" field.
 func LeaseExpiresAtIsNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldLeaseExpiresAt)))
-	})
+	return predicate.Chunk(sql.FieldIsNull(FieldLeaseExpiresAt))
 }
 
 // LeaseExpiresAtNotNil applies the NotNil predicate on the "lease_expires_at" field.
 func LeaseExpiresAtNotNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldLeaseExpiresAt)))
-	})
+	return predicate.Chunk(sql.FieldNotNull(FieldLeaseExpiresAt))
 }
 
 // StateEQ applies the EQ predicate on the "state" field.
 func StateEQ(v State) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldState), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldState, v))
 }
 
 // StateNEQ applies the NEQ predicate on the "state" field.
 func StateNEQ(v State) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldState), v))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldState, v))
 }
 
 // StateIn applies the In predicate on the "state" field.
 func StateIn(vs ...State) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldState), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldState, vs...))
 }
 
 // StateNotIn applies the NotIn predicate on the "state" field.
 func StateNotIn(vs ...State) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldState), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldState, vs...))
 }
 
 // SizeInputEQ applies the EQ predicate on the "size_input" field.
 func SizeInputEQ(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSizeInput), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSizeInput, v))
 }
 
 // SizeInputNEQ applies the NEQ predicate on the "size_input" field.
 func SizeInputNEQ(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldSizeInput), v))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldSizeInput, v))
 }
 
 // SizeInputIn applies the In predicate on the "size_input" field.
 func SizeInputIn(vs ...int64) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldSizeInput), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldSizeInput, vs...))
 }
 
 // SizeInputNotIn applies the NotIn predicate on the "size_input" field.
 func SizeInputNotIn(vs ...int64) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldSizeInput), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldSizeInput, vs...))
 }
 
 // SizeInputGT applies the GT predicate on the "size_input" field.
 func SizeInputGT(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldSizeInput), v))
-	})
+	return predicate.Chunk(sql.FieldGT(FieldSizeInput, v))
 }
 
 // SizeInputGTE applies the GTE predicate on the "size_input" field.
 func SizeInputGTE(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldSizeInput), v))
-	})
+	return predicate.Chunk(sql.FieldGTE(FieldSizeInput, v))
 }
 
 // SizeInputLT applies the LT predicate on the "size_input" field.
 func SizeInputLT(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldSizeInput), v))
-	})
+	return predicate.Chunk(sql.FieldLT(FieldSizeInput, v))
 }
 
 // SizeInputLTE applies the LTE predicate on the "size_input" field.
 func SizeInputLTE(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldSizeInput), v))
-	})
+	return predicate.Chunk(sql.FieldLTE(FieldSizeInput, v))
 }
 
 // SizeInputIsNil applies the IsNil predicate on the "size_input" field.
 func SizeInputIsNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldSizeInput)))
-	})
+	return predicate.Chunk(sql.FieldIsNull(FieldSizeInput))
 }
 
 // SizeInputNotNil applies the NotNil predicate on the "size_input" field.
 func SizeInputNotNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldSizeInput)))
-	})
+	return predicate.Chunk(sql.FieldNotNull(FieldSizeInput))
 }
 
 // SizeContentEQ applies the EQ predicate on the "size_content" field.
 func SizeContentEQ(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSizeContent), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSizeContent, v))
 }
 
 // SizeContentNEQ applies the NEQ predicate on the "size_content" field.
 func SizeContentNEQ(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldSizeContent), v))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldSizeContent, v))
 }
 
 // SizeContentIn applies the In predicate on the "size_content" field.
 func SizeContentIn(vs ...int64) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldSizeContent), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldSizeContent, vs...))
 }
 
 // SizeContentNotIn applies the NotIn predicate on the "size_content" field.
 func SizeContentNotIn(vs ...int64) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldSizeContent), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldSizeContent, vs...))
 }
 
 // SizeContentGT applies the GT predicate on the "size_content" field.
 func SizeContentGT(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldSizeContent), v))
-	})
+	return predicate.Chunk(sql.FieldGT(FieldSizeContent, v))
 }
 
 // SizeContentGTE applies the GTE predicate on the "size_content" field.
 func SizeContentGTE(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldSizeContent), v))
-	})
+	return predicate.Chunk(sql.FieldGTE(FieldSizeContent, v))
 }
 
 // SizeContentLT applies the LT predicate on the "size_content" field.
 func SizeContentLT(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldSizeContent), v))
-	})
+	return predicate.Chunk(sql.FieldLT(FieldSizeContent, v))
 }
 
 // SizeContentLTE applies the LTE predicate on the "size_content" field.
 func SizeContentLTE(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldSizeContent), v))
-	})
+	return predicate.Chunk(sql.FieldLTE(FieldSizeContent, v))
 }
 
 // SizeContentIsNil applies the IsNil predicate on the "size_content" field.
 func SizeContentIsNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldSizeContent)))
-	})
+	return predicate.Chunk(sql.FieldIsNull(FieldSizeContent))
 }
 
 // SizeContentNotNil applies the NotNil predicate on the "size_content" field.
 func SizeContentNotNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldSizeContent)))
-	})
+	return predicate.Chunk(sql.FieldNotNull(FieldSizeContent))
 }
 
 // SizeOutputEQ applies the EQ predicate on the "size_output" field.
 func SizeOutputEQ(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSizeOutput), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSizeOutput, v))
 }
 
 // SizeOutputNEQ applies the NEQ predicate on the "size_output" field.
 func SizeOutputNEQ(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldSizeOutput), v))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldSizeOutput, v))
 }
 
 // SizeOutputIn applies the In predicate on the "size_output" field.
 func SizeOutputIn(vs ...int64) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldSizeOutput), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldSizeOutput, vs...))
 }
 
 // SizeOutputNotIn applies the NotIn predicate on the "size_output" field.
 func SizeOutputNotIn(vs ...int64) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldSizeOutput), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldSizeOutput, vs...))
 }
 
 // SizeOutputGT applies the GT predicate on the "size_output" field.
 func SizeOutputGT(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldSizeOutput), v))
-	})
+	return predicate.Chunk(sql.FieldGT(FieldSizeOutput, v))
 }
 
 // SizeOutputGTE applies the GTE predicate on the "size_output" field.
 func SizeOutputGTE(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldSizeOutput), v))
-	})
+	return predicate.Chunk(sql.FieldGTE(FieldSizeOutput, v))
 }
 
 // SizeOutputLT applies the LT predicate on the "size_output" field.
 func SizeOutputLT(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldSizeOutput), v))
-	})
+	return predicate.Chunk(sql.FieldLT(FieldSizeOutput, v))
 }
 
 // SizeOutputLTE applies the LTE predicate on the "size_output" field.
 func SizeOutputLTE(v int64) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldSizeOutput), v))
-	})
+	return predicate.Chunk(sql.FieldLTE(FieldSizeOutput, v))
 }
 
 // SizeOutputIsNil applies the IsNil predicate on the "size_output" field.
 func SizeOutputIsNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldSizeOutput)))
-	})
+	return predicate.Chunk(sql.FieldIsNull(FieldSizeOutput))
 }
 
 // SizeOutputNotNil applies the NotNil predicate on the "size_output" field.
 func SizeOutputNotNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldSizeOutput)))
-	})
+	return predicate.Chunk(sql.FieldNotNull(FieldSizeOutput))
 }
 
 // Sha256InputEQ applies the EQ predicate on the "sha256_input" field.
 func Sha256InputEQ(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSha256Input, v))
 }
 
 // Sha256InputNEQ applies the NEQ predicate on the "sha256_input" field.
 func Sha256InputNEQ(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldSha256Input, v))
 }
 
 // Sha256InputIn applies the In predicate on the "sha256_input" field.
 func Sha256InputIn(vs ...string) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldSha256Input), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldSha256Input, vs...))
 }
 
 // Sha256InputNotIn applies the NotIn predicate on the "sha256_input" field.
 func Sha256InputNotIn(vs ...string) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldSha256Input), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldSha256Input, vs...))
 }
 
 // Sha256InputGT applies the GT predicate on the "sha256_input" field.
 func Sha256InputGT(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldGT(FieldSha256Input, v))
 }
 
 // Sha256InputGTE applies the GTE predicate on the "sha256_input" field.
 func Sha256InputGTE(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldGTE(FieldSha256Input, v))
 }
 
 // Sha256InputLT applies the LT predicate on the "sha256_input" field.
 func Sha256InputLT(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldLT(FieldSha256Input, v))
 }
 
 // Sha256InputLTE applies the LTE predicate on the "sha256_input" field.
 func Sha256InputLTE(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldLTE(FieldSha256Input, v))
 }
 
 // Sha256InputContains applies the Contains predicate on the "sha256_input" field.
 func Sha256InputContains(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldContains(FieldSha256Input, v))
 }
 
 // Sha256InputHasPrefix applies the HasPrefix predicate on the "sha256_input" field.
 func Sha256InputHasPrefix(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldHasPrefix(FieldSha256Input, v))
 }
 
 // Sha256InputHasSuffix applies the HasSuffix predicate on the "sha256_input" field.
 func Sha256InputHasSuffix(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldHasSuffix(FieldSha256Input, v))
 }
 
 // Sha256InputIsNil applies the IsNil predicate on the "sha256_input" field.
 func Sha256InputIsNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldSha256Input)))
-	})
+	return predicate.Chunk(sql.FieldIsNull(FieldSha256Input))
 }
 
 // Sha256InputNotNil applies the NotNil predicate on the "sha256_input" field.
 func Sha256InputNotNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldSha256Input)))
-	})
+	return predicate.Chunk(sql.FieldNotNull(FieldSha256Input))
 }
 
 // Sha256InputEqualFold applies the EqualFold predicate on the "sha256_input" field.
 func Sha256InputEqualFold(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldEqualFold(FieldSha256Input, v))
 }
 
 // Sha256InputContainsFold applies the ContainsFold predicate on the "sha256_input" field.
 func Sha256InputContainsFold(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldSha256Input), v))
-	})
+	return predicate.Chunk(sql.FieldContainsFold(FieldSha256Input, v))
 }
 
 // Sha256ContentEQ applies the EQ predicate on the "sha256_content" field.
 func Sha256ContentEQ(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSha256Content, v))
 }
 
 // Sha256ContentNEQ applies the NEQ predicate on the "sha256_content" field.
 func Sha256ContentNEQ(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldSha256Content, v))
 }
 
 // Sha256ContentIn applies the In predicate on the "sha256_content" field.
 func Sha256ContentIn(vs ...string) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldSha256Content), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldSha256Content, vs...))
 }
 
 // Sha256ContentNotIn applies the NotIn predicate on the "sha256_content" field.
 func Sha256ContentNotIn(vs ...string) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldSha256Content), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldSha256Content, vs...))
 }
 
 // Sha256ContentGT applies the GT predicate on the "sha256_content" field.
 func Sha256ContentGT(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldGT(FieldSha256Content, v))
 }
 
 // Sha256ContentGTE applies the GTE predicate on the "sha256_content" field.
 func Sha256ContentGTE(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldGTE(FieldSha256Content, v))
 }
 
 // Sha256ContentLT applies the LT predicate on the "sha256_content" field.
 func Sha256ContentLT(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldLT(FieldSha256Content, v))
 }
 
 // Sha256ContentLTE applies the LTE predicate on the "sha256_content" field.
 func Sha256ContentLTE(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldLTE(FieldSha256Content, v))
 }
 
 // Sha256ContentContains applies the Contains predicate on the "sha256_content" field.
 func Sha256ContentContains(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldContains(FieldSha256Content, v))
 }
 
 // Sha256ContentHasPrefix applies the HasPrefix predicate on the "sha256_content" field.
 func Sha256ContentHasPrefix(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldHasPrefix(FieldSha256Content, v))
 }
 
 // Sha256ContentHasSuffix applies the HasSuffix predicate on the "sha256_content" field.
 func Sha256ContentHasSuffix(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldHasSuffix(FieldSha256Content, v))
 }
 
 // Sha256ContentIsNil applies the IsNil predicate on the "sha256_content" field.
 func Sha256ContentIsNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldSha256Content)))
-	})
+	return predicate.Chunk(sql.FieldIsNull(FieldSha256Content))
 }
 
 // Sha256ContentNotNil applies the NotNil predicate on the "sha256_content" field.
 func Sha256ContentNotNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldSha256Content)))
-	})
+	return predicate.Chunk(sql.FieldNotNull(FieldSha256Content))
 }
 
 // Sha256ContentEqualFold applies the EqualFold predicate on the "sha256_content" field.
 func Sha256ContentEqualFold(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldEqualFold(FieldSha256Content, v))
 }
 
 // Sha256ContentContainsFold applies the ContainsFold predicate on the "sha256_content" field.
 func Sha256ContentContainsFold(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldSha256Content), v))
-	})
+	return predicate.Chunk(sql.FieldContainsFold(FieldSha256Content, v))
 }
 
 // Sha256OutputEQ applies the EQ predicate on the "sha256_output" field.
 func Sha256OutputEQ(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldEQ(FieldSha256Output, v))
 }
 
 // Sha256OutputNEQ applies the NEQ predicate on the "sha256_output" field.
 func Sha256OutputNEQ(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldNEQ(FieldSha256Output, v))
 }
 
 // Sha256OutputIn applies the In predicate on the "sha256_output" field.
 func Sha256OutputIn(vs ...string) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldSha256Output), v...))
-	})
+	return predicate.Chunk(sql.FieldIn(FieldSha256Output, vs...))
 }
 
 // Sha256OutputNotIn applies the NotIn predicate on the "sha256_output" field.
 func Sha256OutputNotIn(vs ...string) predicate.Chunk {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldSha256Output), v...))
-	})
+	return predicate.Chunk(sql.FieldNotIn(FieldSha256Output, vs...))
 }
 
 // Sha256OutputGT applies the GT predicate on the "sha256_output" field.
 func Sha256OutputGT(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldGT(FieldSha256Output, v))
 }
 
 // Sha256OutputGTE applies the GTE predicate on the "sha256_output" field.
 func Sha256OutputGTE(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldGTE(FieldSha256Output, v))
 }
 
 // Sha256OutputLT applies the LT predicate on the "sha256_output" field.
 func Sha256OutputLT(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldLT(FieldSha256Output, v))
 }
 
 // Sha256OutputLTE applies the LTE predicate on the "sha256_output" field.
 func Sha256OutputLTE(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldLTE(FieldSha256Output, v))
 }
 
 // Sha256OutputContains applies the Contains predicate on the "sha256_output" field.
 func Sha256OutputContains(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldContains(FieldSha256Output, v))
 }
 
 // Sha256OutputHasPrefix applies the HasPrefix predicate on the "sha256_output" field.
 func Sha256OutputHasPrefix(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldHasPrefix(FieldSha256Output, v))
 }
 
 // Sha256OutputHasSuffix applies the HasSuffix predicate on the "sha256_output" field.
 func Sha256OutputHasSuffix(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldHasSuffix(FieldSha256Output, v))
 }
 
 // Sha256OutputIsNil applies the IsNil predicate on the "sha256_output" field.
 func Sha256OutputIsNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldSha256Output)))
-	})
+	return predicate.Chunk(sql.FieldIsNull(FieldSha256Output))
 }
 
 // Sha256OutputNotNil applies the NotNil predicate on the "sha256_output" field.
 func Sha256OutputNotNil() predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldSha256Output)))
-	})
+	return predicate.Chunk(sql.FieldNotNull(FieldSha256Output))
 }
 
 // Sha256OutputEqualFold applies the EqualFold predicate on the "sha256_output" field.
 func Sha256OutputEqualFold(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldEqualFold(FieldSha256Output, v))
 }
 
 // Sha256OutputContainsFold applies the ContainsFold predicate on the "sha256_output" field.
 func Sha256OutputContainsFold(v string) predicate.Chunk {
-	return predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldSha256Output), v))
-	})
+	return predicate.Chunk(sql.FieldContainsFold(FieldSha256Output, v))
 }
 
 // HasWorker applies the HasEdge predicate on the "worker" edge.
@@ -1035,7 +685,6 @@ func HasWorker() predicate.Chunk {
 	return predicate.Chunk(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(WorkerTable, FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, WorkerTable, WorkerColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)

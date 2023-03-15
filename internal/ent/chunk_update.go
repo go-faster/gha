@@ -249,41 +249,8 @@ func (cu *ChunkUpdate) ClearWorker() *ChunkUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (cu *ChunkUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
 	cu.defaults()
-	if len(cu.hooks) == 0 {
-		if err = cu.check(); err != nil {
-			return 0, err
-		}
-		affected, err = cu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ChunkMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = cu.check(); err != nil {
-				return 0, err
-			}
-			cu.mutation = mutation
-			affected, err = cu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(cu.hooks) - 1; i >= 0; i-- {
-			if cu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = cu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, cu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks[int, ChunkMutation](ctx, cu.sqlSave, cu.mutation, cu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -327,16 +294,10 @@ func (cu *ChunkUpdate) check() error {
 }
 
 func (cu *ChunkUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   chunk.Table,
-			Columns: chunk.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
-				Column: chunk.FieldID,
-			},
-		},
+	if err := cu.check(); err != nil {
+		return n, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(chunk.Table, chunk.Columns, sqlgraph.NewFieldSpec(chunk.FieldID, field.TypeString))
 	if ps := cu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -345,137 +306,64 @@ func (cu *ChunkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := cu.mutation.UpdatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chunk.FieldUpdatedAt,
-		})
+		_spec.SetField(chunk.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := cu.mutation.Start(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chunk.FieldStart,
-		})
+		_spec.SetField(chunk.FieldStart, field.TypeTime, value)
 	}
 	if value, ok := cu.mutation.LeaseExpiresAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chunk.FieldLeaseExpiresAt,
-		})
+		_spec.SetField(chunk.FieldLeaseExpiresAt, field.TypeTime, value)
 	}
 	if cu.mutation.LeaseExpiresAtCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: chunk.FieldLeaseExpiresAt,
-		})
+		_spec.ClearField(chunk.FieldLeaseExpiresAt, field.TypeTime)
 	}
 	if value, ok := cu.mutation.State(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: chunk.FieldState,
-		})
+		_spec.SetField(chunk.FieldState, field.TypeEnum, value)
 	}
 	if value, ok := cu.mutation.SizeInput(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeInput,
-		})
+		_spec.SetField(chunk.FieldSizeInput, field.TypeInt64, value)
 	}
 	if value, ok := cu.mutation.AddedSizeInput(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeInput,
-		})
+		_spec.AddField(chunk.FieldSizeInput, field.TypeInt64, value)
 	}
 	if cu.mutation.SizeInputCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: chunk.FieldSizeInput,
-		})
+		_spec.ClearField(chunk.FieldSizeInput, field.TypeInt64)
 	}
 	if value, ok := cu.mutation.SizeContent(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeContent,
-		})
+		_spec.SetField(chunk.FieldSizeContent, field.TypeInt64, value)
 	}
 	if value, ok := cu.mutation.AddedSizeContent(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeContent,
-		})
+		_spec.AddField(chunk.FieldSizeContent, field.TypeInt64, value)
 	}
 	if cu.mutation.SizeContentCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: chunk.FieldSizeContent,
-		})
+		_spec.ClearField(chunk.FieldSizeContent, field.TypeInt64)
 	}
 	if value, ok := cu.mutation.SizeOutput(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeOutput,
-		})
+		_spec.SetField(chunk.FieldSizeOutput, field.TypeInt64, value)
 	}
 	if value, ok := cu.mutation.AddedSizeOutput(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeOutput,
-		})
+		_spec.AddField(chunk.FieldSizeOutput, field.TypeInt64, value)
 	}
 	if cu.mutation.SizeOutputCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: chunk.FieldSizeOutput,
-		})
+		_spec.ClearField(chunk.FieldSizeOutput, field.TypeInt64)
 	}
 	if value, ok := cu.mutation.Sha256Input(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chunk.FieldSha256Input,
-		})
+		_spec.SetField(chunk.FieldSha256Input, field.TypeString, value)
 	}
 	if cu.mutation.Sha256InputCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: chunk.FieldSha256Input,
-		})
+		_spec.ClearField(chunk.FieldSha256Input, field.TypeString)
 	}
 	if value, ok := cu.mutation.Sha256Content(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chunk.FieldSha256Content,
-		})
+		_spec.SetField(chunk.FieldSha256Content, field.TypeString, value)
 	}
 	if cu.mutation.Sha256ContentCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: chunk.FieldSha256Content,
-		})
+		_spec.ClearField(chunk.FieldSha256Content, field.TypeString)
 	}
 	if value, ok := cu.mutation.Sha256Output(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chunk.FieldSha256Output,
-		})
+		_spec.SetField(chunk.FieldSha256Output, field.TypeString, value)
 	}
 	if cu.mutation.Sha256OutputCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: chunk.FieldSha256Output,
-		})
+		_spec.ClearField(chunk.FieldSha256Output, field.TypeString)
 	}
 	if cu.mutation.WorkerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -485,10 +373,7 @@ func (cu *ChunkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{chunk.WorkerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: worker.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -501,10 +386,7 @@ func (cu *ChunkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{chunk.WorkerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: worker.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -520,6 +402,7 @@ func (cu *ChunkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	cu.mutation.done = true
 	return n, nil
 }
 
@@ -748,6 +631,12 @@ func (cuo *ChunkUpdateOne) ClearWorker() *ChunkUpdateOne {
 	return cuo
 }
 
+// Where appends a list predicates to the ChunkUpdate builder.
+func (cuo *ChunkUpdateOne) Where(ps ...predicate.Chunk) *ChunkUpdateOne {
+	cuo.mutation.Where(ps...)
+	return cuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (cuo *ChunkUpdateOne) Select(field string, fields ...string) *ChunkUpdateOne {
@@ -757,47 +646,8 @@ func (cuo *ChunkUpdateOne) Select(field string, fields ...string) *ChunkUpdateOn
 
 // Save executes the query and returns the updated Chunk entity.
 func (cuo *ChunkUpdateOne) Save(ctx context.Context) (*Chunk, error) {
-	var (
-		err  error
-		node *Chunk
-	)
 	cuo.defaults()
-	if len(cuo.hooks) == 0 {
-		if err = cuo.check(); err != nil {
-			return nil, err
-		}
-		node, err = cuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ChunkMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = cuo.check(); err != nil {
-				return nil, err
-			}
-			cuo.mutation = mutation
-			node, err = cuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(cuo.hooks) - 1; i >= 0; i-- {
-			if cuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = cuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, cuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Chunk)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from ChunkMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks[*Chunk, ChunkMutation](ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -841,16 +691,10 @@ func (cuo *ChunkUpdateOne) check() error {
 }
 
 func (cuo *ChunkUpdateOne) sqlSave(ctx context.Context) (_node *Chunk, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   chunk.Table,
-			Columns: chunk.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
-				Column: chunk.FieldID,
-			},
-		},
+	if err := cuo.check(); err != nil {
+		return _node, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(chunk.Table, chunk.Columns, sqlgraph.NewFieldSpec(chunk.FieldID, field.TypeString))
 	id, ok := cuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Chunk.id" for update`)}
@@ -876,137 +720,64 @@ func (cuo *ChunkUpdateOne) sqlSave(ctx context.Context) (_node *Chunk, err error
 		}
 	}
 	if value, ok := cuo.mutation.UpdatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chunk.FieldUpdatedAt,
-		})
+		_spec.SetField(chunk.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := cuo.mutation.Start(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chunk.FieldStart,
-		})
+		_spec.SetField(chunk.FieldStart, field.TypeTime, value)
 	}
 	if value, ok := cuo.mutation.LeaseExpiresAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chunk.FieldLeaseExpiresAt,
-		})
+		_spec.SetField(chunk.FieldLeaseExpiresAt, field.TypeTime, value)
 	}
 	if cuo.mutation.LeaseExpiresAtCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: chunk.FieldLeaseExpiresAt,
-		})
+		_spec.ClearField(chunk.FieldLeaseExpiresAt, field.TypeTime)
 	}
 	if value, ok := cuo.mutation.State(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: chunk.FieldState,
-		})
+		_spec.SetField(chunk.FieldState, field.TypeEnum, value)
 	}
 	if value, ok := cuo.mutation.SizeInput(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeInput,
-		})
+		_spec.SetField(chunk.FieldSizeInput, field.TypeInt64, value)
 	}
 	if value, ok := cuo.mutation.AddedSizeInput(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeInput,
-		})
+		_spec.AddField(chunk.FieldSizeInput, field.TypeInt64, value)
 	}
 	if cuo.mutation.SizeInputCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: chunk.FieldSizeInput,
-		})
+		_spec.ClearField(chunk.FieldSizeInput, field.TypeInt64)
 	}
 	if value, ok := cuo.mutation.SizeContent(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeContent,
-		})
+		_spec.SetField(chunk.FieldSizeContent, field.TypeInt64, value)
 	}
 	if value, ok := cuo.mutation.AddedSizeContent(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeContent,
-		})
+		_spec.AddField(chunk.FieldSizeContent, field.TypeInt64, value)
 	}
 	if cuo.mutation.SizeContentCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: chunk.FieldSizeContent,
-		})
+		_spec.ClearField(chunk.FieldSizeContent, field.TypeInt64)
 	}
 	if value, ok := cuo.mutation.SizeOutput(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeOutput,
-		})
+		_spec.SetField(chunk.FieldSizeOutput, field.TypeInt64, value)
 	}
 	if value, ok := cuo.mutation.AddedSizeOutput(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeOutput,
-		})
+		_spec.AddField(chunk.FieldSizeOutput, field.TypeInt64, value)
 	}
 	if cuo.mutation.SizeOutputCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: chunk.FieldSizeOutput,
-		})
+		_spec.ClearField(chunk.FieldSizeOutput, field.TypeInt64)
 	}
 	if value, ok := cuo.mutation.Sha256Input(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chunk.FieldSha256Input,
-		})
+		_spec.SetField(chunk.FieldSha256Input, field.TypeString, value)
 	}
 	if cuo.mutation.Sha256InputCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: chunk.FieldSha256Input,
-		})
+		_spec.ClearField(chunk.FieldSha256Input, field.TypeString)
 	}
 	if value, ok := cuo.mutation.Sha256Content(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chunk.FieldSha256Content,
-		})
+		_spec.SetField(chunk.FieldSha256Content, field.TypeString, value)
 	}
 	if cuo.mutation.Sha256ContentCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: chunk.FieldSha256Content,
-		})
+		_spec.ClearField(chunk.FieldSha256Content, field.TypeString)
 	}
 	if value, ok := cuo.mutation.Sha256Output(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chunk.FieldSha256Output,
-		})
+		_spec.SetField(chunk.FieldSha256Output, field.TypeString, value)
 	}
 	if cuo.mutation.Sha256OutputCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: chunk.FieldSha256Output,
-		})
+		_spec.ClearField(chunk.FieldSha256Output, field.TypeString)
 	}
 	if cuo.mutation.WorkerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1016,10 +787,7 @@ func (cuo *ChunkUpdateOne) sqlSave(ctx context.Context) (_node *Chunk, err error
 			Columns: []string{chunk.WorkerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: worker.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1032,10 +800,7 @@ func (cuo *ChunkUpdateOne) sqlSave(ctx context.Context) (_node *Chunk, err error
 			Columns: []string{chunk.WorkerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: worker.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1054,5 +819,6 @@ func (cuo *ChunkUpdateOne) sqlSave(ctx context.Context) (_node *Chunk, err error
 		}
 		return nil, err
 	}
+	cuo.mutation.done = true
 	return _node, nil
 }

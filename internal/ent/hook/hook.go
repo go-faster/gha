@@ -15,11 +15,10 @@ type ChunkFunc func(context.Context, *ent.ChunkMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
 func (f ChunkFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.ChunkMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ChunkMutation", m)
+	if mv, ok := m.(*ent.ChunkMutation); ok {
+		return f(ctx, mv)
 	}
-	return f(ctx, mv)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ChunkMutation", m)
 }
 
 // The WorkerFunc type is an adapter to allow the use of ordinary
@@ -28,11 +27,10 @@ type WorkerFunc func(context.Context, *ent.WorkerMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
 func (f WorkerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.WorkerMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkerMutation", m)
+	if mv, ok := m.(*ent.WorkerMutation); ok {
+		return f(ctx, mv)
 	}
-	return f(ctx, mv)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkerMutation", m)
 }
 
 // Condition is a hook condition function.

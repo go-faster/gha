@@ -21,11 +21,9 @@ import (
 // WorkerQuery is the builder for querying Worker entities.
 type WorkerQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
+	ctx        *QueryContext
 	order      []OrderFunc
-	fields     []string
+	inters     []Interceptor
 	predicates []predicate.Worker
 	withChunks *ChunkQuery
 	modifiers  []func(*sql.Selector)
@@ -40,26 +38,26 @@ func (wq *WorkerQuery) Where(ps ...predicate.Worker) *WorkerQuery {
 	return wq
 }
 
-// Limit adds a limit step to the query.
+// Limit the number of records to be returned by this query.
 func (wq *WorkerQuery) Limit(limit int) *WorkerQuery {
-	wq.limit = &limit
+	wq.ctx.Limit = &limit
 	return wq
 }
 
-// Offset adds an offset step to the query.
+// Offset to start from.
 func (wq *WorkerQuery) Offset(offset int) *WorkerQuery {
-	wq.offset = &offset
+	wq.ctx.Offset = &offset
 	return wq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
 func (wq *WorkerQuery) Unique(unique bool) *WorkerQuery {
-	wq.unique = &unique
+	wq.ctx.Unique = &unique
 	return wq
 }
 
-// Order adds an order step to the query.
+// Order specifies how the records should be ordered.
 func (wq *WorkerQuery) Order(o ...OrderFunc) *WorkerQuery {
 	wq.order = append(wq.order, o...)
 	return wq
@@ -67,7 +65,7 @@ func (wq *WorkerQuery) Order(o ...OrderFunc) *WorkerQuery {
 
 // QueryChunks chains the current query on the "chunks" edge.
 func (wq *WorkerQuery) QueryChunks() *ChunkQuery {
-	query := &ChunkQuery{config: wq.config}
+	query := (&ChunkClient{config: wq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := wq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -90,7 +88,7 @@ func (wq *WorkerQuery) QueryChunks() *ChunkQuery {
 // First returns the first Worker entity from the query.
 // Returns a *NotFoundError when no Worker was found.
 func (wq *WorkerQuery) First(ctx context.Context) (*Worker, error) {
-	nodes, err := wq.Limit(1).All(ctx)
+	nodes, err := wq.Limit(1).All(setContextOp(ctx, wq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +111,7 @@ func (wq *WorkerQuery) FirstX(ctx context.Context) *Worker {
 // Returns a *NotFoundError when no Worker ID was found.
 func (wq *WorkerQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = wq.Limit(1).IDs(ctx); err != nil {
+	if ids, err = wq.Limit(1).IDs(setContextOp(ctx, wq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -136,7 +134,7 @@ func (wq *WorkerQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Returns a *NotSingularError when more than one Worker entity is found.
 // Returns a *NotFoundError when no Worker entities are found.
 func (wq *WorkerQuery) Only(ctx context.Context) (*Worker, error) {
-	nodes, err := wq.Limit(2).All(ctx)
+	nodes, err := wq.Limit(2).All(setContextOp(ctx, wq.ctx, "Only"))
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +162,7 @@ func (wq *WorkerQuery) OnlyX(ctx context.Context) *Worker {
 // Returns a *NotFoundError when no entities are found.
 func (wq *WorkerQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = wq.Limit(2).IDs(ctx); err != nil {
+	if ids, err = wq.Limit(2).IDs(setContextOp(ctx, wq.ctx, "OnlyID")); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -189,10 +187,12 @@ func (wq *WorkerQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 
 // All executes the query and returns a list of Workers.
 func (wq *WorkerQuery) All(ctx context.Context) ([]*Worker, error) {
+	ctx = setContextOp(ctx, wq.ctx, "All")
 	if err := wq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	return wq.sqlAll(ctx)
+	qr := querierAll[[]*Worker, *WorkerQuery]()
+	return withInterceptors[[]*Worker](ctx, wq, qr, wq.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
@@ -205,9 +205,12 @@ func (wq *WorkerQuery) AllX(ctx context.Context) []*Worker {
 }
 
 // IDs executes the query and returns a list of Worker IDs.
-func (wq *WorkerQuery) IDs(ctx context.Context) ([]uuid.UUID, error) {
-	var ids []uuid.UUID
-	if err := wq.Select(worker.FieldID).Scan(ctx, &ids); err != nil {
+func (wq *WorkerQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+	if wq.ctx.Unique == nil && wq.path != nil {
+		wq.Unique(true)
+	}
+	ctx = setContextOp(ctx, wq.ctx, "IDs")
+	if err = wq.Select(worker.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -224,10 +227,11 @@ func (wq *WorkerQuery) IDsX(ctx context.Context) []uuid.UUID {
 
 // Count returns the count of the given query.
 func (wq *WorkerQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, wq.ctx, "Count")
 	if err := wq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return wq.sqlCount(ctx)
+	return withInterceptors[int](ctx, wq, querierCount[*WorkerQuery](), wq.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
@@ -241,10 +245,15 @@ func (wq *WorkerQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (wq *WorkerQuery) Exist(ctx context.Context) (bool, error) {
-	if err := wq.prepareQuery(ctx); err != nil {
-		return false, err
+	ctx = setContextOp(ctx, wq.ctx, "Exist")
+	switch _, err := wq.FirstID(ctx); {
+	case IsNotFound(err):
+		return false, nil
+	case err != nil:
+		return false, fmt.Errorf("ent: check existence: %w", err)
+	default:
+		return true, nil
 	}
-	return wq.sqlExist(ctx)
 }
 
 // ExistX is like Exist, but panics if an error occurs.
@@ -264,22 +273,21 @@ func (wq *WorkerQuery) Clone() *WorkerQuery {
 	}
 	return &WorkerQuery{
 		config:     wq.config,
-		limit:      wq.limit,
-		offset:     wq.offset,
+		ctx:        wq.ctx.Clone(),
 		order:      append([]OrderFunc{}, wq.order...),
+		inters:     append([]Interceptor{}, wq.inters...),
 		predicates: append([]predicate.Worker{}, wq.predicates...),
 		withChunks: wq.withChunks.Clone(),
 		// clone intermediate query.
-		sql:    wq.sql.Clone(),
-		path:   wq.path,
-		unique: wq.unique,
+		sql:  wq.sql.Clone(),
+		path: wq.path,
 	}
 }
 
 // WithChunks tells the query-builder to eager-load the nodes that are connected to
 // the "chunks" edge. The optional arguments are used to configure the query builder of the edge.
 func (wq *WorkerQuery) WithChunks(opts ...func(*ChunkQuery)) *WorkerQuery {
-	query := &ChunkQuery{config: wq.config}
+	query := (&ChunkClient{config: wq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
@@ -302,16 +310,11 @@ func (wq *WorkerQuery) WithChunks(opts ...func(*ChunkQuery)) *WorkerQuery {
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (wq *WorkerQuery) GroupBy(field string, fields ...string) *WorkerGroupBy {
-	grbuild := &WorkerGroupBy{config: wq.config}
-	grbuild.fields = append([]string{field}, fields...)
-	grbuild.path = func(ctx context.Context) (prev *sql.Selector, err error) {
-		if err := wq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		return wq.sqlQuery(ctx), nil
-	}
+	wq.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &WorkerGroupBy{build: wq}
+	grbuild.flds = &wq.ctx.Fields
 	grbuild.label = worker.Label
-	grbuild.flds, grbuild.scan = &grbuild.fields, grbuild.Scan
+	grbuild.scan = grbuild.Scan
 	return grbuild
 }
 
@@ -328,15 +331,30 @@ func (wq *WorkerQuery) GroupBy(field string, fields ...string) *WorkerGroupBy {
 //		Select(worker.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (wq *WorkerQuery) Select(fields ...string) *WorkerSelect {
-	wq.fields = append(wq.fields, fields...)
-	selbuild := &WorkerSelect{WorkerQuery: wq}
-	selbuild.label = worker.Label
-	selbuild.flds, selbuild.scan = &wq.fields, selbuild.Scan
-	return selbuild
+	wq.ctx.Fields = append(wq.ctx.Fields, fields...)
+	sbuild := &WorkerSelect{WorkerQuery: wq}
+	sbuild.label = worker.Label
+	sbuild.flds, sbuild.scan = &wq.ctx.Fields, sbuild.Scan
+	return sbuild
+}
+
+// Aggregate returns a WorkerSelect configured with the given aggregations.
+func (wq *WorkerQuery) Aggregate(fns ...AggregateFunc) *WorkerSelect {
+	return wq.Select().Aggregate(fns...)
 }
 
 func (wq *WorkerQuery) prepareQuery(ctx context.Context) error {
-	for _, f := range wq.fields {
+	for _, inter := range wq.inters {
+		if inter == nil {
+			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
+		}
+		if trv, ok := inter.(Traverser); ok {
+			if err := trv.Traverse(ctx, wq); err != nil {
+				return err
+			}
+		}
+	}
+	for _, f := range wq.ctx.Fields {
 		if !worker.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
@@ -359,10 +377,10 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Worke
 			wq.withChunks != nil,
 		}
 	)
-	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
+	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Worker).scanValues(nil, columns)
 	}
-	_spec.Assign = func(columns []string, values []interface{}) error {
+	_spec.Assign = func(columns []string, values []any) error {
 		node := &Worker{config: wq.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
@@ -427,38 +445,22 @@ func (wq *WorkerQuery) sqlCount(ctx context.Context) (int, error) {
 	if len(wq.modifiers) > 0 {
 		_spec.Modifiers = wq.modifiers
 	}
-	_spec.Node.Columns = wq.fields
-	if len(wq.fields) > 0 {
-		_spec.Unique = wq.unique != nil && *wq.unique
+	_spec.Node.Columns = wq.ctx.Fields
+	if len(wq.ctx.Fields) > 0 {
+		_spec.Unique = wq.ctx.Unique != nil && *wq.ctx.Unique
 	}
 	return sqlgraph.CountNodes(ctx, wq.driver, _spec)
 }
 
-func (wq *WorkerQuery) sqlExist(ctx context.Context) (bool, error) {
-	n, err := wq.sqlCount(ctx)
-	if err != nil {
-		return false, fmt.Errorf("ent: check existence: %w", err)
-	}
-	return n > 0, nil
-}
-
 func (wq *WorkerQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := &sqlgraph.QuerySpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   worker.Table,
-			Columns: worker.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: worker.FieldID,
-			},
-		},
-		From:   wq.sql,
-		Unique: true,
-	}
-	if unique := wq.unique; unique != nil {
+	_spec := sqlgraph.NewQuerySpec(worker.Table, worker.Columns, sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID))
+	_spec.From = wq.sql
+	if unique := wq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
+	} else if wq.path != nil {
+		_spec.Unique = true
 	}
-	if fields := wq.fields; len(fields) > 0 {
+	if fields := wq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, worker.FieldID)
 		for i := range fields {
@@ -474,10 +476,10 @@ func (wq *WorkerQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if limit := wq.limit; limit != nil {
+	if limit := wq.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := wq.offset; offset != nil {
+	if offset := wq.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
 	if ps := wq.order; len(ps) > 0 {
@@ -493,7 +495,7 @@ func (wq *WorkerQuery) querySpec() *sqlgraph.QuerySpec {
 func (wq *WorkerQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(wq.driver.Dialect())
 	t1 := builder.Table(worker.Table)
-	columns := wq.fields
+	columns := wq.ctx.Fields
 	if len(columns) == 0 {
 		columns = worker.Columns
 	}
@@ -502,7 +504,7 @@ func (wq *WorkerQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector = wq.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if wq.unique != nil && *wq.unique {
+	if wq.ctx.Unique != nil && *wq.ctx.Unique {
 		selector.Distinct()
 	}
 	for _, m := range wq.modifiers {
@@ -514,12 +516,12 @@ func (wq *WorkerQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	for _, p := range wq.order {
 		p(selector)
 	}
-	if offset := wq.offset; offset != nil {
+	if offset := wq.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := wq.limit; limit != nil {
+	if limit := wq.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -553,13 +555,8 @@ func (wq *WorkerQuery) ForShare(opts ...sql.LockOption) *WorkerQuery {
 
 // WorkerGroupBy is the group-by builder for Worker entities.
 type WorkerGroupBy struct {
-	config
 	selector
-	fields []string
-	fns    []AggregateFunc
-	// intermediate query (i.e. traversal path).
-	sql  *sql.Selector
-	path func(context.Context) (*sql.Selector, error)
+	build *WorkerQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
@@ -568,74 +565,77 @@ func (wgb *WorkerGroupBy) Aggregate(fns ...AggregateFunc) *WorkerGroupBy {
 	return wgb
 }
 
-// Scan applies the group-by query and scans the result into the given value.
-func (wgb *WorkerGroupBy) Scan(ctx context.Context, v interface{}) error {
-	query, err := wgb.path(ctx)
-	if err != nil {
+// Scan applies the selector query and scans the result into the given value.
+func (wgb *WorkerGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, wgb.build.ctx, "GroupBy")
+	if err := wgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	wgb.sql = query
-	return wgb.sqlScan(ctx, v)
+	return scanWithInterceptors[*WorkerQuery, *WorkerGroupBy](ctx, wgb.build, wgb, wgb.build.inters, v)
 }
 
-func (wgb *WorkerGroupBy) sqlScan(ctx context.Context, v interface{}) error {
-	for _, f := range wgb.fields {
-		if !worker.ValidColumn(f) {
-			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
-		}
+func (wgb *WorkerGroupBy) sqlScan(ctx context.Context, root *WorkerQuery, v any) error {
+	selector := root.sqlQuery(ctx).Select()
+	aggregation := make([]string, 0, len(wgb.fns))
+	for _, fn := range wgb.fns {
+		aggregation = append(aggregation, fn(selector))
 	}
-	selector := wgb.sqlQuery()
+	if len(selector.SelectedColumns()) == 0 {
+		columns := make([]string, 0, len(*wgb.flds)+len(wgb.fns))
+		for _, f := range *wgb.flds {
+			columns = append(columns, selector.C(f))
+		}
+		columns = append(columns, aggregation...)
+		selector.Select(columns...)
+	}
+	selector.GroupBy(selector.Columns(*wgb.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := wgb.driver.Query(ctx, query, args, rows); err != nil {
+	if err := wgb.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
 }
 
-func (wgb *WorkerGroupBy) sqlQuery() *sql.Selector {
-	selector := wgb.sql.Select()
-	aggregation := make([]string, 0, len(wgb.fns))
-	for _, fn := range wgb.fns {
-		aggregation = append(aggregation, fn(selector))
-	}
-	// If no columns were selected in a custom aggregation function, the default
-	// selection is the fields used for "group-by", and the aggregation functions.
-	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(wgb.fields)+len(wgb.fns))
-		for _, f := range wgb.fields {
-			columns = append(columns, selector.C(f))
-		}
-		columns = append(columns, aggregation...)
-		selector.Select(columns...)
-	}
-	return selector.GroupBy(selector.Columns(wgb.fields...)...)
-}
-
 // WorkerSelect is the builder for selecting fields of Worker entities.
 type WorkerSelect struct {
 	*WorkerQuery
 	selector
-	// intermediate query (i.e. traversal path).
-	sql *sql.Selector
+}
+
+// Aggregate adds the given aggregation functions to the selector query.
+func (ws *WorkerSelect) Aggregate(fns ...AggregateFunc) *WorkerSelect {
+	ws.fns = append(ws.fns, fns...)
+	return ws
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (ws *WorkerSelect) Scan(ctx context.Context, v interface{}) error {
+func (ws *WorkerSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, ws.ctx, "Select")
 	if err := ws.prepareQuery(ctx); err != nil {
 		return err
 	}
-	ws.sql = ws.WorkerQuery.sqlQuery(ctx)
-	return ws.sqlScan(ctx, v)
+	return scanWithInterceptors[*WorkerQuery, *WorkerSelect](ctx, ws.WorkerQuery, ws, ws.inters, v)
 }
 
-func (ws *WorkerSelect) sqlScan(ctx context.Context, v interface{}) error {
+func (ws *WorkerSelect) sqlScan(ctx context.Context, root *WorkerQuery, v any) error {
+	selector := root.sqlQuery(ctx)
+	aggregation := make([]string, 0, len(ws.fns))
+	for _, fn := range ws.fns {
+		aggregation = append(aggregation, fn(selector))
+	}
+	switch n := len(*ws.selector.flds); {
+	case n == 0 && len(aggregation) > 0:
+		selector.Select(aggregation...)
+	case n != 0 && len(aggregation) > 0:
+		selector.AppendSelect(aggregation...)
+	}
 	rows := &sql.Rows{}
-	query, args := ws.sql.Query()
+	query, args := selector.Query()
 	if err := ws.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}

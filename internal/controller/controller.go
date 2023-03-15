@@ -54,10 +54,10 @@ type Handler struct {
 	db *ent.Client
 }
 
-func (h Handler) Progress(ctx context.Context, req oas.Progress, params oas.ProgressParams) (oas.Status, error) {
+func (h Handler) Progress(ctx context.Context, req *oas.Progress, params oas.ProgressParams) (*oas.Status, error) {
 	w, err := h.authToken(ctx, params.XToken)
 	if err != nil {
-		return oas.Status{}, err
+		return nil, err
 	}
 
 	h.lg.Info("Progress",
@@ -83,19 +83,19 @@ func (h Handler) Progress(ctx context.Context, req oas.Progress, params oas.Prog
 			SetState(chunk.StateReady).
 			SetNillableLeaseExpiresAt(nil).
 			Exec(ctx); err != nil {
-			return oas.Status{}, errors.Wrap(err, "done")
+			return nil, errors.Wrap(err, "done")
 		}
-		return oas.Status{Message: "ack done"}, nil
+		return &oas.Status{Message: "ack done"}, nil
 	case oas.ProgressEventDownloading:
 		if err := u.
 			SetWorker(w).
 			SetLeaseExpiresAt(time.Now().Add(time.Second * 15)).
 			Exec(ctx); err != nil {
-			return oas.Status{}, errors.Wrap(err, "lease")
+			return nil, errors.Wrap(err, "lease")
 		}
-		return oas.Status{Message: "ack lease"}, nil
+		return &oas.Status{Message: "ack lease"}, nil
 	default:
-		return oas.Status{}, errors.Errorf("unknown event %s", req.Event)
+		return nil, errors.Errorf("unknown event %s", req.Event)
 	}
 }
 
@@ -299,12 +299,12 @@ func (h Handler) Poll(ctx context.Context, params oas.PollParams) (oas.Job, erro
 	}), err
 }
 
-func (h Handler) Status(ctx context.Context) (oas.Status, error) {
-	return oas.Status{Message: "ok"}, nil
+func (h Handler) Status(ctx context.Context) (*oas.Status, error) {
+	return &oas.Status{Message: "ok"}, nil
 }
 
-func (h Handler) NewError(ctx context.Context, err error) oas.ErrorStatusCode {
-	return oas.ErrorStatusCode{
+func (h Handler) NewError(ctx context.Context, err error) *oas.ErrorStatusCode {
+	return &oas.ErrorStatusCode{
 		StatusCode: 500,
 		Response: oas.Error{
 			Message: err.Error(),

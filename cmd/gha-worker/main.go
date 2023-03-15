@@ -123,7 +123,7 @@ func main() {
 							continue
 						}
 						lastProgress = time.Now()
-						if _, err := api.Progress(ctx, oas.Progress{
+						if _, err := api.Progress(ctx, &oas.Progress{
 							Event:           oas.ProgressEventDownloading,
 							Key:             key,
 							InputSizeBytes:  oas.NewOptInt64(p.Total()),
@@ -146,7 +146,7 @@ func main() {
 			}
 
 			lg.Info("Downloaded", zap.String("path", res.Path))
-			if _, err := api.Progress(ctx, oas.Progress{
+			if _, err := api.Progress(ctx, &oas.Progress{
 				Event: oas.ProgressEventReady,
 				Key:   key,
 

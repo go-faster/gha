@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
+	"entgo.io/ent"
+	"entgo.io/ent/dialect/sql"
 	"github.com/go-faster/gha/internal/ent/chunk"
 	"github.com/go-faster/gha/internal/ent/predicate"
 	"github.com/go-faster/gha/internal/ent/worker"
 	"github.com/google/uuid"
-
-	"entgo.io/ent"
 )
 
 const (
@@ -756,9 +756,24 @@ func (m *ChunkMutation) Where(ps ...predicate.Chunk) {
 	m.predicates = append(m.predicates, ps...)
 }
 
+// WhereP appends storage-level predicates to the ChunkMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ChunkMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Chunk, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
 // Op returns the operation name.
 func (m *ChunkMutation) Op() Op {
 	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ChunkMutation) SetOp(op Op) {
+	m.op = op
 }
 
 // Type returns the node type of this mutation (Chunk).
@@ -1151,8 +1166,6 @@ func (m *ChunkMutation) RemovedEdges() []string {
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *ChunkMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	}
 	return nil
 }
 
@@ -1523,9 +1536,24 @@ func (m *WorkerMutation) Where(ps ...predicate.Worker) {
 	m.predicates = append(m.predicates, ps...)
 }
 
+// WhereP appends storage-level predicates to the WorkerMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WorkerMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Worker, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
 // Op returns the operation name.
 func (m *WorkerMutation) Op() Op {
 	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WorkerMutation) SetOp(op Op) {
+	m.op = op
 }
 
 // Type returns the node type of this mutation (Worker).

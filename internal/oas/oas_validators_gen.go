@@ -24,7 +24,7 @@ func (s Job) Validate() error {
 	}
 }
 
-func (s JobProcess) Validate() error {
+func (s *JobProcess) Validate() error {
 	var failures []validate.FieldError
 	if err := func() error {
 		if s.Keys == nil {
@@ -43,7 +43,7 @@ func (s JobProcess) Validate() error {
 	return nil
 }
 
-func (s Progress) Validate() error {
+func (s *Progress) Validate() error {
 	var failures []validate.FieldError
 	if err := func() error {
 		if err := s.Event.Validate(); err != nil {
