@@ -70,8 +70,8 @@ func (e ChunkEdges) WorkerOrErr() (*Worker, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Chunk) scanValues(columns []string) ([]interface{}, error) {
-	values := make([]interface{}, len(columns))
+func (*Chunk) scanValues(columns []string) ([]any, error) {
+	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
 		case chunk.FieldSizeInput, chunk.FieldSizeContent, chunk.FieldSizeOutput:
@@ -91,7 +91,7 @@ func (*Chunk) scanValues(columns []string) ([]interface{}, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Chunk fields.
-func (c *Chunk) assignValues(columns []string, values []interface{}) error {
+func (c *Chunk) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -186,14 +186,14 @@ func (c *Chunk) assignValues(columns []string, values []interface{}) error {
 
 // QueryWorker queries the "worker" edge of the Chunk entity.
 func (c *Chunk) QueryWorker() *WorkerQuery {
-	return (&ChunkClient{config: c.config}).QueryWorker(c)
+	return NewChunkClient(c.config).QueryWorker(c)
 }
 
 // Update returns a builder for updating this Chunk.
 // Note that you need to call Chunk.Unwrap() before calling this method if this Chunk
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (c *Chunk) Update() *ChunkUpdateOne {
-	return (&ChunkClient{config: c.config}).UpdateOne(c)
+	return NewChunkClient(c.config).UpdateOne(c)
 }
 
 // Unwrap unwraps the Chunk entity that was returned from a transaction after it was closed,
@@ -256,9 +256,3 @@ func (c *Chunk) String() string {
 
 // Chunks is a parsable slice of Chunk.
 type Chunks []*Chunk
-
-func (c Chunks) config(cfg config) {
-	for _i := range c {
-		c[_i].config = cfg
-	}
-}

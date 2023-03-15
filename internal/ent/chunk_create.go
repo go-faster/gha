@@ -203,50 +203,8 @@ func (cc *ChunkCreate) Mutation() *ChunkMutation {
 
 // Save creates the Chunk in the database.
 func (cc *ChunkCreate) Save(ctx context.Context) (*Chunk, error) {
-	var (
-		err  error
-		node *Chunk
-	)
 	cc.defaults()
-	if len(cc.hooks) == 0 {
-		if err = cc.check(); err != nil {
-			return nil, err
-		}
-		node, err = cc.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ChunkMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = cc.check(); err != nil {
-				return nil, err
-			}
-			cc.mutation = mutation
-			if node, err = cc.sqlSave(ctx); err != nil {
-				return nil, err
-			}
-			mutation.id = &node.ID
-			mutation.done = true
-			return node, err
-		})
-		for i := len(cc.hooks) - 1; i >= 0; i-- {
-			if cc.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = cc.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, cc.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Chunk)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from ChunkMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks[*Chunk, ChunkMutation](ctx, cc.sqlSave, cc.mutation, cc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -310,6 +268,9 @@ func (cc *ChunkCreate) check() error {
 }
 
 func (cc *ChunkCreate) sqlSave(ctx context.Context) (*Chunk, error) {
+	if err := cc.check(); err != nil {
+		return nil, err
+	}
 	_node, _spec := cc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, cc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
@@ -324,19 +285,15 @@ func (cc *ChunkCreate) sqlSave(ctx context.Context) (*Chunk, error) {
 			return nil, fmt.Errorf("unexpected Chunk.ID type: %T", _spec.ID.Value)
 		}
 	}
+	cc.mutation.id = &_node.ID
+	cc.mutation.done = true
 	return _node, nil
 }
 
 func (cc *ChunkCreate) createSpec() (*Chunk, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Chunk{config: cc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: chunk.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
-				Column: chunk.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(chunk.Table, sqlgraph.NewFieldSpec(chunk.FieldID, field.TypeString))
 	)
 	_spec.OnConflict = cc.conflict
 	if id, ok := cc.mutation.ID(); ok {
@@ -344,91 +301,47 @@ func (cc *ChunkCreate) createSpec() (*Chunk, *sqlgraph.CreateSpec) {
 		_spec.ID.Value = id
 	}
 	if value, ok := cc.mutation.CreatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chunk.FieldCreatedAt,
-		})
+		_spec.SetField(chunk.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	if value, ok := cc.mutation.UpdatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chunk.FieldUpdatedAt,
-		})
+		_spec.SetField(chunk.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	if value, ok := cc.mutation.Start(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chunk.FieldStart,
-		})
+		_spec.SetField(chunk.FieldStart, field.TypeTime, value)
 		_node.Start = value
 	}
 	if value, ok := cc.mutation.LeaseExpiresAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chunk.FieldLeaseExpiresAt,
-		})
+		_spec.SetField(chunk.FieldLeaseExpiresAt, field.TypeTime, value)
 		_node.LeaseExpiresAt = value
 	}
 	if value, ok := cc.mutation.State(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: chunk.FieldState,
-		})
+		_spec.SetField(chunk.FieldState, field.TypeEnum, value)
 		_node.State = value
 	}
 	if value, ok := cc.mutation.SizeInput(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeInput,
-		})
+		_spec.SetField(chunk.FieldSizeInput, field.TypeInt64, value)
 		_node.SizeInput = value
 	}
 	if value, ok := cc.mutation.SizeContent(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeContent,
-		})
+		_spec.SetField(chunk.FieldSizeContent, field.TypeInt64, value)
 		_node.SizeContent = value
 	}
 	if value, ok := cc.mutation.SizeOutput(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: chunk.FieldSizeOutput,
-		})
+		_spec.SetField(chunk.FieldSizeOutput, field.TypeInt64, value)
 		_node.SizeOutput = value
 	}
 	if value, ok := cc.mutation.Sha256Input(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chunk.FieldSha256Input,
-		})
+		_spec.SetField(chunk.FieldSha256Input, field.TypeString, value)
 		_node.Sha256Input = &value
 	}
 	if value, ok := cc.mutation.Sha256Content(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chunk.FieldSha256Content,
-		})
+		_spec.SetField(chunk.FieldSha256Content, field.TypeString, value)
 		_node.Sha256Content = &value
 	}
 	if value, ok := cc.mutation.Sha256Output(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chunk.FieldSha256Output,
-		})
+		_spec.SetField(chunk.FieldSha256Output, field.TypeString, value)
 		_node.Sha256Output = &value
 	}
 	if nodes := cc.mutation.WorkerIDs(); len(nodes) > 0 {
@@ -439,10 +352,7 @@ func (cc *ChunkCreate) createSpec() (*Chunk, *sqlgraph.CreateSpec) {
 			Columns: []string{chunk.WorkerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: worker.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -502,18 +412,6 @@ type (
 		*sql.UpdateSet
 	}
 )
-
-// SetCreatedAt sets the "created_at" field.
-func (u *ChunkUpsert) SetCreatedAt(v time.Time) *ChunkUpsert {
-	u.Set(chunk.FieldCreatedAt, v)
-	return u
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *ChunkUpsert) UpdateCreatedAt() *ChunkUpsert {
-	u.SetExcluded(chunk.FieldCreatedAt)
-	return u
-}
 
 // SetUpdatedAt sets the "updated_at" field.
 func (u *ChunkUpsert) SetUpdatedAt(v time.Time) *ChunkUpsert {
@@ -744,20 +642,6 @@ func (u *ChunkUpsertOne) Update(set func(*ChunkUpsert)) *ChunkUpsertOne {
 		set(&ChunkUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (u *ChunkUpsertOne) SetCreatedAt(v time.Time) *ChunkUpsertOne {
-	return u.Update(func(s *ChunkUpsert) {
-		s.SetCreatedAt(v)
-	})
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *ChunkUpsertOne) UpdateCreatedAt() *ChunkUpsertOne {
-	return u.Update(func(s *ChunkUpsert) {
-		s.UpdateCreatedAt()
-	})
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -1148,7 +1032,6 @@ func (u *ChunkUpsertBulk) UpdateNewValues() *ChunkUpsertBulk {
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(chunk.FieldID)
-				return
 			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(chunk.FieldCreatedAt)
@@ -1183,20 +1066,6 @@ func (u *ChunkUpsertBulk) Update(set func(*ChunkUpsert)) *ChunkUpsertBulk {
 		set(&ChunkUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (u *ChunkUpsertBulk) SetCreatedAt(v time.Time) *ChunkUpsertBulk {
-	return u.Update(func(s *ChunkUpsert) {
-		s.SetCreatedAt(v)
-	})
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *ChunkUpsertBulk) UpdateCreatedAt() *ChunkUpsertBulk {
-	return u.Update(func(s *ChunkUpsert) {
-		s.UpdateCreatedAt()
-	})
 }
 
 // SetUpdatedAt sets the "updated_at" field.

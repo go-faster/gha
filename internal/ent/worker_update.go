@@ -90,35 +90,8 @@ func (wu *WorkerUpdate) RemoveChunks(c ...*Chunk) *WorkerUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (wu *WorkerUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
 	wu.defaults()
-	if len(wu.hooks) == 0 {
-		affected, err = wu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*WorkerMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			wu.mutation = mutation
-			affected, err = wu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(wu.hooks) - 1; i >= 0; i-- {
-			if wu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = wu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, wu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks[int, WorkerMutation](ctx, wu.sqlSave, wu.mutation, wu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -152,16 +125,7 @@ func (wu *WorkerUpdate) defaults() {
 }
 
 func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   worker.Table,
-			Columns: worker.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: worker.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(worker.Table, worker.Columns, sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID))
 	if ps := wu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -170,25 +134,13 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := wu.mutation.UpdatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: worker.FieldUpdatedAt,
-		})
+		_spec.SetField(worker.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := wu.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: worker.FieldName,
-		})
+		_spec.SetField(worker.FieldName, field.TypeString, value)
 	}
 	if value, ok := wu.mutation.Token(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: worker.FieldToken,
-		})
+		_spec.SetField(worker.FieldToken, field.TypeString, value)
 	}
 	if wu.mutation.ChunksCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -198,10 +150,7 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{worker.ChunksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: chunk.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(chunk.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -214,10 +163,7 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{worker.ChunksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: chunk.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(chunk.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -233,10 +179,7 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{worker.ChunksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: chunk.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(chunk.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -252,6 +195,7 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	wu.mutation.done = true
 	return n, nil
 }
 
@@ -322,6 +266,12 @@ func (wuo *WorkerUpdateOne) RemoveChunks(c ...*Chunk) *WorkerUpdateOne {
 	return wuo.RemoveChunkIDs(ids...)
 }
 
+// Where appends a list predicates to the WorkerUpdate builder.
+func (wuo *WorkerUpdateOne) Where(ps ...predicate.Worker) *WorkerUpdateOne {
+	wuo.mutation.Where(ps...)
+	return wuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (wuo *WorkerUpdateOne) Select(field string, fields ...string) *WorkerUpdateOne {
@@ -331,41 +281,8 @@ func (wuo *WorkerUpdateOne) Select(field string, fields ...string) *WorkerUpdate
 
 // Save executes the query and returns the updated Worker entity.
 func (wuo *WorkerUpdateOne) Save(ctx context.Context) (*Worker, error) {
-	var (
-		err  error
-		node *Worker
-	)
 	wuo.defaults()
-	if len(wuo.hooks) == 0 {
-		node, err = wuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*WorkerMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			wuo.mutation = mutation
-			node, err = wuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(wuo.hooks) - 1; i >= 0; i-- {
-			if wuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = wuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, wuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Worker)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from WorkerMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks[*Worker, WorkerMutation](ctx, wuo.sqlSave, wuo.mutation, wuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -399,16 +316,7 @@ func (wuo *WorkerUpdateOne) defaults() {
 }
 
 func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   worker.Table,
-			Columns: worker.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: worker.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(worker.Table, worker.Columns, sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID))
 	id, ok := wuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Worker.id" for update`)}
@@ -434,25 +342,13 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 		}
 	}
 	if value, ok := wuo.mutation.UpdatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: worker.FieldUpdatedAt,
-		})
+		_spec.SetField(worker.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := wuo.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: worker.FieldName,
-		})
+		_spec.SetField(worker.FieldName, field.TypeString, value)
 	}
 	if value, ok := wuo.mutation.Token(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: worker.FieldToken,
-		})
+		_spec.SetField(worker.FieldToken, field.TypeString, value)
 	}
 	if wuo.mutation.ChunksCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -462,10 +358,7 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 			Columns: []string{worker.ChunksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: chunk.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(chunk.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -478,10 +371,7 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 			Columns: []string{worker.ChunksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: chunk.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(chunk.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -497,10 +387,7 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 			Columns: []string{worker.ChunksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: chunk.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(chunk.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -519,5 +406,6 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 		}
 		return nil, err
 	}
+	wuo.mutation.done = true
 	return _node, nil
 }

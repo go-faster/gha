@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"fmt"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -28,34 +27,7 @@ func (wd *WorkerDelete) Where(ps ...predicate.Worker) *WorkerDelete {
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (wd *WorkerDelete) Exec(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(wd.hooks) == 0 {
-		affected, err = wd.sqlExec(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*WorkerMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			wd.mutation = mutation
-			affected, err = wd.sqlExec(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(wd.hooks) - 1; i >= 0; i-- {
-			if wd.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = wd.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, wd.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks[int, WorkerMutation](ctx, wd.sqlExec, wd.mutation, wd.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
@@ -68,15 +40,7 @@ func (wd *WorkerDelete) ExecX(ctx context.Context) int {
 }
 
 func (wd *WorkerDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := &sqlgraph.DeleteSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table: worker.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: worker.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewDeleteSpec(worker.Table, sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID))
 	if ps := wd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -88,12 +52,19 @@ func (wd *WorkerDelete) sqlExec(ctx context.Context) (int, error) {
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
+	wd.mutation.done = true
 	return affected, err
 }
 
 // WorkerDeleteOne is the builder for deleting a single Worker entity.
 type WorkerDeleteOne struct {
 	wd *WorkerDelete
+}
+
+// Where appends a list predicates to the WorkerDelete builder.
+func (wdo *WorkerDeleteOne) Where(ps ...predicate.Worker) *WorkerDeleteOne {
+	wdo.wd.mutation.Where(ps...)
+	return wdo
 }
 
 // Exec executes the deletion query.
@@ -111,5 +82,7 @@ func (wdo *WorkerDeleteOne) Exec(ctx context.Context) error {
 
 // ExecX is like Exec, but panics if an error occurs.
 func (wdo *WorkerDeleteOne) ExecX(ctx context.Context) {
-	wdo.wd.ExecX(ctx)
+	if err := wdo.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

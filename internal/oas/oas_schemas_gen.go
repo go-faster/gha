@@ -4,6 +4,8 @@ package oas
 
 import (
 	"fmt"
+
+	"github.com/go-faster/errors"
 )
 
 func (s *ErrorStatusCode) Error() string {
@@ -13,13 +15,43 @@ func (s *ErrorStatusCode) Error() string {
 // Error description.
 // Ref: #/components/schemas/Error
 type Error struct {
-	Message string "json:\"message\""
+	Message string `json:"message"`
+}
+
+// GetMessage returns the value of Message.
+func (s *Error) GetMessage() string {
+	return s.Message
+}
+
+// SetMessage sets the value of Message.
+func (s *Error) SetMessage(val string) {
+	s.Message = val
 }
 
 // ErrorStatusCode wraps Error with StatusCode.
 type ErrorStatusCode struct {
 	StatusCode int
 	Response   Error
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *ErrorStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *ErrorStatusCode) GetResponse() Error {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *ErrorStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ErrorStatusCode) SetResponse(val Error) {
+	s.Response = val
 }
 
 // Job to perform on worker.
@@ -117,7 +149,17 @@ func NewJobProcessJob(v JobProcess) Job {
 // Download chunk.
 // Ref: #/components/schemas/JobDownload
 type JobDownload struct {
-	Date string "json:\"date\""
+	Date string `json:"date"`
+}
+
+// GetDate returns the value of Date.
+func (s *JobDownload) GetDate() string {
+	return s.Date
+}
+
+// SetDate sets the value of Date.
+func (s *JobDownload) SetDate(val string) {
+	s.Date = val
 }
 
 // Do nothing.
@@ -127,8 +169,28 @@ type JobNothing struct{}
 // Process job.
 // Ref: #/components/schemas/JobProcess
 type JobProcess struct {
-	Keys       []string "json:\"keys\""
-	Clickhouse string   "json:\"clickhouse\""
+	Keys       []string `json:"keys"`
+	Clickhouse string   `json:"clickhouse"`
+}
+
+// GetKeys returns the value of Keys.
+func (s *JobProcess) GetKeys() []string {
+	return s.Keys
+}
+
+// GetClickhouse returns the value of Clickhouse.
+func (s *JobProcess) GetClickhouse() string {
+	return s.Clickhouse
+}
+
+// SetKeys sets the value of Keys.
+func (s *JobProcess) SetKeys(val []string) {
+	s.Keys = val
+}
+
+// SetClickhouse sets the value of Clickhouse.
+func (s *JobProcess) SetClickhouse(val string) {
+	s.Clickhouse = val
 }
 
 // NewOptInt64 returns new OptInt64 with value set to v.
@@ -225,16 +287,106 @@ func (o OptString) Or(d string) string {
 
 // Ref: #/components/schemas/Progress
 type Progress struct {
-	Event ProgressEvent "json:\"event\""
+	Event ProgressEvent `json:"event"`
 	// Chunk key.
-	Key              string    "json:\"key\""
-	InputSizeBytes   OptInt64  "json:\"input_size_bytes\""
-	ContentSizeBytes OptInt64  "json:\"content_size_bytes\""
-	OutputSizeBytes  OptInt64  "json:\"output_size_bytes\""
-	InputReadyBytes  OptInt64  "json:\"input_ready_bytes\""
-	SHA256Input      OptString "json:\"sha256_input\""
-	SHA256Content    OptString "json:\"sha256_content\""
-	SHA256Output     OptString "json:\"sha256_output\""
+	Key              string    `json:"key"`
+	InputSizeBytes   OptInt64  `json:"input_size_bytes"`
+	ContentSizeBytes OptInt64  `json:"content_size_bytes"`
+	OutputSizeBytes  OptInt64  `json:"output_size_bytes"`
+	InputReadyBytes  OptInt64  `json:"input_ready_bytes"`
+	SHA256Input      OptString `json:"sha256_input"`
+	SHA256Content    OptString `json:"sha256_content"`
+	SHA256Output     OptString `json:"sha256_output"`
+}
+
+// GetEvent returns the value of Event.
+func (s *Progress) GetEvent() ProgressEvent {
+	return s.Event
+}
+
+// GetKey returns the value of Key.
+func (s *Progress) GetKey() string {
+	return s.Key
+}
+
+// GetInputSizeBytes returns the value of InputSizeBytes.
+func (s *Progress) GetInputSizeBytes() OptInt64 {
+	return s.InputSizeBytes
+}
+
+// GetContentSizeBytes returns the value of ContentSizeBytes.
+func (s *Progress) GetContentSizeBytes() OptInt64 {
+	return s.ContentSizeBytes
+}
+
+// GetOutputSizeBytes returns the value of OutputSizeBytes.
+func (s *Progress) GetOutputSizeBytes() OptInt64 {
+	return s.OutputSizeBytes
+}
+
+// GetInputReadyBytes returns the value of InputReadyBytes.
+func (s *Progress) GetInputReadyBytes() OptInt64 {
+	return s.InputReadyBytes
+}
+
+// GetSHA256Input returns the value of SHA256Input.
+func (s *Progress) GetSHA256Input() OptString {
+	return s.SHA256Input
+}
+
+// GetSHA256Content returns the value of SHA256Content.
+func (s *Progress) GetSHA256Content() OptString {
+	return s.SHA256Content
+}
+
+// GetSHA256Output returns the value of SHA256Output.
+func (s *Progress) GetSHA256Output() OptString {
+	return s.SHA256Output
+}
+
+// SetEvent sets the value of Event.
+func (s *Progress) SetEvent(val ProgressEvent) {
+	s.Event = val
+}
+
+// SetKey sets the value of Key.
+func (s *Progress) SetKey(val string) {
+	s.Key = val
+}
+
+// SetInputSizeBytes sets the value of InputSizeBytes.
+func (s *Progress) SetInputSizeBytes(val OptInt64) {
+	s.InputSizeBytes = val
+}
+
+// SetContentSizeBytes sets the value of ContentSizeBytes.
+func (s *Progress) SetContentSizeBytes(val OptInt64) {
+	s.ContentSizeBytes = val
+}
+
+// SetOutputSizeBytes sets the value of OutputSizeBytes.
+func (s *Progress) SetOutputSizeBytes(val OptInt64) {
+	s.OutputSizeBytes = val
+}
+
+// SetInputReadyBytes sets the value of InputReadyBytes.
+func (s *Progress) SetInputReadyBytes(val OptInt64) {
+	s.InputReadyBytes = val
+}
+
+// SetSHA256Input sets the value of SHA256Input.
+func (s *Progress) SetSHA256Input(val OptString) {
+	s.SHA256Input = val
+}
+
+// SetSHA256Content sets the value of SHA256Content.
+func (s *Progress) SetSHA256Content(val OptString) {
+	s.SHA256Content = val
+}
+
+// SetSHA256Output sets the value of SHA256Output.
+func (s *Progress) SetSHA256Output(val OptString) {
+	s.SHA256Output = val
 }
 
 type ProgressEvent string
@@ -245,7 +397,48 @@ const (
 	ProgressEventProcessed   ProgressEvent = "Processed"
 )
 
+// MarshalText implements encoding.TextMarshaler.
+func (s ProgressEvent) MarshalText() ([]byte, error) {
+	switch s {
+	case ProgressEventReady:
+		return []byte(s), nil
+	case ProgressEventDownloading:
+		return []byte(s), nil
+	case ProgressEventProcessed:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ProgressEvent) UnmarshalText(data []byte) error {
+	switch ProgressEvent(data) {
+	case ProgressEventReady:
+		*s = ProgressEventReady
+		return nil
+	case ProgressEventDownloading:
+		*s = ProgressEventDownloading
+		return nil
+	case ProgressEventProcessed:
+		*s = ProgressEventProcessed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/Status
 type Status struct {
-	Message string "json:\"message\""
+	Message string `json:"message"`
+}
+
+// GetMessage returns the value of Message.
+func (s *Status) GetMessage() string {
+	return s.Message
+}
+
+// SetMessage sets the value of Message.
+func (s *Status) SetMessage(val string) {
+	s.Message = val
 }

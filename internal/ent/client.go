@@ -11,12 +11,12 @@ import (
 	"github.com/go-faster/gha/internal/ent/migrate"
 	"github.com/google/uuid"
 
-	"github.com/go-faster/gha/internal/ent/chunk"
-	"github.com/go-faster/gha/internal/ent/worker"
-
+	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/go-faster/gha/internal/ent/chunk"
+	"github.com/go-faster/gha/internal/ent/worker"
 )
 
 // Client is the client that holds all ent builders.
@@ -32,7 +32,7 @@ type Client struct {
 
 // NewClient creates a new client configured with the given options.
 func NewClient(opts ...Option) *Client {
-	cfg := config{log: log.Println, hooks: &hooks{}}
+	cfg := config{log: log.Println, hooks: &hooks{}, inters: &inters{}}
 	cfg.options(opts...)
 	client := &Client{config: cfg}
 	client.init()
@@ -43,6 +43,55 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Chunk = NewChunkClient(c.config)
 	c.Worker = NewWorkerClient(c.config)
+}
+
+type (
+	// config is the configuration for the client and its builder.
+	config struct {
+		// driver used for executing database requests.
+		driver dialect.Driver
+		// debug enable a debug logging.
+		debug bool
+		// log used for logging on debug mode.
+		log func(...any)
+		// hooks to execute on mutations.
+		hooks *hooks
+		// interceptors to execute on queries.
+		inters *inters
+	}
+	// Option function to configure the client.
+	Option func(*config)
+)
+
+// options applies the options on the config object.
+func (c *config) options(opts ...Option) {
+	for _, opt := range opts {
+		opt(c)
+	}
+	if c.debug {
+		c.driver = dialect.Debug(c.driver, c.log)
+	}
+}
+
+// Debug enables debug logging on the ent.Driver.
+func Debug() Option {
+	return func(c *config) {
+		c.debug = true
+	}
+}
+
+// Log sets the logging function for debug mode.
+func Log(fn func(...any)) Option {
+	return func(c *config) {
+		c.log = fn
+	}
+}
+
+// Driver configures the client driver.
+func Driver(driver dialect.Driver) Option {
+	return func(c *config) {
+		c.driver = driver
+	}
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -131,6 +180,25 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Worker.Use(hooks...)
 }
 
+// Intercept adds the query interceptors to all the entity clients.
+// In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
+func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Chunk.Intercept(interceptors...)
+	c.Worker.Intercept(interceptors...)
+}
+
+// Mutate implements the ent.Mutator interface.
+func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
+	switch m := m.(type) {
+	case *ChunkMutation:
+		return c.Chunk.mutate(ctx, m)
+	case *WorkerMutation:
+		return c.Worker.mutate(ctx, m)
+	default:
+		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
 // ChunkClient is a client for the Chunk schema.
 type ChunkClient struct {
 	config
@@ -145,6 +213,12 @@ func NewChunkClient(c config) *ChunkClient {
 // A call to `Use(f, g, h)` equals to `chunk.Hooks(f(g(h())))`.
 func (c *ChunkClient) Use(hooks ...Hook) {
 	c.hooks.Chunk = append(c.hooks.Chunk, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `chunk.Intercept(f(g(h())))`.
+func (c *ChunkClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Chunk = append(c.inters.Chunk, interceptors...)
 }
 
 // Create returns a builder for creating a Chunk entity.
@@ -187,7 +261,7 @@ func (c *ChunkClient) DeleteOne(ch *Chunk) *ChunkDeleteOne {
 	return c.DeleteOneID(ch.ID)
 }
 
-// DeleteOne returns a builder for deleting the given entity by its id.
+// DeleteOneID returns a builder for deleting the given entity by its id.
 func (c *ChunkClient) DeleteOneID(id string) *ChunkDeleteOne {
 	builder := c.Delete().Where(chunk.ID(id))
 	builder.mutation.id = &id
@@ -199,6 +273,8 @@ func (c *ChunkClient) DeleteOneID(id string) *ChunkDeleteOne {
 func (c *ChunkClient) Query() *ChunkQuery {
 	return &ChunkQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeChunk},
+		inters: c.Interceptors(),
 	}
 }
 
@@ -218,8 +294,8 @@ func (c *ChunkClient) GetX(ctx context.Context, id string) *Chunk {
 
 // QueryWorker queries the worker edge of a Chunk.
 func (c *ChunkClient) QueryWorker(ch *Chunk) *WorkerQuery {
-	query := &WorkerQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+	query := (&WorkerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := ch.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(chunk.Table, chunk.FieldID, id),
@@ -237,6 +313,26 @@ func (c *ChunkClient) Hooks() []Hook {
 	return c.hooks.Chunk
 }
 
+// Interceptors returns the client interceptors.
+func (c *ChunkClient) Interceptors() []Interceptor {
+	return c.inters.Chunk
+}
+
+func (c *ChunkClient) mutate(ctx context.Context, m *ChunkMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ChunkCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ChunkUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ChunkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ChunkDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Chunk mutation op: %q", m.Op())
+	}
+}
+
 // WorkerClient is a client for the Worker schema.
 type WorkerClient struct {
 	config
@@ -251,6 +347,12 @@ func NewWorkerClient(c config) *WorkerClient {
 // A call to `Use(f, g, h)` equals to `worker.Hooks(f(g(h())))`.
 func (c *WorkerClient) Use(hooks ...Hook) {
 	c.hooks.Worker = append(c.hooks.Worker, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `worker.Intercept(f(g(h())))`.
+func (c *WorkerClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Worker = append(c.inters.Worker, interceptors...)
 }
 
 // Create returns a builder for creating a Worker entity.
@@ -293,7 +395,7 @@ func (c *WorkerClient) DeleteOne(w *Worker) *WorkerDeleteOne {
 	return c.DeleteOneID(w.ID)
 }
 
-// DeleteOne returns a builder for deleting the given entity by its id.
+// DeleteOneID returns a builder for deleting the given entity by its id.
 func (c *WorkerClient) DeleteOneID(id uuid.UUID) *WorkerDeleteOne {
 	builder := c.Delete().Where(worker.ID(id))
 	builder.mutation.id = &id
@@ -305,6 +407,8 @@ func (c *WorkerClient) DeleteOneID(id uuid.UUID) *WorkerDeleteOne {
 func (c *WorkerClient) Query() *WorkerQuery {
 	return &WorkerQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorker},
+		inters: c.Interceptors(),
 	}
 }
 
@@ -324,8 +428,8 @@ func (c *WorkerClient) GetX(ctx context.Context, id uuid.UUID) *Worker {
 
 // QueryChunks queries the chunks edge of a Worker.
 func (c *WorkerClient) QueryChunks(w *Worker) *ChunkQuery {
-	query := &ChunkQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+	query := (&ChunkClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := w.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(worker.Table, worker.FieldID, id),
@@ -342,3 +446,33 @@ func (c *WorkerClient) QueryChunks(w *Worker) *ChunkQuery {
 func (c *WorkerClient) Hooks() []Hook {
 	return c.hooks.Worker
 }
+
+// Interceptors returns the client interceptors.
+func (c *WorkerClient) Interceptors() []Interceptor {
+	return c.inters.Worker
+}
+
+func (c *WorkerClient) mutate(ctx context.Context, m *WorkerMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkerCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkerUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkerDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Worker mutation op: %q", m.Op())
+	}
+}
+
+// hooks and interceptors per client, for fast access.
+type (
+	hooks struct {
+		Chunk, Worker []ent.Hook
+	}
+	inters struct {
+		Chunk, Worker []ent.Interceptor
+	}
+)

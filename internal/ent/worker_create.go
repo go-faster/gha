@@ -101,50 +101,8 @@ func (wc *WorkerCreate) Mutation() *WorkerMutation {
 
 // Save creates the Worker in the database.
 func (wc *WorkerCreate) Save(ctx context.Context) (*Worker, error) {
-	var (
-		err  error
-		node *Worker
-	)
 	wc.defaults()
-	if len(wc.hooks) == 0 {
-		if err = wc.check(); err != nil {
-			return nil, err
-		}
-		node, err = wc.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*WorkerMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = wc.check(); err != nil {
-				return nil, err
-			}
-			wc.mutation = mutation
-			if node, err = wc.sqlSave(ctx); err != nil {
-				return nil, err
-			}
-			mutation.id = &node.ID
-			mutation.done = true
-			return node, err
-		})
-		for i := len(wc.hooks) - 1; i >= 0; i-- {
-			if wc.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = wc.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, wc.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Worker)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from WorkerMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks[*Worker, WorkerMutation](ctx, wc.sqlSave, wc.mutation, wc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -203,6 +161,9 @@ func (wc *WorkerCreate) check() error {
 }
 
 func (wc *WorkerCreate) sqlSave(ctx context.Context) (*Worker, error) {
+	if err := wc.check(); err != nil {
+		return nil, err
+	}
 	_node, _spec := wc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, wc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
@@ -217,19 +178,15 @@ func (wc *WorkerCreate) sqlSave(ctx context.Context) (*Worker, error) {
 			return nil, err
 		}
 	}
+	wc.mutation.id = &_node.ID
+	wc.mutation.done = true
 	return _node, nil
 }
 
 func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Worker{config: wc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: worker.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: worker.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(worker.Table, sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID))
 	)
 	_spec.OnConflict = wc.conflict
 	if id, ok := wc.mutation.ID(); ok {
@@ -237,35 +194,19 @@ func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 		_spec.ID.Value = &id
 	}
 	if value, ok := wc.mutation.CreatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: worker.FieldCreatedAt,
-		})
+		_spec.SetField(worker.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	if value, ok := wc.mutation.UpdatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: worker.FieldUpdatedAt,
-		})
+		_spec.SetField(worker.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	if value, ok := wc.mutation.Name(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: worker.FieldName,
-		})
+		_spec.SetField(worker.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
 	if value, ok := wc.mutation.Token(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: worker.FieldToken,
-		})
+		_spec.SetField(worker.FieldToken, field.TypeString, value)
 		_node.Token = value
 	}
 	if nodes := wc.mutation.ChunksIDs(); len(nodes) > 0 {
@@ -276,10 +217,7 @@ func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 			Columns: []string{worker.ChunksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: chunk.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(chunk.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -338,18 +276,6 @@ type (
 		*sql.UpdateSet
 	}
 )
-
-// SetCreatedAt sets the "created_at" field.
-func (u *WorkerUpsert) SetCreatedAt(v time.Time) *WorkerUpsert {
-	u.Set(worker.FieldCreatedAt, v)
-	return u
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *WorkerUpsert) UpdateCreatedAt() *WorkerUpsert {
-	u.SetExcluded(worker.FieldCreatedAt)
-	return u
-}
 
 // SetUpdatedAt sets the "updated_at" field.
 func (u *WorkerUpsert) SetUpdatedAt(v time.Time) *WorkerUpsert {
@@ -436,20 +362,6 @@ func (u *WorkerUpsertOne) Update(set func(*WorkerUpsert)) *WorkerUpsertOne {
 		set(&WorkerUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (u *WorkerUpsertOne) SetCreatedAt(v time.Time) *WorkerUpsertOne {
-	return u.Update(func(s *WorkerUpsert) {
-		s.SetCreatedAt(v)
-	})
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *WorkerUpsertOne) UpdateCreatedAt() *WorkerUpsertOne {
-	return u.Update(func(s *WorkerUpsert) {
-		s.UpdateCreatedAt()
-	})
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -672,7 +584,6 @@ func (u *WorkerUpsertBulk) UpdateNewValues() *WorkerUpsertBulk {
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(worker.FieldID)
-				return
 			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(worker.FieldCreatedAt)
@@ -707,20 +618,6 @@ func (u *WorkerUpsertBulk) Update(set func(*WorkerUpsert)) *WorkerUpsertBulk {
 		set(&WorkerUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (u *WorkerUpsertBulk) SetCreatedAt(v time.Time) *WorkerUpsertBulk {
-	return u.Update(func(s *WorkerUpsert) {
-		s.SetCreatedAt(v)
-	})
-}
-
-// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
-func (u *WorkerUpsertBulk) UpdateCreatedAt() *WorkerUpsertBulk {
-	return u.Update(func(s *WorkerUpsert) {
-		s.UpdateCreatedAt()
-	})
 }
 
 // SetUpdatedAt sets the "updated_at" field.

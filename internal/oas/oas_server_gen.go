@@ -4,10 +4,6 @@ package oas
 
 import (
 	"context"
-
-	"go.opentelemetry.io/otel/metric/instrument/syncint64"
-
-	"github.com/ogen-go/ogen/otelogen"
 )
 
 // Handler handles operations described by OpenAPI v3 specification.
@@ -23,44 +19,34 @@ type Handler interface {
 	// Report progress.
 	//
 	// POST /progress
-	Progress(ctx context.Context, req Progress, params ProgressParams) (Status, error)
+	Progress(ctx context.Context, req *Progress, params ProgressParams) (*Status, error)
 	// Status implements status operation.
 	//
 	// Get status.
 	//
 	// GET /status
-	Status(ctx context.Context) (Status, error)
-	// NewError creates ErrorStatusCode from error returned by handler.
+	Status(ctx context.Context) (*Status, error)
+	// NewError creates *ErrorStatusCode from error returned by handler.
 	//
 	// Used for common default response.
-	NewError(ctx context.Context, err error) ErrorStatusCode
+	NewError(ctx context.Context, err error) *ErrorStatusCode
 }
 
 // Server implements http server based on OpenAPI v3 specification and
 // calls Handler to handle requests.
 type Server struct {
-	h   Handler
-	cfg config
-
-	requests syncint64.Counter
-	errors   syncint64.Counter
-	duration syncint64.Histogram
+	h Handler
+	baseServer
 }
 
-func NewServer(h Handler, opts ...Option) (*Server, error) {
-	s := &Server{
-		h:   h,
-		cfg: newConfig(opts...),
-	}
-	var err error
-	if s.requests, err = s.cfg.Meter.SyncInt64().Counter(otelogen.ServerRequestCount); err != nil {
+// NewServer creates new Server.
+func NewServer(h Handler, opts ...ServerOption) (*Server, error) {
+	s, err := newServerConfig(opts...).baseServer()
+	if err != nil {
 		return nil, err
 	}
-	if s.errors, err = s.cfg.Meter.SyncInt64().Counter(otelogen.ServerErrorsCount); err != nil {
-		return nil, err
-	}
-	if s.duration, err = s.cfg.Meter.SyncInt64().Histogram(otelogen.ServerDuration); err != nil {
-		return nil, err
-	}
-	return s, nil
+	return &Server{
+		h:          h,
+		baseServer: s,
+	}, nil
 }

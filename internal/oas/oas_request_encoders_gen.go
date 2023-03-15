@@ -12,7 +12,7 @@ import (
 )
 
 func encodeProgressRequest(
-	req Progress,
+	req *Progress,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

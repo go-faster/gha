@@ -10,7 +10,6 @@ import (
 	"github.com/go-faster/errors"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/metric/instrument/syncint64"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/ogen-go/ogen/conv"
@@ -22,32 +21,46 @@ import (
 // Client implements OAS client.
 type Client struct {
 	serverURL *url.URL
-	cfg       config
-	requests  syncint64.Counter
-	errors    syncint64.Counter
-	duration  syncint64.Histogram
+	baseClient
+}
+type errorHandler interface {
+	NewError(ctx context.Context, err error) *ErrorStatusCode
 }
 
+var _ Handler = struct {
+	errorHandler
+	*Client
+}{}
+
 // NewClient initializes new Client defined by OAS.
-func NewClient(serverURL string, opts ...Option) (*Client, error) {
+func NewClient(serverURL string, opts ...ClientOption) (*Client, error) {
 	u, err := url.Parse(serverURL)
 	if err != nil {
 		return nil, err
 	}
-	c := &Client{
-		cfg:       newConfig(opts...),
-		serverURL: u,
-	}
-	if c.requests, err = c.cfg.Meter.SyncInt64().Counter(otelogen.ClientRequestCount); err != nil {
+	c, err := newClientConfig(opts...).baseClient()
+	if err != nil {
 		return nil, err
 	}
-	if c.errors, err = c.cfg.Meter.SyncInt64().Counter(otelogen.ClientErrorsCount); err != nil {
-		return nil, err
+	return &Client{
+		serverURL:  u,
+		baseClient: c,
+	}, nil
+}
+
+type serverURLKey struct{}
+
+// WithServerURL sets context key to override server URL.
+func WithServerURL(ctx context.Context, u *url.URL) context.Context {
+	return context.WithValue(ctx, serverURLKey{}, u)
+}
+
+func (c *Client) requestURL(ctx context.Context) *url.URL {
+	u, ok := ctx.Value(serverURLKey{}).(*url.URL)
+	if !ok {
+		return c.serverURL
 	}
-	if c.duration, err = c.cfg.Meter.SyncInt64().Histogram(otelogen.ClientDuration); err != nil {
-		return nil, err
-	}
-	return c, nil
+	return u
 }
 
 // Poll invokes poll operation.
@@ -55,7 +68,13 @@ func NewClient(serverURL string, opts ...Option) (*Client, error) {
 // Request job from coordinator.
 //
 // POST /job/poll
-func (c *Client) Poll(ctx context.Context, params PollParams) (res Job, err error) {
+func (c *Client) Poll(ctx context.Context, params PollParams) (Job, error) {
+	res, err := c.sendPoll(ctx, params)
+	_ = res
+	return res, err
+}
+
+func (c *Client) sendPoll(ctx context.Context, params PollParams) (res Job, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("poll"),
 	}
@@ -73,7 +92,7 @@ func (c *Client) Poll(ctx context.Context, params PollParams) (res Job, err erro
 	// Start a span for this request.
 	ctx, span := c.cfg.Tracer.Start(ctx, "Poll",
 		trace.WithAttributes(otelAttrs...),
-		trace.WithSpanKind(trace.SpanKindClient),
+		clientSpanKind,
 	)
 	// Track stage for error reporting.
 	var stage string
@@ -87,11 +106,14 @@ func (c *Client) Poll(ctx context.Context, params PollParams) (res Job, err erro
 	}()
 
 	stage = "BuildURL"
-	u := uri.Clone(c.serverURL)
+	u := uri.Clone(c.requestURL(ctx))
 	u.Path += "/job/poll"
 
 	stage = "EncodeRequest"
-	r := ht.NewRequest(ctx, "POST", u, nil)
+	r, err := ht.NewRequest(ctx, "POST", u, nil)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
 
 	stage = "EncodeHeaderParams"
 	h := uri.NewHeaderEncoder(r.Header)
@@ -103,7 +125,7 @@ func (c *Client) Poll(ctx context.Context, params PollParams) (res Job, err erro
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XToken))
 		}); err != nil {
-			return res, errors.Wrap(err, "encode header param X-Token")
+			return res, errors.Wrap(err, "encode header")
 		}
 	}
 
@@ -115,7 +137,7 @@ func (c *Client) Poll(ctx context.Context, params PollParams) (res Job, err erro
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodePollResponse(resp, span)
+	result, err := decodePollResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -128,7 +150,13 @@ func (c *Client) Poll(ctx context.Context, params PollParams) (res Job, err erro
 // Report progress.
 //
 // POST /progress
-func (c *Client) Progress(ctx context.Context, request Progress, params ProgressParams) (res Status, err error) {
+func (c *Client) Progress(ctx context.Context, request *Progress, params ProgressParams) (*Status, error) {
+	res, err := c.sendProgress(ctx, request, params)
+	_ = res
+	return res, err
+}
+
+func (c *Client) sendProgress(ctx context.Context, request *Progress, params ProgressParams) (res *Status, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("progress"),
 	}
@@ -155,7 +183,7 @@ func (c *Client) Progress(ctx context.Context, request Progress, params Progress
 	// Start a span for this request.
 	ctx, span := c.cfg.Tracer.Start(ctx, "Progress",
 		trace.WithAttributes(otelAttrs...),
-		trace.WithSpanKind(trace.SpanKindClient),
+		clientSpanKind,
 	)
 	// Track stage for error reporting.
 	var stage string
@@ -169,11 +197,14 @@ func (c *Client) Progress(ctx context.Context, request Progress, params Progress
 	}()
 
 	stage = "BuildURL"
-	u := uri.Clone(c.serverURL)
+	u := uri.Clone(c.requestURL(ctx))
 	u.Path += "/progress"
 
 	stage = "EncodeRequest"
-	r := ht.NewRequest(ctx, "POST", u, nil)
+	r, err := ht.NewRequest(ctx, "POST", u, nil)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
 	if err := encodeProgressRequest(request, r); err != nil {
 		return res, errors.Wrap(err, "encode request")
 	}
@@ -188,7 +219,7 @@ func (c *Client) Progress(ctx context.Context, request Progress, params Progress
 		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
 			return e.EncodeValue(conv.StringToString(params.XToken))
 		}); err != nil {
-			return res, errors.Wrap(err, "encode header param X-Token")
+			return res, errors.Wrap(err, "encode header")
 		}
 	}
 
@@ -200,7 +231,7 @@ func (c *Client) Progress(ctx context.Context, request Progress, params Progress
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeProgressResponse(resp, span)
+	result, err := decodeProgressResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -213,7 +244,13 @@ func (c *Client) Progress(ctx context.Context, request Progress, params Progress
 // Get status.
 //
 // GET /status
-func (c *Client) Status(ctx context.Context) (res Status, err error) {
+func (c *Client) Status(ctx context.Context) (*Status, error) {
+	res, err := c.sendStatus(ctx)
+	_ = res
+	return res, err
+}
+
+func (c *Client) sendStatus(ctx context.Context) (res *Status, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("status"),
 	}
@@ -231,7 +268,7 @@ func (c *Client) Status(ctx context.Context) (res Status, err error) {
 	// Start a span for this request.
 	ctx, span := c.cfg.Tracer.Start(ctx, "Status",
 		trace.WithAttributes(otelAttrs...),
-		trace.WithSpanKind(trace.SpanKindClient),
+		clientSpanKind,
 	)
 	// Track stage for error reporting.
 	var stage string
@@ -245,11 +282,14 @@ func (c *Client) Status(ctx context.Context) (res Status, err error) {
 	}()
 
 	stage = "BuildURL"
-	u := uri.Clone(c.serverURL)
+	u := uri.Clone(c.requestURL(ctx))
 	u.Path += "/status"
 
 	stage = "EncodeRequest"
-	r := ht.NewRequest(ctx, "GET", u, nil)
+	r, err := ht.NewRequest(ctx, "GET", u, nil)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
 
 	stage = "SendRequest"
 	resp, err := c.cfg.Client.Do(r)
@@ -259,7 +299,7 @@ func (c *Client) Status(ctx context.Context) (res Status, err error) {
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeStatusResponse(resp, span)
+	result, err := decodeStatusResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
