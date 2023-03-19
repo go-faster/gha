@@ -24,7 +24,7 @@ import (
 // Request job from coordinator.
 //
 // POST /job/poll
-func (s *Server) handlePollRequest(args [0]string, w http.ResponseWriter, r *http.Request) {
+func (s *Server) handlePollRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("poll"),
 		semconv.HTTPMethodKey.String("POST"),
@@ -60,7 +60,7 @@ func (s *Server) handlePollRequest(args [0]string, w http.ResponseWriter, r *htt
 			ID:   "poll",
 		}
 	)
-	params, err := decodePollParams(args, r)
+	params, err := decodePollParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -134,7 +134,7 @@ func (s *Server) handlePollRequest(args [0]string, w http.ResponseWriter, r *htt
 // Report progress.
 //
 // POST /progress
-func (s *Server) handleProgressRequest(args [0]string, w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleProgressRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("progress"),
 		semconv.HTTPMethodKey.String("POST"),
@@ -170,7 +170,7 @@ func (s *Server) handleProgressRequest(args [0]string, w http.ResponseWriter, r 
 			ID:   "progress",
 		}
 	)
-	params, err := decodeProgressParams(args, r)
+	params, err := decodeProgressParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -259,7 +259,7 @@ func (s *Server) handleProgressRequest(args [0]string, w http.ResponseWriter, r 
 // Get status.
 //
 // GET /status
-func (s *Server) handleStatusRequest(args [0]string, w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleStatusRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("status"),
 		semconv.HTTPMethodKey.String("GET"),

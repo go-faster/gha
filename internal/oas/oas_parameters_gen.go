@@ -29,7 +29,7 @@ func unpackPollParams(packed middleware.Parameters) (params PollParams) {
 	return params
 }
 
-func decodePollParams(args [0]string, r *http.Request) (params PollParams, _ error) {
+func decodePollParams(args [0]string, argsEscaped bool, r *http.Request) (params PollParams, _ error) {
 	h := uri.NewHeaderDecoder(r.Header)
 	// Decode header: X-Token.
 	if err := func() error {
@@ -85,7 +85,7 @@ func unpackProgressParams(packed middleware.Parameters) (params ProgressParams) 
 	return params
 }
 
-func decodeProgressParams(args [0]string, r *http.Request) (params ProgressParams, _ error) {
+func decodeProgressParams(args [0]string, argsEscaped bool, r *http.Request) (params ProgressParams, _ error) {
 	h := uri.NewHeaderDecoder(r.Header)
 	// Decode header: X-Token.
 	if err := func() error {
