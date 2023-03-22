@@ -28,3 +28,6 @@ deploy-controller:
 	cat hosts.controller.txt | xargs -I HOST scp _bin/gha-controller HOST:~
 
 deploy: build install deploy-worker deploy-controller
+
+forward_clickhouse:
+	kubectl -n clickhouse port-forward svc/chendpoint-db 38123:8123
