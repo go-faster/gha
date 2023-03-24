@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	entgo.io/ent v0.11.10
-	github.com/ClickHouse/ch-go v0.53.1
+	github.com/ClickHouse/ch-go v0.54.0
 	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/cheggaaa/pb/v3 v3.1.2
 	github.com/dustin/go-humanize v1.0.1
@@ -14,7 +14,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/compress v1.16.3
 	github.com/lib/pq v1.10.7
-	github.com/ogen-go/ogen v0.60.0
+	github.com/ogen-go/ogen v0.60.1
 	github.com/stretchr/testify v1.8.2
 	go.etcd.io/bbolt v1.3.7
 	go.opentelemetry.io/otel v1.14.0
