@@ -22,7 +22,6 @@ func (s *Error) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Error) encodeFields(e *jx.Encoder) {
 	{
-
 		e.FieldStart("message")
 		e.Str(s.Message)
 	}
@@ -220,7 +219,6 @@ func (s *JobDownload) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *JobDownload) encodeFields(e *jx.Encoder) {
 	{
-
 		e.FieldStart("date")
 		e.Str(s.Date)
 	}
@@ -362,7 +360,6 @@ func (s *JobProcess) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *JobProcess) encodeFields(e *jx.Encoder) {
 	{
-
 		e.FieldStart("keys")
 		e.ArrStart()
 		for _, elem := range s.Keys {
@@ -371,7 +368,6 @@ func (s *JobProcess) encodeFields(e *jx.Encoder) {
 		e.ArrEnd()
 	}
 	{
-
 		e.FieldStart("clickhouse")
 		e.Str(s.Clickhouse)
 	}
@@ -559,12 +555,10 @@ func (s *Progress) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Progress) encodeFields(e *jx.Encoder) {
 	{
-
 		e.FieldStart("event")
 		s.Event.Encode(e)
 	}
 	{
-
 		e.FieldStart("key")
 		e.Str(s.Key)
 	}
@@ -834,7 +828,6 @@ func (s *Status) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Status) encodeFields(e *jx.Encoder) {
 	{
-
 		e.FieldStart("message")
 		e.Str(s.Message)
 	}

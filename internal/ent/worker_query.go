@@ -22,7 +22,7 @@ import (
 type WorkerQuery struct {
 	config
 	ctx        *QueryContext
-	order      []OrderFunc
+	order      []worker.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Worker
 	withChunks *ChunkQuery
@@ -58,7 +58,7 @@ func (wq *WorkerQuery) Unique(unique bool) *WorkerQuery {
 }
 
 // Order specifies how the records should be ordered.
-func (wq *WorkerQuery) Order(o ...OrderFunc) *WorkerQuery {
+func (wq *WorkerQuery) Order(o ...worker.OrderOption) *WorkerQuery {
 	wq.order = append(wq.order, o...)
 	return wq
 }
@@ -274,7 +274,7 @@ func (wq *WorkerQuery) Clone() *WorkerQuery {
 	return &WorkerQuery{
 		config:     wq.config,
 		ctx:        wq.ctx.Clone(),
-		order:      append([]OrderFunc{}, wq.order...),
+		order:      append([]worker.OrderOption{}, wq.order...),
 		inters:     append([]Interceptor{}, wq.inters...),
 		predicates: append([]predicate.Worker{}, wq.predicates...),
 		withChunks: wq.withChunks.Clone(),
@@ -420,7 +420,7 @@ func (wq *WorkerQuery) loadChunks(ctx context.Context, query *ChunkQuery, nodes 
 	}
 	query.withFKs = true
 	query.Where(predicate.Chunk(func(s *sql.Selector) {
-		s.Where(sql.InValues(worker.ChunksColumn, fks...))
+		s.Where(sql.InValues(s.C(worker.ChunksColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

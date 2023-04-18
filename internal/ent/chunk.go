@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/go-faster/gha/internal/ent/chunk"
 	"github.com/go-faster/gha/internal/ent/worker"
@@ -45,6 +46,7 @@ type Chunk struct {
 	// The values are being populated by the ChunkQuery when eager-loading is set.
 	Edges         ChunkEdges `json:"edges"`
 	worker_chunks *uuid.UUID
+	selectValues  sql.SelectValues
 }
 
 // ChunkEdges holds the relations/edges for other nodes in the graph.
@@ -83,7 +85,7 @@ func (*Chunk) scanValues(columns []string) ([]any, error) {
 		case chunk.ForeignKeys[0]: // worker_chunks
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
-			return nil, fmt.Errorf("unexpected column %q for type Chunk", columns[i])
+			values[i] = new(sql.UnknownType)
 		}
 	}
 	return values, nil
@@ -179,9 +181,17 @@ func (c *Chunk) assignValues(columns []string, values []any) error {
 				c.worker_chunks = new(uuid.UUID)
 				*c.worker_chunks = *value.S.(*uuid.UUID)
 			}
+		default:
+			c.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
+}
+
+// Value returns the ent.Value that was dynamically selected and assigned to the Chunk.
+// This includes values selected through modifiers, order, etc.
+func (c *Chunk) Value(name string) (ent.Value, error) {
+	return c.selectValues.Get(name)
 }
 
 // QueryWorker queries the "worker" edge of the Chunk entity.

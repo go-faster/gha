@@ -694,11 +694,7 @@ func HasWorker() predicate.Chunk {
 // HasWorkerWith applies the HasEdge predicate on the "worker" edge with a given conditions (other predicates).
 func HasWorkerWith(preds ...predicate.Worker) predicate.Chunk {
 	return predicate.Chunk(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(WorkerInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, WorkerTable, WorkerColumn),
-		)
+		step := newWorkerStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
