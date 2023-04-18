@@ -21,7 +21,7 @@ import (
 type ChunkQuery struct {
 	config
 	ctx        *QueryContext
-	order      []OrderFunc
+	order      []chunk.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Chunk
 	withWorker *WorkerQuery
@@ -58,7 +58,7 @@ func (cq *ChunkQuery) Unique(unique bool) *ChunkQuery {
 }
 
 // Order specifies how the records should be ordered.
-func (cq *ChunkQuery) Order(o ...OrderFunc) *ChunkQuery {
+func (cq *ChunkQuery) Order(o ...chunk.OrderOption) *ChunkQuery {
 	cq.order = append(cq.order, o...)
 	return cq
 }
@@ -274,7 +274,7 @@ func (cq *ChunkQuery) Clone() *ChunkQuery {
 	return &ChunkQuery{
 		config:     cq.config,
 		ctx:        cq.ctx.Clone(),
-		order:      append([]OrderFunc{}, cq.order...),
+		order:      append([]chunk.OrderOption{}, cq.order...),
 		inters:     append([]Interceptor{}, cq.inters...),
 		predicates: append([]predicate.Chunk{}, cq.predicates...),
 		withWorker: cq.withWorker.Clone(),

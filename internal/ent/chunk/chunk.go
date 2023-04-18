@@ -5,6 +5,9 @@ package chunk
 import (
 	"fmt"
 	"time"
+
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -121,4 +124,81 @@ func StateValidator(s State) error {
 	default:
 		return fmt.Errorf("chunk: invalid enum value for state field: %q", s)
 	}
+}
+
+// OrderOption defines the ordering options for the Chunk queries.
+type OrderOption func(*sql.Selector)
+
+// ByID orders the results by the id field.
+func ByID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByUpdatedAt orders the results by the updated_at field.
+func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByStart orders the results by the start field.
+func ByStart(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStart, opts...).ToFunc()
+}
+
+// ByLeaseExpiresAt orders the results by the lease_expires_at field.
+func ByLeaseExpiresAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLeaseExpiresAt, opts...).ToFunc()
+}
+
+// ByState orders the results by the state field.
+func ByState(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldState, opts...).ToFunc()
+}
+
+// BySizeInput orders the results by the size_input field.
+func BySizeInput(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSizeInput, opts...).ToFunc()
+}
+
+// BySizeContent orders the results by the size_content field.
+func BySizeContent(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSizeContent, opts...).ToFunc()
+}
+
+// BySizeOutput orders the results by the size_output field.
+func BySizeOutput(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSizeOutput, opts...).ToFunc()
+}
+
+// BySha256Input orders the results by the sha256_input field.
+func BySha256Input(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSha256Input, opts...).ToFunc()
+}
+
+// BySha256Content orders the results by the sha256_content field.
+func BySha256Content(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSha256Content, opts...).ToFunc()
+}
+
+// BySha256Output orders the results by the sha256_output field.
+func BySha256Output(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSha256Output, opts...).ToFunc()
+}
+
+// ByWorkerField orders the results by worker field.
+func ByWorkerField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWorkerStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newWorkerStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkerInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, WorkerTable, WorkerColumn),
+	)
 }

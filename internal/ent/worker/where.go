@@ -300,11 +300,7 @@ func HasChunks() predicate.Worker {
 // HasChunksWith applies the HasEdge predicate on the "chunks" edge with a given conditions (other predicates).
 func HasChunksWith(preds ...predicate.Chunk) predicate.Worker {
 	return predicate.Worker(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ChunksInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, ChunksTable, ChunksColumn),
-		)
+		step := newChunksStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

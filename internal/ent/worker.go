@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/go-faster/gha/internal/ent/worker"
 	"github.com/google/uuid"
@@ -27,7 +28,8 @@ type Worker struct {
 	Token string `json:"token,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the WorkerQuery when eager-loading is set.
-	Edges WorkerEdges `json:"edges"`
+	Edges        WorkerEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // WorkerEdges holds the relations/edges for other nodes in the graph.
@@ -60,7 +62,7 @@ func (*Worker) scanValues(columns []string) ([]any, error) {
 		case worker.FieldID:
 			values[i] = new(uuid.UUID)
 		default:
-			return nil, fmt.Errorf("unexpected column %q for type Worker", columns[i])
+			values[i] = new(sql.UnknownType)
 		}
 	}
 	return values, nil
@@ -104,9 +106,17 @@ func (w *Worker) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				w.Token = value.String
 			}
+		default:
+			w.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
+}
+
+// Value returns the ent.Value that was dynamically selected and assigned to the Worker.
+// This includes values selected through modifiers, order, etc.
+func (w *Worker) Value(name string) (ent.Value, error) {
+	return w.selectValues.Get(name)
 }
 
 // QueryChunks queries the "chunks" edge of the Worker entity.
