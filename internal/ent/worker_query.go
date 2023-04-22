@@ -433,7 +433,7 @@ func (wq *WorkerQuery) loadChunks(ctx context.Context, query *ChunkQuery, nodes 
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "worker_chunks" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "worker_chunks" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

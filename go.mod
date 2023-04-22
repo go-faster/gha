@@ -3,7 +3,7 @@ module github.com/go-faster/gha
 go 1.20
 
 require (
-	entgo.io/ent v0.12.1
+	entgo.io/ent v0.12.2
 	github.com/ClickHouse/ch-go v0.54.0
 	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/cheggaaa/pb/v3 v3.1.2
