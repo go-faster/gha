@@ -101,8 +101,8 @@ github.com/mattn/go-sqlite3 v1.9.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOq
 github.com/mattn/go-sqlite3 v1.14.16 h1:yOQRA0RpS5PFz/oikGwBEqvAWhWg5ufRz4ETLjwpU1Y=
 github.com/mitchellh/go-wordwrap v1.0.1 h1:TLuKupo69TCn6TQSyGxwI1EblZZEsQ0vMlAFQflz0v0=
 github.com/mitchellh/go-wordwrap v1.0.1/go.mod h1:R62XHJLzvMFRBbcrT7m7WgmE1eOyTSsCt+hzestvNj0=
-github.com/ogen-go/ogen v0.66.0 h1:jT0dxA0k1tNempRYK8pVrw+f14AIgEHlIAdq7G4Ow/8=
-github.com/ogen-go/ogen v0.66.0/go.mod h1:9KR09F0TOR+sjt+Hcv+h2Rtae24PTRwwZsj+UthGbWY=
+github.com/ogen-go/ogen v0.67.0 h1:mCWKEsxmDqQMN8aw+tv0+qGKeYj/yRhC0d38+XfdN1E=
+github.com/ogen-go/ogen v0.67.0/go.mod h1:2xVW08apG9D+lwRmqR2THu4pYXe1XnZ8AhBpQ0arbtE=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/pascaldekloe/name v1.0.1 h1:9lnXOHeqeHHnWLbKfH6X98+4+ETVqFqxN09UXSjcMb0=
