@@ -102,7 +102,7 @@ func (wc *WorkerCreate) Mutation() *WorkerMutation {
 // Save creates the Worker in the database.
 func (wc *WorkerCreate) Save(ctx context.Context) (*Worker, error) {
 	wc.defaults()
-	return withHooks[*Worker, WorkerMutation](ctx, wc.sqlSave, wc.mutation, wc.hooks)
+	return withHooks(ctx, wc.sqlSave, wc.mutation, wc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.

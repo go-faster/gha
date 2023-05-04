@@ -204,7 +204,7 @@ func (cc *ChunkCreate) Mutation() *ChunkMutation {
 // Save creates the Chunk in the database.
 func (cc *ChunkCreate) Save(ctx context.Context) (*Chunk, error) {
 	cc.defaults()
-	return withHooks[*Chunk, ChunkMutation](ctx, cc.sqlSave, cc.mutation, cc.hooks)
+	return withHooks(ctx, cc.sqlSave, cc.mutation, cc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
