@@ -91,7 +91,7 @@ func (wu *WorkerUpdate) RemoveChunks(c ...*Chunk) *WorkerUpdate {
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (wu *WorkerUpdate) Save(ctx context.Context) (int, error) {
 	wu.defaults()
-	return withHooks[int, WorkerMutation](ctx, wu.sqlSave, wu.mutation, wu.hooks)
+	return withHooks(ctx, wu.sqlSave, wu.mutation, wu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -282,7 +282,7 @@ func (wuo *WorkerUpdateOne) Select(field string, fields ...string) *WorkerUpdate
 // Save executes the query and returns the updated Worker entity.
 func (wuo *WorkerUpdateOne) Save(ctx context.Context) (*Worker, error) {
 	wuo.defaults()
-	return withHooks[*Worker, WorkerMutation](ctx, wuo.sqlSave, wuo.mutation, wuo.hooks)
+	return withHooks(ctx, wuo.sqlSave, wuo.mutation, wuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.

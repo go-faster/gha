@@ -250,7 +250,7 @@ func (cu *ChunkUpdate) ClearWorker() *ChunkUpdate {
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (cu *ChunkUpdate) Save(ctx context.Context) (int, error) {
 	cu.defaults()
-	return withHooks[int, ChunkMutation](ctx, cu.sqlSave, cu.mutation, cu.hooks)
+	return withHooks(ctx, cu.sqlSave, cu.mutation, cu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -647,7 +647,7 @@ func (cuo *ChunkUpdateOne) Select(field string, fields ...string) *ChunkUpdateOn
 // Save executes the query and returns the updated Chunk entity.
 func (cuo *ChunkUpdateOne) Save(ctx context.Context) (*Chunk, error) {
 	cuo.defaults()
-	return withHooks[*Chunk, ChunkMutation](ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
+	return withHooks(ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
