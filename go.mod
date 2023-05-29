@@ -14,12 +14,12 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/compress v1.16.5
 	github.com/lib/pq v1.10.9
-	github.com/ogen-go/ogen v0.67.0
+	github.com/ogen-go/ogen v0.68.2
 	github.com/stretchr/testify v1.8.3
 	go.etcd.io/bbolt v1.3.7
-	go.opentelemetry.io/otel v1.15.1
-	go.opentelemetry.io/otel/metric v0.38.1
-	go.opentelemetry.io/otel/trace v1.15.1
+	go.opentelemetry.io/otel v1.16.0
+	go.opentelemetry.io/otel/metric v1.16.0
+	go.opentelemetry.io/otel/trace v1.16.0
 	go.uber.org/atomic v1.11.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/ratelimit v0.2.0
@@ -36,7 +36,7 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dlclark/regexp2 v1.9.0 // indirect
+	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/dmarkham/enumer v1.5.8 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -52,7 +52,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.13.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
@@ -70,7 +70,7 @@ require (
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
-	golang.org/x/tools v0.8.1-0.20230428195545-5283a0178901 // indirect
+	golang.org/x/tools v0.9.1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
