@@ -14,7 +14,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/compress v1.16.5
 	github.com/lib/pq v1.10.9
-	github.com/ogen-go/ogen v0.68.4
+	github.com/ogen-go/ogen v0.69.0
 	github.com/stretchr/testify v1.8.4
 	go.etcd.io/bbolt v1.3.7
 	go.opentelemetry.io/otel v1.16.0
