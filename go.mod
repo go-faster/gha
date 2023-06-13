@@ -12,7 +12,7 @@ require (
 	github.com/go-faster/jx v1.0.0
 	github.com/google/go-github/v40 v40.0.0
 	github.com/google/uuid v1.3.0
-	github.com/klauspost/compress v1.16.5
+	github.com/klauspost/compress v1.16.6
 	github.com/lib/pq v1.10.9
 	github.com/ogen-go/ogen v0.68.4
 	github.com/stretchr/testify v1.8.4
