@@ -76,7 +76,7 @@ func (s *Progress) Validate() error {
 		})
 	}
 	if err := func() error {
-		if s.SHA256Input.Set {
+		if value, ok := s.SHA256Input.Get(); ok {
 			if err := func() error {
 				if err := (validate.String{
 					MinLength:    64,
@@ -86,7 +86,7 @@ func (s *Progress) Validate() error {
 					Email:        false,
 					Hostname:     false,
 					Regex:        nil,
-				}).Validate(string(s.SHA256Input.Value)); err != nil {
+				}).Validate(string(value)); err != nil {
 					return errors.Wrap(err, "string")
 				}
 				return nil
@@ -102,7 +102,7 @@ func (s *Progress) Validate() error {
 		})
 	}
 	if err := func() error {
-		if s.SHA256Content.Set {
+		if value, ok := s.SHA256Content.Get(); ok {
 			if err := func() error {
 				if err := (validate.String{
 					MinLength:    64,
@@ -112,7 +112,7 @@ func (s *Progress) Validate() error {
 					Email:        false,
 					Hostname:     false,
 					Regex:        nil,
-				}).Validate(string(s.SHA256Content.Value)); err != nil {
+				}).Validate(string(value)); err != nil {
 					return errors.Wrap(err, "string")
 				}
 				return nil
@@ -128,7 +128,7 @@ func (s *Progress) Validate() error {
 		})
 	}
 	if err := func() error {
-		if s.SHA256Output.Set {
+		if value, ok := s.SHA256Output.Get(); ok {
 			if err := func() error {
 				if err := (validate.String{
 					MinLength:    64,
@@ -138,7 +138,7 @@ func (s *Progress) Validate() error {
 					Email:        false,
 					Hostname:     false,
 					Regex:        nil,
-				}).Validate(string(s.SHA256Output.Value)); err != nil {
+				}).Validate(string(value)); err != nil {
 					return errors.Wrap(err, "string")
 				}
 				return nil

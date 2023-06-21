@@ -249,6 +249,8 @@ func (s *JobDownload) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"date\"")
 			}
+		case "type":
+			return d.Skip()
 		default:
 			return d.Skip()
 		}
@@ -326,6 +328,8 @@ func (s *JobNothing) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
+		case "type":
+			return d.Skip()
 		default:
 			return d.Skip()
 		}
@@ -419,6 +423,8 @@ func (s *JobProcess) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"clickhouse\"")
 			}
+		case "type":
+			return d.Skip()
 		default:
 			return d.Skip()
 		}
