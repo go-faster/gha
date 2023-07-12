@@ -6,7 +6,7 @@ require (
 	entgo.io/ent v0.12.3
 	github.com/ClickHouse/ch-go v0.57.0
 	github.com/ClickHouse/clickhouse-go v1.5.4
-	github.com/cheggaaa/pb/v3 v3.1.2
+	github.com/cheggaaa/pb/v3 v3.1.4
 	github.com/dustin/go-humanize v1.0.1
 	github.com/go-faster/errors v0.6.1
 	github.com/go-faster/jx v1.0.0
@@ -53,7 +53,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/mattn/go-runewidth v0.0.13 // indirect
+	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pascaldekloe/name v1.0.1 // indirect
