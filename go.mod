@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	entgo.io/ent v0.12.3
-	github.com/ClickHouse/ch-go v0.57.0
+	github.com/ClickHouse/ch-go v0.58.0
 	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/cheggaaa/pb/v3 v3.1.4
 	github.com/dustin/go-humanize v1.0.1
