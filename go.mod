@@ -9,12 +9,12 @@ require (
 	github.com/cheggaaa/pb/v3 v3.1.4
 	github.com/dustin/go-humanize v1.0.1
 	github.com/go-faster/errors v0.6.1
-	github.com/go-faster/jx v1.0.0
+	github.com/go-faster/jx v1.0.1
 	github.com/google/go-github/v40 v40.0.0
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/compress v1.16.7
 	github.com/lib/pq v1.10.9
-	github.com/ogen-go/ogen v0.70.1
+	github.com/ogen-go/ogen v0.72.0
 	github.com/stretchr/testify v1.8.4
 	go.etcd.io/bbolt v1.3.7
 	go.opentelemetry.io/otel v1.16.0
@@ -65,12 +65,12 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zclconf/go-cty v1.10.0 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
-	golang.org/x/mod v0.11.0 // indirect
+	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090 // indirect
+	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
-	golang.org/x/tools v0.10.0 // indirect
+	golang.org/x/tools v0.11.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
