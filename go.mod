@@ -11,7 +11,7 @@ require (
 	github.com/go-faster/errors v0.6.1
 	github.com/go-faster/jx v1.1.0
 	github.com/google/go-github/v40 v40.0.0
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
 	github.com/klauspost/compress v1.16.7
 	github.com/lib/pq v1.10.9
 	github.com/ogen-go/ogen v0.70.1
