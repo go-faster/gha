@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
+	semconv "go.opentelemetry.io/otel/semconv/v1.19.0"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/ogen-go/ogen/conv"
@@ -19,6 +20,28 @@ import (
 	"github.com/ogen-go/ogen/otelogen"
 	"github.com/ogen-go/ogen/uri"
 )
+
+// Invoker invokes operations described by OpenAPI v3 specification.
+type Invoker interface {
+	// Poll invokes poll operation.
+	//
+	// Request job from coordinator.
+	//
+	// POST /job/poll
+	Poll(ctx context.Context, params PollParams) (*Job, error)
+	// Progress invokes progress operation.
+	//
+	// Report progress.
+	//
+	// POST /progress
+	Progress(ctx context.Context, request *Progress, params ProgressParams) (*Status, error)
+	// Status invokes status operation.
+	//
+	// Get status.
+	//
+	// GET /status
+	Status(ctx context.Context) (*Status, error)
+}
 
 // Client implements OAS client.
 type Client struct {
@@ -77,15 +100,17 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 // Request job from coordinator.
 //
 // POST /job/poll
-func (c *Client) Poll(ctx context.Context, params PollParams) (Job, error) {
+func (c *Client) Poll(ctx context.Context, params PollParams) (*Job, error) {
 	res, err := c.sendPoll(ctx, params)
 	_ = res
 	return res, err
 }
 
-func (c *Client) sendPoll(ctx context.Context, params PollParams) (res Job, err error) {
+func (c *Client) sendPoll(ctx context.Context, params PollParams) (res *Job, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("poll"),
+		semconv.HTTPMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/job/poll"),
 	}
 
 	// Run stopwatch.
@@ -171,6 +196,8 @@ func (c *Client) Progress(ctx context.Context, request *Progress, params Progres
 func (c *Client) sendProgress(ctx context.Context, request *Progress, params ProgressParams) (res *Status, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("progress"),
+		semconv.HTTPMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/progress"),
 	}
 	// Validate request before sending.
 	if err := func() error {
@@ -268,6 +295,8 @@ func (c *Client) Status(ctx context.Context) (*Status, error) {
 func (c *Client) sendStatus(ctx context.Context) (res *Status, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("status"),
+		semconv.HTTPMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/status"),
 	}
 
 	// Run stopwatch.

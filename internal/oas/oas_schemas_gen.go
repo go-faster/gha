@@ -56,94 +56,18 @@ func (s *ErrorStatusCode) SetResponse(val Error) {
 
 // Job to perform on worker.
 // Ref: #/components/schemas/Job
-// Job represents sum type.
 type Job struct {
-	Type        JobType // switch on this field
-	JobNothing  JobNothing
-	JobDownload JobDownload
-	JobProcess  JobProcess
+	OneOf JobSum
 }
 
-// JobType is oneOf type of Job.
-type JobType string
-
-// Possible values for JobType.
-const (
-	JobNothingJob  JobType = "JobNothing"
-	JobDownloadJob JobType = "JobDownload"
-	JobProcessJob  JobType = "JobProcess"
-)
-
-// IsJobNothing reports whether Job is JobNothing.
-func (s Job) IsJobNothing() bool { return s.Type == JobNothingJob }
-
-// IsJobDownload reports whether Job is JobDownload.
-func (s Job) IsJobDownload() bool { return s.Type == JobDownloadJob }
-
-// IsJobProcess reports whether Job is JobProcess.
-func (s Job) IsJobProcess() bool { return s.Type == JobProcessJob }
-
-// SetJobNothing sets Job to JobNothing.
-func (s *Job) SetJobNothing(v JobNothing) {
-	s.Type = JobNothingJob
-	s.JobNothing = v
+// GetOneOf returns the value of OneOf.
+func (s *Job) GetOneOf() JobSum {
+	return s.OneOf
 }
 
-// GetJobNothing returns JobNothing and true boolean if Job is JobNothing.
-func (s Job) GetJobNothing() (v JobNothing, ok bool) {
-	if !s.IsJobNothing() {
-		return v, false
-	}
-	return s.JobNothing, true
-}
-
-// NewJobNothingJob returns new Job from JobNothing.
-func NewJobNothingJob(v JobNothing) Job {
-	var s Job
-	s.SetJobNothing(v)
-	return s
-}
-
-// SetJobDownload sets Job to JobDownload.
-func (s *Job) SetJobDownload(v JobDownload) {
-	s.Type = JobDownloadJob
-	s.JobDownload = v
-}
-
-// GetJobDownload returns JobDownload and true boolean if Job is JobDownload.
-func (s Job) GetJobDownload() (v JobDownload, ok bool) {
-	if !s.IsJobDownload() {
-		return v, false
-	}
-	return s.JobDownload, true
-}
-
-// NewJobDownloadJob returns new Job from JobDownload.
-func NewJobDownloadJob(v JobDownload) Job {
-	var s Job
-	s.SetJobDownload(v)
-	return s
-}
-
-// SetJobProcess sets Job to JobProcess.
-func (s *Job) SetJobProcess(v JobProcess) {
-	s.Type = JobProcessJob
-	s.JobProcess = v
-}
-
-// GetJobProcess returns JobProcess and true boolean if Job is JobProcess.
-func (s Job) GetJobProcess() (v JobProcess, ok bool) {
-	if !s.IsJobProcess() {
-		return v, false
-	}
-	return s.JobProcess, true
-}
-
-// NewJobProcessJob returns new Job from JobProcess.
-func NewJobProcessJob(v JobProcess) Job {
-	var s Job
-	s.SetJobProcess(v)
-	return s
+// SetOneOf sets the value of OneOf.
+func (s *Job) SetOneOf(val JobSum) {
+	s.OneOf = val
 }
 
 // Download chunk.
@@ -191,6 +115,96 @@ func (s *JobProcess) SetKeys(val []string) {
 // SetClickhouse sets the value of Clickhouse.
 func (s *JobProcess) SetClickhouse(val string) {
 	s.Clickhouse = val
+}
+
+// JobSum represents sum type.
+type JobSum struct {
+	Type        JobSumType // switch on this field
+	JobNothing  JobNothing
+	JobDownload JobDownload
+	JobProcess  JobProcess
+}
+
+// JobSumType is oneOf type of JobSum.
+type JobSumType string
+
+// Possible values for JobSumType.
+const (
+	JobNothingJobSum  JobSumType = "nothing"
+	JobDownloadJobSum JobSumType = "download"
+	JobProcessJobSum  JobSumType = "process"
+)
+
+// IsJobNothing reports whether JobSum is JobNothing.
+func (s JobSum) IsJobNothing() bool { return s.Type == JobNothingJobSum }
+
+// IsJobDownload reports whether JobSum is JobDownload.
+func (s JobSum) IsJobDownload() bool { return s.Type == JobDownloadJobSum }
+
+// IsJobProcess reports whether JobSum is JobProcess.
+func (s JobSum) IsJobProcess() bool { return s.Type == JobProcessJobSum }
+
+// SetJobNothing sets JobSum to JobNothing.
+func (s *JobSum) SetJobNothing(v JobNothing) {
+	s.Type = JobNothingJobSum
+	s.JobNothing = v
+}
+
+// GetJobNothing returns JobNothing and true boolean if JobSum is JobNothing.
+func (s JobSum) GetJobNothing() (v JobNothing, ok bool) {
+	if !s.IsJobNothing() {
+		return v, false
+	}
+	return s.JobNothing, true
+}
+
+// NewJobNothingJobSum returns new JobSum from JobNothing.
+func NewJobNothingJobSum(v JobNothing) JobSum {
+	var s JobSum
+	s.SetJobNothing(v)
+	return s
+}
+
+// SetJobDownload sets JobSum to JobDownload.
+func (s *JobSum) SetJobDownload(v JobDownload) {
+	s.Type = JobDownloadJobSum
+	s.JobDownload = v
+}
+
+// GetJobDownload returns JobDownload and true boolean if JobSum is JobDownload.
+func (s JobSum) GetJobDownload() (v JobDownload, ok bool) {
+	if !s.IsJobDownload() {
+		return v, false
+	}
+	return s.JobDownload, true
+}
+
+// NewJobDownloadJobSum returns new JobSum from JobDownload.
+func NewJobDownloadJobSum(v JobDownload) JobSum {
+	var s JobSum
+	s.SetJobDownload(v)
+	return s
+}
+
+// SetJobProcess sets JobSum to JobProcess.
+func (s *JobSum) SetJobProcess(v JobProcess) {
+	s.Type = JobProcessJobSum
+	s.JobProcess = v
+}
+
+// GetJobProcess returns JobProcess and true boolean if JobSum is JobProcess.
+func (s JobSum) GetJobProcess() (v JobProcess, ok bool) {
+	if !s.IsJobProcess() {
+		return v, false
+	}
+	return s.JobProcess, true
+}
+
+// NewJobProcessJobSum returns new JobSum from JobProcess.
+func NewJobProcessJobSum(v JobProcess) JobSum {
+	var s JobSum
+	s.SetJobProcess(v)
+	return s
 }
 
 // NewOptInt64 returns new OptInt64 with value set to v.
@@ -396,6 +410,15 @@ const (
 	ProgressEventDownloading ProgressEvent = "Downloading"
 	ProgressEventProcessed   ProgressEvent = "Processed"
 )
+
+// AllValues returns all ProgressEvent values.
+func (ProgressEvent) AllValues() []ProgressEvent {
+	return []ProgressEvent{
+		ProgressEventReady,
+		ProgressEventDownloading,
+		ProgressEventProcessed,
+	}
+}
 
 // MarshalText implements encoding.TextMarshaler.
 func (s ProgressEvent) MarshalText() ([]byte, error) {

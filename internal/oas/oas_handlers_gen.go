@@ -73,7 +73,7 @@ func (s *Server) handlePollRequest(args [0]string, argsEscaped bool, w http.Resp
 		return
 	}
 
-	var response Job
+	var response *Job
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:       ctx,
@@ -92,7 +92,7 @@ func (s *Server) handlePollRequest(args [0]string, argsEscaped bool, w http.Resp
 		type (
 			Request  = struct{}
 			Params   = PollParams
-			Response = Job
+			Response = *Job
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -111,22 +111,27 @@ func (s *Server) handlePollRequest(args [0]string, argsEscaped bool, w http.Resp
 		response, err = s.h.Poll(ctx, params)
 	}
 	if err != nil {
-		recordError("Internal", err)
 		if errRes, ok := errors.Into[*ErrorStatusCode](err); ok {
-			encodeErrorResponse(errRes, w, span)
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				recordError("Internal", err)
+			}
 			return
 		}
 		if errors.Is(err, ht.ErrNotImplemented) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
-		encodeErrorResponse(s.h.NewError(ctx, err), w, span)
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			recordError("Internal", err)
+		}
 		return
 	}
 
 	if err := encodePollResponse(response, w, span); err != nil {
 		recordError("EncodeResponse", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
 		return
 	}
 }
@@ -237,22 +242,27 @@ func (s *Server) handleProgressRequest(args [0]string, argsEscaped bool, w http.
 		response, err = s.h.Progress(ctx, request, params)
 	}
 	if err != nil {
-		recordError("Internal", err)
 		if errRes, ok := errors.Into[*ErrorStatusCode](err); ok {
-			encodeErrorResponse(errRes, w, span)
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				recordError("Internal", err)
+			}
 			return
 		}
 		if errors.Is(err, ht.ErrNotImplemented) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
-		encodeErrorResponse(s.h.NewError(ctx, err), w, span)
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			recordError("Internal", err)
+		}
 		return
 	}
 
 	if err := encodeProgressResponse(response, w, span); err != nil {
 		recordError("EncodeResponse", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
 		return
 	}
 }
@@ -329,22 +339,27 @@ func (s *Server) handleStatusRequest(args [0]string, argsEscaped bool, w http.Re
 		response, err = s.h.Status(ctx)
 	}
 	if err != nil {
-		recordError("Internal", err)
 		if errRes, ok := errors.Into[*ErrorStatusCode](err); ok {
-			encodeErrorResponse(errRes, w, span)
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				recordError("Internal", err)
+			}
 			return
 		}
 		if errors.Is(err, ht.ErrNotImplemented) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
-		encodeErrorResponse(s.h.NewError(ctx, err), w, span)
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			recordError("Internal", err)
+		}
 		return
 	}
 
 	if err := encodeStatusResponse(response, w, span); err != nil {
 		recordError("EncodeResponse", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
 		return
 	}
 }

@@ -13,7 +13,7 @@ type Handler interface {
 	// Request job from coordinator.
 	//
 	// POST /job/poll
-	Poll(ctx context.Context, params PollParams) (Job, error)
+	Poll(ctx context.Context, params PollParams) (*Job, error)
 	// Progress implements progress operation.
 	//
 	// Report progress.
