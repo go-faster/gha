@@ -18,7 +18,7 @@ var _ Handler = UnimplementedHandler{}
 // Request job from coordinator.
 //
 // POST /job/poll
-func (UnimplementedHandler) Poll(ctx context.Context, params PollParams) (r Job, _ error) {
+func (UnimplementedHandler) Poll(ctx context.Context, params PollParams) (r *Job, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

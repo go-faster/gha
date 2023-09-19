@@ -108,96 +108,45 @@ func (s *Error) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes Job as json.
-func (s Job) Encode(e *jx.Encoder) {
-	switch s.Type {
-	case JobDownloadJob:
-		e.ObjStart()
-		e.FieldStart("type")
-		e.Str("download")
-		s.JobDownload.encodeFields(e)
-		e.ObjEnd()
-	case JobNothingJob:
-		e.ObjStart()
-		e.FieldStart("type")
-		e.Str("nothing")
-		s.JobNothing.encodeFields(e)
-		e.ObjEnd()
-	case JobProcessJob:
-		e.ObjStart()
-		e.FieldStart("type")
-		e.Str("process")
-		s.JobProcess.encodeFields(e)
-		e.ObjEnd()
-	}
+// Encode implements json.Marshaler.
+func (s *Job) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
 }
+
+// encodeFields encodes fields.
+func (s *Job) encodeFields(e *jx.Encoder) {
+	s.OneOf.encodeFields(e)
+}
+
+var jsonFieldsNameOfJob = [0]string{}
 
 // Decode decodes Job from json.
 func (s *Job) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode Job to nil")
 	}
-	// Sum type discriminator.
-	if typ := d.Next(); typ != jx.Object {
-		return errors.Errorf("unexpected json type %q", typ)
+	if err := d.Capture(func(d *jx.Decoder) error {
+		return s.OneOf.Decode(d)
+	}); err != nil {
+		return errors.Wrap(err, "decode field OneOf")
 	}
 
-	var found bool
-	if err := d.Capture(func(d *jx.Decoder) error {
-		return d.ObjBytes(func(d *jx.Decoder, key []byte) error {
-			if found {
-				return d.Skip()
-			}
-			switch string(key) {
-			case "type":
-				typ, err := d.Str()
-				if err != nil {
-					return err
-				}
-				switch typ {
-				case "download":
-					s.Type = JobDownloadJob
-					found = true
-				case "nothing":
-					s.Type = JobNothingJob
-					found = true
-				case "process":
-					s.Type = JobProcessJob
-					found = true
-				default:
-					return errors.Errorf("unknown type %s", typ)
-				}
-				return nil
-			}
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
 			return d.Skip()
-		})
+		}
 	}); err != nil {
-		return errors.Wrap(err, "capture")
+		return errors.Wrap(err, "decode Job")
 	}
-	if !found {
-		return errors.New("unable to detect sum type variant")
-	}
-	switch s.Type {
-	case JobNothingJob:
-		if err := s.JobNothing.Decode(d); err != nil {
-			return err
-		}
-	case JobDownloadJob:
-		if err := s.JobDownload.Decode(d); err != nil {
-			return err
-		}
-	case JobProcessJob:
-		if err := s.JobProcess.Decode(d); err != nil {
-			return err
-		}
-	default:
-		return errors.Errorf("inferred invalid type: %s", s.Type)
-	}
+
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s Job) MarshalJSON() ([]byte, error) {
+func (s *Job) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
@@ -333,7 +282,6 @@ func (s *JobNothing) Decode(d *jx.Decoder) error {
 		default:
 			return d.Skip()
 		}
-		return nil
 	}); err != nil {
 		return errors.Wrap(err, "decode JobNothing")
 	}
@@ -477,6 +425,107 @@ func (s *JobProcess) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *JobProcess) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes JobSum as json.
+func (s JobSum) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+func (s JobSum) encodeFields(e *jx.Encoder) {
+	switch s.Type {
+	case JobDownloadJobSum:
+		e.FieldStart("type")
+		e.Str("download")
+		s.JobDownload.encodeFields(e)
+	case JobNothingJobSum:
+		e.FieldStart("type")
+		e.Str("nothing")
+		s.JobNothing.encodeFields(e)
+	case JobProcessJobSum:
+		e.FieldStart("type")
+		e.Str("process")
+		s.JobProcess.encodeFields(e)
+	}
+}
+
+// Decode decodes JobSum from json.
+func (s *JobSum) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode JobSum to nil")
+	}
+	// Sum type discriminator.
+	if typ := d.Next(); typ != jx.Object {
+		return errors.Errorf("unexpected json type %q", typ)
+	}
+
+	var found bool
+	if err := d.Capture(func(d *jx.Decoder) error {
+		return d.ObjBytes(func(d *jx.Decoder, key []byte) error {
+			if found {
+				return d.Skip()
+			}
+			switch string(key) {
+			case "type":
+				typ, err := d.Str()
+				if err != nil {
+					return err
+				}
+				switch typ {
+				case "download":
+					s.Type = JobDownloadJobSum
+					found = true
+				case "nothing":
+					s.Type = JobNothingJobSum
+					found = true
+				case "process":
+					s.Type = JobProcessJobSum
+					found = true
+				default:
+					return errors.Errorf("unknown type %s", typ)
+				}
+				return nil
+			}
+			return d.Skip()
+		})
+	}); err != nil {
+		return errors.Wrap(err, "capture")
+	}
+	if !found {
+		return errors.New("unable to detect sum type variant")
+	}
+	switch s.Type {
+	case JobNothingJobSum:
+		if err := s.JobNothing.Decode(d); err != nil {
+			return err
+		}
+	case JobDownloadJobSum:
+		if err := s.JobDownload.Decode(d); err != nil {
+			return err
+		}
+	case JobProcessJobSum:
+		if err := s.JobProcess.Decode(d); err != nil {
+			return err
+		}
+	default:
+		return errors.Errorf("inferred invalid type: %s", s.Type)
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s JobSum) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *JobSum) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

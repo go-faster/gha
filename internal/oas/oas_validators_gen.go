@@ -8,20 +8,23 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-func (s Job) Validate() error {
-	switch s.Type {
-	case JobNothingJob:
-		return nil // no validation needed
-	case JobDownloadJob:
-		return nil // no validation needed
-	case JobProcessJob:
-		if err := s.JobProcess.Validate(); err != nil {
+func (s *Job) Validate() error {
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.OneOf.Validate(); err != nil {
 			return err
 		}
 		return nil
-	default:
-		return errors.Errorf("invalid type %q", s.Type)
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "OneOf",
+			Error: err,
+		})
 	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
 }
 
 func (s *JobProcess) Validate() error {
@@ -41,6 +44,22 @@ func (s *JobProcess) Validate() error {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
+}
+
+func (s JobSum) Validate() error {
+	switch s.Type {
+	case JobNothingJobSum:
+		return nil // no validation needed
+	case JobDownloadJobSum:
+		return nil // no validation needed
+	case JobProcessJobSum:
+		if err := s.JobProcess.Validate(); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.Errorf("invalid type %q", s.Type)
+	}
 }
 
 func (s *Progress) Validate() error {
@@ -158,6 +177,7 @@ func (s *Progress) Validate() error {
 	}
 	return nil
 }
+
 func (s ProgressEvent) Validate() error {
 	switch s {
 	case "Ready":

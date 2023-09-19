@@ -9,9 +9,11 @@ import (
 	"github.com/go-faster/jx"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+
+	ht "github.com/ogen-go/ogen/http"
 )
 
-func encodePollResponse(response Job, w http.ResponseWriter, span trace.Span) error {
+func encodePollResponse(response *Job, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	span.SetStatus(codes.Ok, http.StatusText(200))
@@ -21,6 +23,7 @@ func encodePollResponse(response Job, w http.ResponseWriter, span trace.Span) er
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}
+
 	return nil
 }
 
@@ -34,6 +37,7 @@ func encodeProgressResponse(response *Status, w http.ResponseWriter, span trace.
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}
+
 	return nil
 }
 
@@ -47,6 +51,7 @@ func encodeStatusResponse(response *Status, w http.ResponseWriter, span trace.Sp
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}
+
 	return nil
 }
 
@@ -69,6 +74,10 @@ func encodeErrorResponse(response *ErrorStatusCode, w http.ResponseWriter, span 
 	response.Response.Encode(e)
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
+	}
+
+	if code >= http.StatusInternalServerError {
+		return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
 	}
 	return nil
 
